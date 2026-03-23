@@ -1,1 +1,10 @@
 /编码规范.md
+/out/
+*.obj
+*.pdb
+*.ilk
+*.recipe
+*.tlog
+*.dll
+*.exe
+*.vcxproj.user
