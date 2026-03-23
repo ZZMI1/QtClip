@@ -1,0 +1,14 @@
+D:\QtClip\src\app\main.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\main.obj
+D:\QtClip\src\core\database\qcdatabasemanager.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcdatabasemanager.obj
+D:\QtClip\src\core\database\qcdatabaseschema.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcdatabaseschema.obj
+D:\QtClip\src\core\database\qcdbenumcodec.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcdbenumcodec.obj
+D:\QtClip\src\domain\entities\qcstudysession.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcstudysession.obj
+D:\QtClip\src\domain\entities\qcsnippet.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcsnippet.obj
+D:\QtClip\src\domain\entities\qcattachment.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcattachment.obj
+D:\QtClip\src\domain\entities\qctag.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qctag.obj
+D:\QtClip\src\domain\entities\qcairecord.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcairecord.obj
+D:\QtClip\src\domain\entities\qcappsetting.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcappsetting.obj
+D:\QtClip\src\domain\entities\qcexportrecord.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcexportrecord.obj
+D:\QtClip\src\repository\sqlite\qcsessionrepositorysqlite.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcsessionrepositorysqlite.obj
+D:\QtClip\src\repository\sqlite\qcsnippetrepositorysqlite.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcsnippetrepositorysqlite.obj
+D:\QtClip\src\repository\sqlite\qcairecordrepositorysqlite.cpp;D:\QtClip\out\qtclipsmoke.dir\Debug\qcairecordrepositorysqlite.obj
