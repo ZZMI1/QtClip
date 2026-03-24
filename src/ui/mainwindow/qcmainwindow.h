@@ -55,6 +55,10 @@ private:
     QCMainWindow(const QCMainWindow& other);
     QCMainWindow& operator=(const QCMainWindow& other);
 
+    void loadAppLanguage();
+    bool isChineseUi() const;
+    QString uiText(const QString& strChinese, const QString& strEnglish) const;
+    void applyLocalizedTexts();
     void setupUi();
     void setupActions();
     void loadSessions();
@@ -68,12 +72,15 @@ private:
     void updateActionState();
     void updateViewSummary(int nVisibleSnippetCount, int nTotalSnippetCount);
     void updateAiStatusDisplay();
+    void updateSelectionContextDisplay();
+    void updateMenuTexts();
     QString currentSearchText() const;
     QString currentSnippetTypeFilter() const;
     bool matchesSnippetTypeFilter(const QCSnippet& snippet) const;
     void loadSearchHistoryOptions();
     void appendSearchHistory(const QString& strSearchText);
     QString buildHighlightedHtml(const QString& strText, const QString& strSearchText) const;
+    QString buildSelectionContextText() const;
     void applyPlainTextHighlight(QPlainTextEdit *pTextEdit, const QString& strSearchText) const;
     QVector<qint64> selectedSnippetIds() const;
     int selectedSnippetCount() const;
@@ -188,6 +195,7 @@ private:
     QComboBox *m_pSnippetTypeFilterComboBox;
     QCheckBox *m_pShowArchivedCheckBox;
     QComboBox *m_pTagFilterComboBox;
+    QLabel *m_pSelectionContextLabel;
     QLabel *m_pViewSummaryLabel;
     QLabel *m_pAiStatusLabel;
     QPlainTextEdit *m_pSessionSummaryTextEdit;
@@ -210,6 +218,7 @@ private:
     qint64 m_nRetrySnippetId;
     qint64 m_nRetrySessionId;
     QString m_strAiStatusMessage;
+    QString m_strAppLanguage;
     QFutureWatcher<QCAiTaskExecutionResult> *m_pSnippetSummaryWatcher;
     QFutureWatcher<QCAiTaskExecutionResult> *m_pSessionSummaryWatcher;
 };

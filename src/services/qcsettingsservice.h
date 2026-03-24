@@ -39,6 +39,9 @@ public:
     bool saveAiSettingsProfiles(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles);
     bool loadAiSettings(QCAiRuntimeSettings *pAiSettings) const;
     bool saveAiSettings(const QCAiRuntimeSettings& aiSettings);
+    QString defaultAppLanguage() const;
+    bool getAppLanguage(QString *pstrLanguage) const;
+    bool setAppLanguage(const QString& strLanguage);
     QString defaultScreenshotSaveDirectory() const;
     bool getScreenshotSaveDirectory(QString *pstrOutputDirectory) const;
     bool setScreenshotSaveDirectory(const QString& strOutputDirectory);

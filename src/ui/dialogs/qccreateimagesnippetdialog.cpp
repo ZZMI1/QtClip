@@ -6,6 +6,7 @@
 // Copyright (c) 2026 QtClip. All rights reserved.
 #include "qccreateimagesnippetdialog.h"
 #include <QCheckBox>
+#include <QApplication>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFileDialog>
@@ -18,6 +19,20 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include "../../services/qcscreencaptureservice.h"
+namespace
+{
+bool IsChineseUi()
+{
+    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
+}
+
+QString UiText(const QString& strChinese, const QString& strEnglish)
+{
+    return IsChineseUi() ? strChinese : strEnglish;
+}
+}
+
+
 QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitialDirectory,
                                                        bool bDefaultCopyToCaptureDirectory,
                                                        const QString& strPreviewDirectory,
@@ -33,9 +48,9 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     , m_pCopyToDefaultCaptureDirectoryCheckBox(new QCheckBox(QString::fromUtf8("Copy imported image to default capture directory"), this))
     , m_pImportModeDescriptionLabel(new QLabel(this))
     , m_pTargetPreviewLabel(new QLabel(this))
-    , m_pBrowseButton(new QPushButton(QString::fromUtf8("Browse"), this))
+    , m_pBrowseButton(new QPushButton(UiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")), this))
 {
-    setWindowTitle(QString::fromUtf8("New Image Snippet"));
+    setWindowTitle(UiText(QString::fromUtf8("??????"), QString::fromUtf8("New Image Snippet")));
     m_pNoteTextEdit->setMinimumHeight(90);
     m_pCopyToDefaultCaptureDirectoryCheckBox->setChecked(bDefaultCopyToCaptureDirectory);
     m_pImportModeDescriptionLabel->setWordWrap(true);
@@ -53,9 +68,9 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     pFileLayout->addWidget(m_pFilePathLineEdit);
     pFileLayout->addWidget(m_pBrowseButton);
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(QString::fromUtf8("Title"), m_pTitleLineEdit);
-    pFormLayout->addRow(QString::fromUtf8("Note"), m_pNoteTextEdit);
-    pFormLayout->addRow(QString::fromUtf8("Image"), pFileLayout);
+    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
+    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Image")), pFileLayout);
     pFormLayout->addRow(QString(), m_pCopyToDefaultCaptureDirectoryCheckBox);
     pFormLayout->addRow(QString(), m_pImportModeDescriptionLabel);
     pFormLayout->addRow(QString(), m_pTargetPreviewLabel);
@@ -97,7 +112,7 @@ void QCCreateImageSnippetDialog::chooseImageFile()
     if (!strBrowseDirectory.isEmpty() && QFileInfo(strBrowseDirectory).isFile())
         strBrowseDirectory = QFileInfo(strBrowseDirectory).absolutePath();
     const QString strFilePath = QFileDialog::getOpenFileName(this,
-                                                             QString::fromUtf8("Select Image"),
+                                                             UiText(QString::fromUtf8("????"), QString::fromUtf8("Select Image")),
                                                              strBrowseDirectory,
                                                              QString::fromUtf8("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
     if (!strFilePath.isEmpty())

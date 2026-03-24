@@ -273,11 +273,19 @@ bool QCTagService::replaceSnippetTags(qint64 nSnippetId, const QVector<qint64>& 
             return false;
         }
 
-        if (!setUniqueIds.contains(nTagId))
+        if (setUniqueIds.contains(nTagId))
+            continue;
+
+        QCTag tag;
+        if (!getTagById(nTagId, &tag))
         {
-            setUniqueIds.insert(nTagId);
-            vecNormalizedIds.append(nTagId);
+            if (lastError().trimmed().isEmpty())
+                setLastError(QString::fromUtf8("Tag was not found."));
+            return false;
         }
+
+        setUniqueIds.insert(nTagId);
+        vecNormalizedIds.append(nTagId);
     }
 
     if (!m_pTagRepository->replaceSnippetTags(nSnippetId, vecNormalizedIds))

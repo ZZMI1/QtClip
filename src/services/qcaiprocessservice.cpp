@@ -18,13 +18,25 @@
 
 namespace
 {
-QString BuildSnippetSystemPrompt()
+bool IsChineseLanguage(const QString& strLanguage)
 {
+    const QString strValue = strLanguage.trimmed().toLower();
+    return strValue.isEmpty() || strValue.startsWith(QString::fromUtf8("zh"));
+}
+
+QString BuildSnippetSystemPrompt(const QString& strLanguage)
+{
+    if (IsChineseLanguage(strLanguage))
+        return QString::fromUtf8("??????????????????????????????????????");
+
     return QString::fromUtf8("You are an assistant for study notes. Write a concise study summary in plain English. Focus on what the student should review next.");
 }
 
-QString BuildSessionSystemPrompt()
+QString BuildSessionSystemPrompt(const QString& strLanguage)
 {
+    if (IsChineseLanguage(strLanguage))
+        return QString::fromUtf8("??????????????????????????????????????");
+
     return QString::fromUtf8("You are an assistant for study sessions. Write a concise session summary in plain English with main takeaways and review focus.");
 }
 
@@ -346,6 +358,9 @@ bool QCAiProcessService::buildSnippetExecutionContext(const QCSnippet& snippet,
                                                       const QCAiRuntimeSettings& aiSettings,
                                                       QCAiTaskExecutionContext *pExecutionContext) const
 {
+    QString strAppLanguage = QString::fromUtf8("zh-CN");
+    if (nullptr != m_pSettingsService)
+        m_pSettingsService->getAppLanguage(&strAppLanguage);
     if (nullptr == pExecutionContext)
     {
         setLastError(QString::fromUtf8("AI execution context output pointer is null."));
@@ -356,7 +371,7 @@ bool QCAiProcessService::buildSnippetExecutionContext(const QCSnippet& snippet,
     pExecutionContext->m_nSnippetId = snippet.id();
     pExecutionContext->m_aiTaskType = QCAiTaskType::SnippetSummaryTask;
     pExecutionContext->m_aiSettings = aiSettings;
-    pExecutionContext->m_aiRequest.m_strSystemPrompt = BuildSnippetSystemPrompt();
+    pExecutionContext->m_aiRequest.m_strSystemPrompt = BuildSnippetSystemPrompt(strAppLanguage);
     pExecutionContext->m_aiRequest.m_strUserPrompt = buildSnippetPrompt(snippet);
     pExecutionContext->m_aiRequest.m_strLocalImageFilePath.clear();
     pExecutionContext->m_aiRequest.m_strModelName = aiSettings.m_strModel;
@@ -390,6 +405,9 @@ bool QCAiProcessService::buildSessionExecutionContext(const QCStudySession& sess
                                                       const QCAiRuntimeSettings& aiSettings,
                                                       QCAiTaskExecutionContext *pExecutionContext) const
 {
+    QString strAppLanguage = QString::fromUtf8("zh-CN");
+    if (nullptr != m_pSettingsService)
+        m_pSettingsService->getAppLanguage(&strAppLanguage);
     if (nullptr == pExecutionContext)
     {
         setLastError(QString::fromUtf8("AI execution context output pointer is null."));
@@ -400,7 +418,7 @@ bool QCAiProcessService::buildSessionExecutionContext(const QCStudySession& sess
     pExecutionContext->m_nSnippetId = 0;
     pExecutionContext->m_aiTaskType = QCAiTaskType::SessionSummaryTask;
     pExecutionContext->m_aiSettings = aiSettings;
-    pExecutionContext->m_aiRequest.m_strSystemPrompt = BuildSessionSystemPrompt();
+    pExecutionContext->m_aiRequest.m_strSystemPrompt = BuildSessionSystemPrompt(strAppLanguage);
     pExecutionContext->m_aiRequest.m_strUserPrompt = buildSessionPrompt(session, vecSnippets);
     pExecutionContext->m_aiRequest.m_strLocalImageFilePath.clear();
     pExecutionContext->m_aiRequest.m_strModelName = aiSettings.m_strModel;
@@ -449,8 +467,19 @@ bool QCAiProcessService::createProvider(const QCAiRuntimeSettings& aiSettings, I
 
 QString QCAiProcessService::buildSnippetPrompt(const QCSnippet& snippet) const
 {
+    QString strAppLanguage = QString::fromUtf8("zh-CN");
+    if (nullptr != m_pSettingsService)
+        m_pSettingsService->getAppLanguage(&strAppLanguage);
+
     QString strPrompt;
-    if (snippet.type() == QCSnippetType::ImageSnippetType)
+    if (IsChineseLanguage(strAppLanguage))
+    {
+        if (snippet.type() == QCSnippetType::ImageSnippetType)
+            strPrompt += QString::fromUtf8("???????????????????????????\n");
+        else
+            strPrompt += QString::fromUtf8("?????????????????\n");
+    }
+    else if (snippet.type() == QCSnippetType::ImageSnippetType)
         strPrompt += QString::fromUtf8("Summarize the attached screenshot for later review. Use the image as the primary source of truth.\n");
     else
         strPrompt += QString::fromUtf8("Summarize this learning snippet for later review.\n");
@@ -464,15 +493,23 @@ QString QCAiProcessService::buildSnippetPrompt(const QCSnippet& snippet) const
     strPrompt += QString::fromUtf8("Note: %1\n").arg(snippet.note());
     strPrompt += QString::fromUtf8("Content: %1\n").arg(snippet.contentText());
     strPrompt += QString::fromUtf8("Source: %1\n").arg(snippet.source());
-    strPrompt += QString::fromUtf8("Return only the summary text.");
+    strPrompt += IsChineseLanguage(strAppLanguage)
+        ? QString::fromUtf8("????????")
+        : QString::fromUtf8("Return only the summary text.");
     return strPrompt;
 }
 
 QString QCAiProcessService::buildSessionPrompt(const QCStudySession& session,
                                                const QVector<QCSnippet>& vecSnippets) const
 {
+    QString strAppLanguage = QString::fromUtf8("zh-CN");
+    if (nullptr != m_pSettingsService)
+        m_pSettingsService->getAppLanguage(&strAppLanguage);
+
     QString strPrompt;
-    strPrompt += QString::fromUtf8("Summarize this study session. Focus on key takeaways and review priorities.\n");
+    strPrompt += IsChineseLanguage(strAppLanguage)
+        ? QString::fromUtf8("????????????????????????\n")
+        : QString::fromUtf8("Summarize this study session. Focus on key takeaways and review priorities.\n");
     strPrompt += QString::fromUtf8("Session Title: %1\n").arg(session.title());
     strPrompt += QString::fromUtf8("Course: %1\n").arg(session.courseName());
     strPrompt += QString::fromUtf8("Description: %1\n\n").arg(session.description());
@@ -485,7 +522,9 @@ QString QCAiProcessService::buildSessionPrompt(const QCStudySession& session,
             .arg(snippet.title(), snippet.note(), snippet.contentText(), snippet.summary());
     }
 
-    strPrompt += QString::fromUtf8("Return only the session summary text.");
+    strPrompt += IsChineseLanguage(strAppLanguage)
+        ? QString::fromUtf8("??????????")
+        : QString::fromUtf8("Return only the session summary text.");
     return strPrompt;
 }
 

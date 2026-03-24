@@ -285,6 +285,7 @@ bool QCSnippetService::moveSnippetsToSession(const QVector<qint64>& vecSnippetId
     }
 
     QSet<qint64> setUniqueSnippetIds;
+    int nMovedCount = 0;
     for (int i = 0; i < vecSnippetIds.size(); ++i)
     {
         const qint64 nSnippetId = vecSnippetIds.at(i);
@@ -309,6 +310,14 @@ bool QCSnippetService::moveSnippetsToSession(const QVector<qint64>& vecSnippetId
         snippet.setSessionId(nTargetSessionId);
         if (!updateSnippet(&snippet))
             return false;
+
+        ++nMovedCount;
+    }
+
+    if (nMovedCount <= 0)
+    {
+        setLastError(QString::fromUtf8("Selected snippets already belong to the target session."));
+        return false;
     }
 
     return true;

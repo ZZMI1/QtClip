@@ -176,6 +176,8 @@ bool SelectListItemsByIds(QListWidget *pListWidget, const QVector<qint64>& vecId
     return bSelectedAny;
 }
 
+int RunSmokeWorkflow();
+
 void ClearCurrentSelection(QListWidget *pListWidget)
 {
     if (nullptr == pListWidget)
@@ -699,9 +701,10 @@ int RunMainWindowStateVerificationWorkflow()
     QLineEdit *pSearchLineEdit = mainWindow.findChild<QLineEdit *>(QString::fromUtf8("snippetSearchLineEdit"));
     QComboBox *pSearchHistoryComboBox = mainWindow.findChild<QComboBox *>(QString::fromUtf8("searchHistoryComboBox"));
     QComboBox *pSnippetTypeFilterComboBox = mainWindow.findChild<QComboBox *>(QString::fromUtf8("snippetTypeFilterComboBox"));
+    QLabel *pSelectionContextLabel = mainWindow.findChild<QLabel *>(QString::fromUtf8("selectionContextLabel"));
     QLabel *pAiStatusLabel = mainWindow.findChild<QLabel *>(QString::fromUtf8("aiStatusLabel"));
     QCheckBox *pShowArchivedCheckBox = mainWindow.findChild<QCheckBox *>(QString::fromUtf8("showArchivedCheckBox"));
-    if (nullptr == pSessionListWidget || nullptr == pSnippetListWidget || nullptr == pSearchLineEdit || nullptr == pSearchHistoryComboBox || nullptr == pSnippetTypeFilterComboBox || nullptr == pAiStatusLabel || nullptr == pShowArchivedCheckBox)
+    if (nullptr == pSessionListWidget || nullptr == pSnippetListWidget || nullptr == pSearchLineEdit || nullptr == pSearchHistoryComboBox || nullptr == pSnippetTypeFilterComboBox || nullptr == pSelectionContextLabel || nullptr == pAiStatusLabel || nullptr == pShowArchivedCheckBox)
     {
         PrintError(QString::fromUtf8("Main window verification widgets are missing."));
         return 610;
@@ -788,6 +791,12 @@ int RunMainWindowStateVerificationWorkflow()
         return 612;
     }
 
+    if (pSessionListWidget->contextMenuPolicy() != Qt::ActionsContextMenu || pSnippetListWidget->contextMenuPolicy() != Qt::ActionsContextMenu)
+    {
+        PrintError(QString::fromUtf8("Context menu policy verification failed."));
+        return 6121;
+    }
+
     if (!SelectListItemById(pSessionListWidget, activeSession.id()))
     {
         PrintError(QString::fromUtf8("Failed to select active session."));
@@ -800,10 +809,24 @@ int RunMainWindowStateVerificationWorkflow()
         return 614;
     }
 
+    if (!pSelectionContextLabel->text().contains(QString::fromUtf8("session"), Qt::CaseInsensitive)
+        && !pSelectionContextLabel->text().contains(QString::fromUtf8("??"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Session selection context label verification failed."));
+        return 6141;
+    }
+
     if (!SelectListItemById(pSnippetListWidget, textSnippet.id()))
     {
         PrintError(QString::fromUtf8("Failed to select visible text snippet."));
         return 615;
+    }
+
+    if (!pSelectionContextLabel->text().contains(QString::fromUtf8("1 selected snippet"), Qt::CaseInsensitive)
+        && !pSelectionContextLabel->text().contains(QString::fromUtf8("1 ???"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Single snippet context label verification failed."));
+        return 6151;
     }
 
     if (!pEditSessionAction->isEnabled()
@@ -868,7 +891,8 @@ int RunMainWindowStateVerificationWorkflow()
         return 618;
     }
 
-    if (pToggleArchiveSnippetAction->text() != QString::fromUtf8("Restore Snippet"))
+    if (pToggleArchiveSnippetAction->text() != QString::fromUtf8("Restore Snippet")
+        && pToggleArchiveSnippetAction->text() != QString::fromUtf8("????"))
     {
         PrintError(QString::fromUtf8("Archived snippet action text verification failed."));
         return 619;
@@ -881,6 +905,13 @@ int RunMainWindowStateVerificationWorkflow()
     {
         PrintError(QString::fromUtf8("Failed to multi-select snippets."));
         return 620;
+    }
+
+    if (!pSelectionContextLabel->text().contains(QString::fromUtf8("2 selected snippets"), Qt::CaseInsensitive)
+        && !pSelectionContextLabel->text().contains(QString::fromUtf8("2 ???"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Multi-selection context label verification failed."));
+        return 6201;
     }
 
     if (pEditSnippetAction->isEnabled()
@@ -979,6 +1010,14 @@ int RunMainWindowStateVerificationWorkflow()
         return 627;
     }
 
+    QLabel *pEmptySelectionContextLabel = emptyMainWindow.findChild<QLabel *>(QString::fromUtf8("selectionContextLabel"));
+    if (nullptr == pEmptySelectionContextLabel || (!pEmptySelectionContextLabel->text().contains(QString::fromUtf8("no session selected"), Qt::CaseInsensitive)
+        && !pEmptySelectionContextLabel->text().contains(QString::fromUtf8("?????"), Qt::CaseInsensitive)))
+    {
+        PrintError(QString::fromUtf8("Empty selection context label verification failed."));
+        return 6271;
+    }
+
     if (pEmptyDuplicateSnippetAction->isEnabled()
         || pEmptyMoveSnippetAction->isEnabled()
         || pEmptyEditSessionAction->isEnabled()
@@ -1004,6 +1043,13 @@ int RunMainWindowStateVerificationWorkflow()
     {
         PrintError(QString::fromUtf8("Failed to select finished session."));
         return 626;
+    }
+
+    if (!pSelectionContextLabel->text().contains(QString::fromUtf8("session"), Qt::CaseInsensitive)
+        && !pSelectionContextLabel->text().contains(QString::fromUtf8("??"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Finished session context label verification failed."));
+        return 6241;
     }
 
     if (pFinishSessionAction->isEnabled()
@@ -1032,6 +1078,376 @@ int RunMainWindowStateVerificationWorkflow()
     PrintInfo(QString::fromUtf8("Main window state verification passed."));
     PrintInfo(QString::fromUtf8("Visible snippets with archived hidden: 1"));
     PrintInfo(QString::fromUtf8("Visible snippets with archived shown: 2"));
+    return 0;
+}
+
+int RunBoundaryVerificationWorkflow()
+{
+    QString strTempDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    if (strTempDirectory.isEmpty())
+        strTempDirectory = QDir::tempPath();
+
+    const QString strDatabasePath = QDir(strTempDirectory).filePath(QString::fromUtf8("qtclip_boundary_verify.sqlite"));
+    QFile::remove(strDatabasePath);
+
+    QCDatabaseManager databaseManager;
+    if (!databaseManager.open(strDatabasePath) || !databaseManager.initialize())
+    {
+        PrintError(databaseManager.lastError());
+        return 701;
+    }
+
+    QCSessionRepositorySqlite sessionRepository(&databaseManager);
+    QCSnippetRepositorySqlite snippetRepository(&databaseManager);
+    QCAiRecordRepositorySqlite aiRecordRepository(&databaseManager);
+    QCSettingsRepositorySqlite settingsRepository(&databaseManager);
+    QCTagRepositorySqlite tagRepository(&databaseManager);
+    QCSessionService sessionService(&sessionRepository);
+    QCSnippetService snippetService(&snippetRepository);
+    QCAiService aiService(&aiRecordRepository);
+    QCSettingsService settingsService(&settingsRepository);
+    QCTagService tagService(&tagRepository);
+    Q_UNUSED(aiService);
+    Q_UNUSED(settingsService);
+
+    QCStudySession sourceSession;
+    sourceSession.setTitle(QString::fromUtf8("Boundary Source"));
+    if (!sessionService.createSession(&sourceSession))
+    {
+        PrintError(sessionService.lastError());
+        return 702;
+    }
+
+    QCStudySession targetSession;
+    targetSession.setTitle(QString::fromUtf8("Boundary Target"));
+    if (!sessionService.createSession(&targetSession))
+    {
+        PrintError(sessionService.lastError());
+        return 703;
+    }
+
+    QCSnippet textSnippet;
+    textSnippet.setSessionId(sourceSession.id());
+    textSnippet.setCaptureType(QCCaptureType::ManualCaptureType);
+    textSnippet.setTitle(QString::fromUtf8("Boundary Snippet"));
+    textSnippet.setContentText(QString::fromUtf8("Boundary content."));
+    textSnippet.setNoteKind(QCNoteKind::ConceptNoteKind);
+    textSnippet.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
+    if (!snippetService.createTextSnippet(&textSnippet))
+    {
+        PrintError(snippetService.lastError());
+        return 704;
+    }
+
+    qint64 nNewSnippetId = 0;
+    if (snippetService.duplicateSnippet(0, sourceSession.id(), &nNewSnippetId)
+        || !snippetService.lastError().contains(QString::fromUtf8("invalid"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Duplicate boundary verification failed."));
+        return 705;
+    }
+
+    if (snippetService.moveSnippetsToSession(QVector<qint64>(), targetSession.id())
+        || !snippetService.lastError().contains(QString::fromUtf8("empty"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Empty move boundary verification failed."));
+        return 706;
+    }
+
+    QVector<qint64> vecSnippetIds;
+    vecSnippetIds.append(textSnippet.id());
+    if (!snippetService.moveSnippetsToSession(vecSnippetIds, targetSession.id()))
+    {
+        PrintError(snippetService.lastError());
+        return 707;
+    }
+
+    if (snippetService.moveSnippetsToSession(vecSnippetIds, targetSession.id())
+        || !snippetService.lastError().contains(QString::fromUtf8("already belong"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Same-target move boundary verification failed."));
+        return 708;
+    }
+
+    if (tagService.replaceSnippetTags(textSnippet.id(), QVector<qint64>() << 999999))
+    {
+        PrintError(QString::fromUtf8("Invalid tag boundary verification failed."));
+        return 709;
+    }
+
+    if (!tagService.lastError().contains(QString::fromUtf8("tag"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("Invalid tag boundary error message verification failed."));
+        return 710;
+    }
+
+    PrintInfo(QString::fromUtf8("Boundary verification passed."));
+    return 0;
+}
+
+int RunSelectionFlowVerificationWorkflow()
+{
+    return RunMainWindowStateVerificationWorkflow();
+}
+
+int RunTagBatchVerificationWorkflow()
+{
+    return RunManagementVerificationWorkflow();
+}
+
+int RunSearchFilterVerificationWorkflow()
+{
+    return RunMainWindowStateVerificationWorkflow();
+}
+
+int RunAiRetryVerificationWorkflow()
+{
+    QString strTempDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    if (strTempDirectory.isEmpty())
+        strTempDirectory = QDir::tempPath();
+
+    const QString strDatabasePath = QDir(strTempDirectory).filePath(QString::fromUtf8("qtclip_ai_retry_verify.sqlite"));
+    QFile::remove(strDatabasePath);
+
+    QCDatabaseManager databaseManager;
+    if (!databaseManager.open(strDatabasePath) || !databaseManager.initialize())
+    {
+        PrintError(databaseManager.lastError());
+        return 711;
+    }
+
+    QCSessionRepositorySqlite sessionRepository(&databaseManager);
+    QCSnippetRepositorySqlite snippetRepository(&databaseManager);
+    QCAiRecordRepositorySqlite aiRecordRepository(&databaseManager);
+    QCSettingsRepositorySqlite settingsRepository(&databaseManager);
+    QCSessionService sessionService(&sessionRepository);
+    QCSnippetService snippetService(&snippetRepository);
+    QCAiService aiService(&aiRecordRepository);
+    QCSettingsService settingsService(&settingsRepository);
+    QCAiProcessService aiProcessService(&sessionService, &snippetService, &aiService, &settingsService);
+
+    QCAiRuntimeSettings invalidSettings;
+    invalidSettings.m_bUseMockProvider = false;
+    invalidSettings.m_strBaseUrl = QString::fromUtf8("https://invalid.local/v1");
+    invalidSettings.m_strApiKey.clear();
+    invalidSettings.m_strModel = QString::fromUtf8("invalid-model");
+    QCAiConnectionTestResult connectionTestResult;
+    if (aiProcessService.testConnection(invalidSettings, &connectionTestResult))
+    {
+        PrintError(QString::fromUtf8("AI retry verification expected a failed connection test."));
+        return 712;
+    }
+
+    if (!connectionTestResult.m_strMessage.contains(QString::fromUtf8("Mode:"))
+        || !connectionTestResult.m_strMessage.contains(QString::fromUtf8("Endpoint:"))
+        || !connectionTestResult.m_strMessage.contains(QString::fromUtf8("Message:")))
+    {
+        PrintError(QString::fromUtf8("AI diagnostic message verification failed."));
+        return 713;
+    }
+
+    QCAiRuntimeSettings mockSettings;
+    mockSettings.m_bUseMockProvider = true;
+    mockSettings.m_strModel = QString::fromUtf8("mock-summary-v1");
+    if (!settingsService.saveAiSettings(mockSettings))
+    {
+        PrintError(settingsService.lastError());
+        return 714;
+    }
+
+    QCStudySession session;
+    session.setTitle(QString::fromUtf8("AI Retry Verify Session"));
+    if (!sessionService.createSession(&session))
+    {
+        PrintError(sessionService.lastError());
+        return 715;
+    }
+
+    QCSnippet snippet;
+    snippet.setSessionId(session.id());
+    snippet.setCaptureType(QCCaptureType::ManualCaptureType);
+    snippet.setTitle(QString::fromUtf8("Retry Snippet"));
+    snippet.setContentText(QString::fromUtf8("Verify AI summarize stability."));
+    snippet.setNoteKind(QCNoteKind::ConceptNoteKind);
+    snippet.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
+    if (!snippetService.createTextSnippet(&snippet))
+    {
+        PrintError(snippetService.lastError());
+        return 716;
+    }
+
+    if (!aiProcessService.summarizeSnippet(snippet.id()))
+    {
+        PrintError(aiProcessService.lastError());
+        return 717;
+    }
+
+    QCSnippet summarizedSnippet;
+    if (!snippetService.getSnippetById(snippet.id(), &summarizedSnippet) || summarizedSnippet.summary().trimmed().isEmpty())
+    {
+        PrintError(QString::fromUtf8("AI summarize success-path verification failed."));
+        return 718;
+    }
+
+    PrintInfo(QString::fromUtf8("AI retry verification passed."));
+    PrintInfo(QString::fromUtf8("Failure diagnostic preview: %1").arg(BuildPreviewText(connectionTestResult.m_strMessage)));
+    return 0;
+}
+
+int RunExportVerificationWorkflow()
+{
+    return RunSmokeWorkflow();
+}
+
+int RunLanguageVerificationWorkflow()
+{
+    QString strTempDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    if (strTempDirectory.isEmpty())
+        strTempDirectory = QDir::tempPath();
+
+    const QString strDatabasePath = QDir(strTempDirectory).filePath(QString::fromUtf8("qtclip_language_verify.sqlite"));
+    QFile::remove(strDatabasePath);
+
+    QCDatabaseManager databaseManager;
+    if (!databaseManager.open(strDatabasePath) || !databaseManager.initialize())
+    {
+        PrintError(databaseManager.lastError());
+        return 719;
+    }
+
+    QCSessionRepositorySqlite sessionRepository(&databaseManager);
+    QCSnippetRepositorySqlite snippetRepository(&databaseManager);
+    QCAiRecordRepositorySqlite aiRecordRepository(&databaseManager);
+    QCSettingsRepositorySqlite settingsRepository(&databaseManager);
+    QCSessionService sessionService(&sessionRepository);
+    QCSnippetService snippetService(&snippetRepository);
+    QCAiService aiService(&aiRecordRepository);
+    QCSettingsService settingsService(&settingsRepository);
+    QCAiProcessService aiProcessService(&sessionService, &snippetService, &aiService, &settingsService);
+
+    if (settingsService.defaultAppLanguage() != QString::fromUtf8("zh-CN"))
+    {
+        PrintError(QString::fromUtf8("Default app language verification failed."));
+        return 720;
+    }
+
+    QString strLoadedLanguage;
+    if (!settingsService.getAppLanguage(&strLoadedLanguage) || strLoadedLanguage != QString::fromUtf8("zh-CN"))
+    {
+        PrintError(settingsService.lastError().isEmpty() ? QString::fromUtf8("Initial app language load verification failed.") : settingsService.lastError());
+        return 721;
+    }
+
+    QCAiRuntimeSettings aiSettings;
+    aiSettings.m_bUseMockProvider = true;
+    aiSettings.m_strModel = QString::fromUtf8("mock-summary-v1");
+    if (!settingsService.saveAiSettings(aiSettings))
+    {
+        PrintError(settingsService.lastError());
+        return 722;
+    }
+
+    QCStudySession session;
+    session.setTitle(QString::fromUtf8("Language Verify Session"));
+    if (!sessionService.createSession(&session))
+    {
+        PrintError(sessionService.lastError());
+        return 723;
+    }
+
+    QCSnippet snippet;
+    snippet.setSessionId(session.id());
+    snippet.setCaptureType(QCCaptureType::ManualCaptureType);
+    snippet.setTitle(QString::fromUtf8("Language Verify Snippet"));
+    snippet.setContentText(QString::fromUtf8("Language verification content."));
+    snippet.setNoteKind(QCNoteKind::ConceptNoteKind);
+    snippet.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
+    if (!snippetService.createTextSnippet(&snippet))
+    {
+        PrintError(snippetService.lastError());
+        return 724;
+    }
+
+    QCAiTaskExecutionContext executionContext;
+    if (!aiProcessService.prepareSnippetSummary(snippet.id(), &executionContext)
+        || !executionContext.m_aiRequest.m_strSystemPrompt.contains(QString::fromUtf8("??")))
+    {
+        PrintError(QString::fromUtf8("Chinese AI prompt verification failed."));
+        return 725;
+    }
+
+    QCExportDataService exportDataService(&sessionService, &snippetService, &aiService);
+    QCMdExportRenderer mdExportRenderer;
+    QCMdExportService mdExportService(&exportDataService, &mdExportRenderer);
+    QCScreenCaptureService screenCaptureService(&settingsService);
+    QCTagRepositorySqlite tagRepository(&databaseManager);
+    QCTagService tagService(&tagRepository);
+    QCMainWindow chineseMainWindow(&sessionService,
+                                   &snippetService,
+                                   &tagService,
+                                   &aiService,
+                                   &aiProcessService,
+                                   &settingsService,
+                                   &mdExportService,
+                                   &screenCaptureService);
+
+    QAction *pChineseSettingsAction = chineseMainWindow.findChild<QAction *>(QString::fromUtf8("aiSettingsAction"));
+    QLineEdit *pChineseSearchLineEdit = chineseMainWindow.findChild<QLineEdit *>(QString::fromUtf8("snippetSearchLineEdit"));
+    QLabel *pChineseContextLabel = chineseMainWindow.findChild<QLabel *>(QString::fromUtf8("selectionContextLabel"));
+    if (nullptr == pChineseSettingsAction
+        || pChineseSettingsAction->text() != QString::fromUtf8("??")
+        || nullptr == pChineseSearchLineEdit
+        || !pChineseSearchLineEdit->placeholderText().contains(QString::fromUtf8("??"))
+        || nullptr == pChineseContextLabel
+        || !pChineseContextLabel->text().contains(QString::fromUtf8("?????")))
+    {
+        PrintError(QString::fromUtf8("Chinese UI text verification failed."));
+        return 7251;
+    }
+
+    if (!settingsService.setAppLanguage(QString::fromUtf8("en-US")))
+    {
+        PrintError(settingsService.lastError());
+        return 726;
+    }
+
+    if (!settingsService.getAppLanguage(&strLoadedLanguage) || strLoadedLanguage != QString::fromUtf8("en-US"))
+    {
+        PrintError(QString::fromUtf8("English app language round-trip verification failed."));
+        return 727;
+    }
+
+    if (!aiProcessService.prepareSnippetSummary(snippet.id(), &executionContext)
+        || !executionContext.m_aiRequest.m_strSystemPrompt.contains(QString::fromUtf8("plain English"), Qt::CaseInsensitive))
+    {
+        PrintError(QString::fromUtf8("English AI prompt verification failed."));
+        return 728;
+    }
+
+    QCMainWindow englishMainWindow(&sessionService,
+                                   &snippetService,
+                                   &tagService,
+                                   &aiService,
+                                   &aiProcessService,
+                                   &settingsService,
+                                   &mdExportService,
+                                   &screenCaptureService);
+    QAction *pEnglishSettingsAction = englishMainWindow.findChild<QAction *>(QString::fromUtf8("aiSettingsAction"));
+    QLineEdit *pEnglishSearchLineEdit = englishMainWindow.findChild<QLineEdit *>(QString::fromUtf8("snippetSearchLineEdit"));
+    QLabel *pEnglishContextLabel = englishMainWindow.findChild<QLabel *>(QString::fromUtf8("selectionContextLabel"));
+    if (nullptr == pEnglishSettingsAction
+        || pEnglishSettingsAction->text() != QString::fromUtf8("Settings")
+        || nullptr == pEnglishSearchLineEdit
+        || !pEnglishSearchLineEdit->placeholderText().contains(QString::fromUtf8("Search"))
+        || nullptr == pEnglishContextLabel
+        || !pEnglishContextLabel->text().contains(QString::fromUtf8("Current context")))
+    {
+        PrintError(QString::fromUtf8("English UI text verification failed."));
+        return 7281;
+    }
+
+    PrintInfo(QString::fromUtf8("Language verification passed."));
+    PrintInfo(QString::fromUtf8("Current language: %1").arg(strLoadedLanguage));
     return 0;
 }
 
@@ -2055,6 +2471,27 @@ int main(int argc, char *argv[])
 
     if (vecArguments.contains(QString::fromUtf8("--verify-mainwindow-state")))
         return RunMainWindowStateVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-boundaries")))
+        return RunBoundaryVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-selection-flow")))
+        return RunSelectionFlowVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-tag-batch")))
+        return RunTagBatchVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-search-filter")))
+        return RunSearchFilterVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-ai-retry")))
+        return RunAiRetryVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-export")))
+        return RunExportVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-language")))
+        return RunLanguageVerificationWorkflow();
 
     const QString strDatabasePath = ResolveAppDataPath();
     QCDatabaseManager databaseManager;

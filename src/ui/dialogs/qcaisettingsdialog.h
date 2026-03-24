@@ -30,17 +30,20 @@ public:
 
     void setDialogState(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles,
                         int nActiveAiProfileIndex,
+                        const QString& strAppLanguage,
                         const QString& strScreenshotDirectory,
                         const QString& strExportDirectory,
                         bool bDefaultCopyImportedImageToCaptureDirectory);
     void setDefaultState(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles,
                          int nActiveAiProfileIndex,
+                         const QString& strAppLanguage,
                          const QString& strScreenshotDirectory,
                          const QString& strExportDirectory,
                          bool bDefaultCopyImportedImageToCaptureDirectory);
     QCAiRuntimeSettings settings() const;
     QVector<QCAiRuntimeSettings> aiSettingsProfiles() const;
     int activeAiProfileIndex() const;
+    QString appLanguage() const;
     QString screenshotSaveDirectory() const;
     QString exportDirectory() const;
     bool defaultCopyImportedImageToCaptureDirectory() const;
@@ -63,10 +66,14 @@ private:
     void updateWindowTitle();
     void updateConnectionTestState();
     void markCurrentStateAsSaved();
+    bool isChineseUi() const;
+    QString uiText(const QString& strChinese, const QString& strEnglish) const;
+    void applyLocalizedTexts();
 
 private:
     QCAiProcessService *m_pAiProcessService;
     QComboBox *m_pAiProfileComboBox;
+    QComboBox *m_pAppLanguageComboBox;
     QCheckBox *m_pUseMockCheckBox;
     QCheckBox *m_pAutoSummarizeImageSnippetCheckBox;
     QLineEdit *m_pBaseUrlLineEdit;
@@ -88,6 +95,8 @@ private:
     QVector<QCAiRuntimeSettings> m_vecAiSettingsProfiles;
     QVector<QCAiRuntimeSettings> m_vecInitialAiSettingsProfiles;
     QVector<QCAiRuntimeSettings> m_vecDefaultAiSettingsProfiles;
+    QString m_strInitialAppLanguage;
+    QString m_strDefaultAppLanguage;
     QString m_strInitialScreenshotSaveDirectory;
     QString m_strInitialExportDirectory;
     QString m_strDefaultScreenshotSaveDirectory;

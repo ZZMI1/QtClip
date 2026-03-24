@@ -7,6 +7,7 @@
 
 #include "qcquickcapturedialog.h"
 
+#include <QApplication>
 #include <QDialogButtonBox>
 #include <QFileInfo>
 #include <QFormLayout>
@@ -18,6 +19,20 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+namespace
+{
+bool IsChineseUi()
+{
+    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
+}
+
+QString UiText(const QString& strChinese, const QString& strEnglish)
+{
+    return IsChineseUi() ? strChinese : strEnglish;
+}
+}
+
+
 QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget *pParent)
     : QDialog(pParent)
     , m_strImagePath(strImagePath)
@@ -26,7 +41,7 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pSaveButton(nullptr)
 {
-    setWindowTitle(QString::fromUtf8("Quick Capture"));
+    setWindowTitle(UiText(QString::fromUtf8("????"), QString::fromUtf8("Quick Capture")));
 
     m_pPreviewLabel->setMinimumSize(420, 240);
     m_pPreviewLabel->setAlignment(Qt::AlignCenter);
@@ -43,15 +58,15 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     }
     else
     {
-        m_pPreviewLabel->setText(QString::fromUtf8("Preview unavailable."));
+        m_pPreviewLabel->setText(UiText(QString::fromUtf8("??????"), QString::fromUtf8("Preview unavailable.")));
     }
 
     m_pTitleLineEdit->setPlaceholderText(QFileInfo(m_strImagePath).baseName());
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(QString::fromUtf8("Preview"), m_pPreviewLabel);
-    pFormLayout->addRow(QString::fromUtf8("Title"), m_pTitleLineEdit);
-    pFormLayout->addRow(QString::fromUtf8("Note"), m_pNoteTextEdit);
+    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Preview")), m_pPreviewLabel);
+    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
     m_pSaveButton = pButtonBox->button(QDialogButtonBox::Save);

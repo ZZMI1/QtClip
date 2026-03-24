@@ -21,6 +21,7 @@ const char *g_pszAiBaseUrlKey = "ai.baseUrl";
 const char *g_pszAiApiKeyKey = "ai.apiKey";
 const char *g_pszAiModelKey = "ai.model";
 const char *g_pszAiActiveProfileIndexKey = "ai.activeProfileIndex";
+const char *g_pszUiLanguageKey = "ui.language";
 const char *g_pszLegacyCaptureOutputDirectoryKey = "capture.outputDir";
 const char *g_pszScreenshotSaveDirectoryKey = "screenshot.saveDir";
 const char *g_pszExportDirectoryKey = "markdown.exportDir";
@@ -89,6 +90,20 @@ QString DefaultScreenshotSaveDirectory()
 QString DefaultExportDirectory()
 {
     return BuildDefaultDirectory(QStandardPaths::DocumentsLocation, QString::fromUtf8("QtClip/Exports"));
+}
+
+QString DefaultAppLanguage()
+{
+    return QString::fromUtf8("zh-CN");
+}
+
+QString NormalizeAppLanguage(const QString& strLanguage)
+{
+    const QString strValue = strLanguage.trimmed().toLower();
+    if (strValue == QString::fromUtf8("en") || strValue == QString::fromUtf8("en-us"))
+        return QString::fromUtf8("en-US");
+
+    return QString::fromUtf8("zh-CN");
 }
 
 bool IsSamePath(const QString& strLeftPath, const QString& strRightPath)
@@ -550,6 +565,57 @@ bool QCSettingsService::loadAiSettings(QCAiRuntimeSettings *pAiSettings) const
         return false;
 
     *pAiSettings = vecAiSettingsProfiles.at(NormalizeAiProfileIndex(nActiveProfileIndex));
+    return true;
+}
+
+QString QCSettingsService::defaultAppLanguage() const
+{
+    return DefaultAppLanguage();
+}
+
+bool QCSettingsService::getAppLanguage(QString *pstrLanguage) const
+{
+    clearError();
+
+    if (nullptr == pstrLanguage)
+    {
+        setLastError(QString::fromUtf8("App language output pointer is null."));
+        return false;
+    }
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    const QVector<QCAppSetting> vecSettings = m_pSettingsRepository->listSettings();
+    const QHash<QString, QString> hashValues = BuildSettingsMap(vecSettings);
+    *pstrLanguage = NormalizeAppLanguage(hashValues.value(QString::fromUtf8(g_pszUiLanguageKey), DefaultAppLanguage()));
+    return true;
+}
+
+bool QCSettingsService::setAppLanguage(const QString& strLanguage)
+{
+    clearError();
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    QString strError;
+    if (!SaveOptionalStringSetting(m_pSettingsRepository,
+                                   QString::fromUtf8(g_pszUiLanguageKey),
+                                   NormalizeAppLanguage(strLanguage),
+                                   DefaultAppLanguage(),
+                                   &strError))
+    {
+        setLastError(strError);
+        return false;
+    }
+
     return true;
 }
 
