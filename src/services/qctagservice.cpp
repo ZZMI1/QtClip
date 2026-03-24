@@ -43,6 +43,16 @@ bool QCTagService::createTag(QCTag *pTag)
         return false;
     }
 
+    const qint64 nExistingTagId = findExistingTagIdByName(pTag->name(), 0);
+    if (nExistingTagId < 0)
+        return false;
+
+    if (nExistingTagId > 0)
+    {
+        setLastError(QString::fromUtf8("A tag with the same name already exists."));
+        return false;
+    }
+
     if (!pTag->createdAt().isValid())
         pTag->setCreatedAt(QDateTime::currentDateTimeUtc());
 
@@ -83,6 +93,16 @@ bool QCTagService::updateTag(QCTag *pTag)
     if (pTag->name().isEmpty())
     {
         setLastError(QString::fromUtf8("Tag name cannot be empty."));
+        return false;
+    }
+
+    const qint64 nExistingTagId = findExistingTagIdByName(pTag->name(), pTag->id());
+    if (nExistingTagId < 0)
+        return false;
+
+    if (nExistingTagId > 0)
+    {
+        setLastError(QString::fromUtf8("A tag with the same name already exists."));
         return false;
     }
 
@@ -203,6 +223,29 @@ QVector<QCTag> QCTagService::listTagsBySnippet(qint64 nSnippetId) const
     return m_pTagRepository->listTagsBySnippet(nSnippetId);
 }
 
+int QCTagService::countSnippetsByTag(qint64 nTagId) const
+{
+    clearError();
+
+    if (nullptr == m_pTagRepository)
+    {
+        setLastError(QString::fromUtf8("Tag repository is null."));
+        return -1;
+    }
+
+    if (nTagId <= 0)
+    {
+        setLastError(QString::fromUtf8("Tag id is invalid."));
+        return -1;
+    }
+
+    const int nCount = m_pTagRepository->countSnippetsByTag(nTagId);
+    if (nCount < 0)
+        setLastError(QString::fromUtf8("Failed to count snippets by tag."));
+
+    return nCount;
+}
+
 bool QCTagService::replaceSnippetTags(qint64 nSnippetId, const QVector<qint64>& vecTagIds)
 {
     clearError();
@@ -254,6 +297,23 @@ QString QCTagService::lastError() const
 void QCTagService::clearError() const
 {
     m_strLastError.clear();
+}
+
+qint64 QCTagService::findExistingTagIdByName(const QString& strName, qint64 nIgnoredTagId) const
+{
+    const QVector<QCTag> vecTags = listTags();
+    if (!lastError().trimmed().isEmpty())
+        return -1;
+
+    const QString strTrimmedName = strName.trimmed();
+    for (int i = 0; i < vecTags.size(); ++i)
+    {
+        const QCTag& tag = vecTags.at(i);
+        if (tag.id() != nIgnoredTagId && tag.name().trimmed().compare(strTrimmedName, Qt::CaseInsensitive) == 0)
+            return tag.id();
+    }
+
+    return 0;
 }
 
 void QCTagService::setLastError(const QString& strError) const

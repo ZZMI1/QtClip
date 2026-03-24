@@ -9,6 +9,7 @@
 // Copyright (c) 2026 QtClip. All rights reserved.
 
 #include <QString>
+#include <QStringList>
 #include <QVector>
 
 #include "../domain/interfaces/iqcsettingsrepository.h"
@@ -47,6 +48,9 @@ public:
     bool defaultCopyImportedImageToCaptureDirectory() const;
     bool getDefaultCopyImportedImageToCaptureDirectory(bool *pbEnabled) const;
     bool setDefaultCopyImportedImageToCaptureDirectory(bool bEnabled);
+    QStringList defaultSnippetSearchHistory() const;
+    bool getSnippetSearchHistory(QStringList *pstrHistory) const;
+    bool setSnippetSearchHistory(const QStringList& strHistory);
 
     QString lastError() const;
     void clearError() const;

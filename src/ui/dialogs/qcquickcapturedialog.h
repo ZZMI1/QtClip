@@ -25,6 +25,9 @@ public:
     QString note() const;
     QString imagePath() const;
 
+    void setTitle(const QString& strTitle);
+    void setNote(const QString& strNote);
+
 private:
     QCQuickCaptureDialog(const QCQuickCaptureDialog& other);
     QCQuickCaptureDialog& operator=(const QCQuickCaptureDialog& other);

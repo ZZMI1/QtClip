@@ -10,18 +10,22 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QVBoxLayout>
 
 QCCreateSessionDialog::QCCreateSessionDialog(QWidget *pParent)
     : QDialog(pParent)
     , m_pTitleLineEdit(new QLineEdit(this))
     , m_pCourseNameLineEdit(new QLineEdit(this))
+    , m_pDescriptionTextEdit(new QPlainTextEdit(this))
 {
     setWindowTitle(QString::fromUtf8("New Session"));
+    m_pDescriptionTextEdit->setMinimumHeight(90);
 
     QFormLayout *pFormLayout = new QFormLayout();
     pFormLayout->addRow(QString::fromUtf8("Title"), m_pTitleLineEdit);
     pFormLayout->addRow(QString::fromUtf8("Course"), m_pCourseNameLineEdit);
+    pFormLayout->addRow(QString::fromUtf8("Description"), m_pDescriptionTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -32,7 +36,7 @@ QCCreateSessionDialog::QCCreateSessionDialog(QWidget *pParent)
     pMainLayout->addWidget(pButtonBox);
     setLayout(pMainLayout);
 
-    resize(360, 120);
+    resize(420, 240);
 }
 
 QCCreateSessionDialog::~QCCreateSessionDialog()
@@ -47,4 +51,24 @@ QString QCCreateSessionDialog::title() const
 QString QCCreateSessionDialog::courseName() const
 {
     return m_pCourseNameLineEdit->text().trimmed();
+}
+
+QString QCCreateSessionDialog::description() const
+{
+    return m_pDescriptionTextEdit->toPlainText().trimmed();
+}
+
+void QCCreateSessionDialog::setTitle(const QString& strTitle)
+{
+    m_pTitleLineEdit->setText(strTitle.trimmed());
+}
+
+void QCCreateSessionDialog::setCourseName(const QString& strCourseName)
+{
+    m_pCourseNameLineEdit->setText(strCourseName.trimmed());
+}
+
+void QCCreateSessionDialog::setDescription(const QString& strDescription)
+{
+    m_pDescriptionTextEdit->setPlainText(strDescription.trimmed());
 }

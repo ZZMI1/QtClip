@@ -11,6 +11,7 @@
 #include <QDialog>
 
 class QLineEdit;
+class QPlainTextEdit;
 
 class QCCreateSessionDialog : public QDialog
 {
@@ -20,6 +21,11 @@ public:
 
     QString title() const;
     QString courseName() const;
+    QString description() const;
+
+    void setTitle(const QString& strTitle);
+    void setCourseName(const QString& strCourseName);
+    void setDescription(const QString& strDescription);
 
 private:
     QCCreateSessionDialog(const QCCreateSessionDialog& other);
@@ -28,6 +34,7 @@ private:
 private:
     QLineEdit *m_pTitleLineEdit;
     QLineEdit *m_pCourseNameLineEdit;
+    QPlainTextEdit *m_pDescriptionTextEdit;
 };
 
 #endif // QTCLIP_QCCREATESESSIONDIALOG_H_

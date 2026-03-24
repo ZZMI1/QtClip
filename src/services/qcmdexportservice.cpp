@@ -27,6 +27,56 @@ QCMdExportService::~QCMdExportService()
 {
 }
 
+bool QCMdExportService::buildExportPreview(qint64 nSessionId, QCMdExportPreview *pExportPreview) const
+{
+    if (nullptr == pExportPreview)
+        return false;
+
+    pExportPreview->m_strSessionTitle.clear();
+    pExportPreview->m_strCourseName.clear();
+    pExportPreview->m_nSnippetCount = 0;
+    pExportPreview->m_nImageSnippetCount = 0;
+    pExportPreview->m_nArchivedSnippetCount = 0;
+    pExportPreview->m_nFavoriteSnippetCount = 0;
+    pExportPreview->m_nSummarizedSnippetCount = 0;
+    pExportPreview->m_bHasSessionSummary = false;
+
+    if (nullptr == m_pExportDataService)
+        return false;
+
+    QCExportContext exportContext;
+    if (!m_pExportDataService->buildExportContext(nSessionId, &exportContext))
+        return false;
+
+    pExportPreview->m_strSessionTitle = exportContext.m_session.title();
+    pExportPreview->m_strCourseName = exportContext.m_session.courseName();
+    pExportPreview->m_nSnippetCount = exportContext.m_vecSnippetContexts.size();
+    for (int i = 0; i < exportContext.m_vecSnippetContexts.size(); ++i)
+    {
+        const QCExportSnippetContext& snippetContext = exportContext.m_vecSnippetContexts.at(i);
+        if (snippetContext.m_snippet.type() == QCSnippetType::ImageSnippetType)
+            ++pExportPreview->m_nImageSnippetCount;
+        if (snippetContext.m_snippet.isArchived())
+            ++pExportPreview->m_nArchivedSnippetCount;
+        if (snippetContext.m_snippet.isFavorite())
+            ++pExportPreview->m_nFavoriteSnippetCount;
+        if (!snippetContext.m_snippet.summary().trimmed().isEmpty())
+            ++pExportPreview->m_nSummarizedSnippetCount;
+    }
+
+    for (int i = 0; i < exportContext.m_vecSessionAiRecords.size(); ++i)
+    {
+        if (exportContext.m_vecSessionAiRecords.at(i).taskType() == QCAiTaskType::SessionSummaryTask
+            && !exportContext.m_vecSessionAiRecords.at(i).responseText().trimmed().isEmpty())
+        {
+            pExportPreview->m_bHasSessionSummary = true;
+            break;
+        }
+    }
+
+    return true;
+}
+
 bool QCMdExportService::exportSessionToFile(qint64 nSessionId, const QString& strOutputFilePath)
 {
     clearError();

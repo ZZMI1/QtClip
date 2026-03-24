@@ -10,8 +10,22 @@
 
 #include <QString>
 
+#include "qcexportdataservice.h"
+
 class QCExportDataService;
 class QCMdExportRenderer;
+
+struct QCMdExportPreview
+{
+    QString m_strSessionTitle;
+    QString m_strCourseName;
+    int m_nSnippetCount;
+    int m_nImageSnippetCount;
+    int m_nArchivedSnippetCount;
+    int m_nFavoriteSnippetCount;
+    int m_nSummarizedSnippetCount;
+    bool m_bHasSessionSummary;
+};
 
 class QCMdExportService
 {
@@ -20,6 +34,7 @@ public:
                       QCMdExportRenderer *pMdExportRenderer);
     ~QCMdExportService();
 
+    bool buildExportPreview(qint64 nSessionId, QCMdExportPreview *pExportPreview) const;
     bool exportSessionToFile(qint64 nSessionId, const QString& strOutputFilePath);
 
     QString lastError() const;

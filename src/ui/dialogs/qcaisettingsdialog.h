@@ -1,4 +1,4 @@
-﻿#ifndef QTCLIP_QCAISETTINGSDIALOG_H_
+#ifndef QTCLIP_QCAISETTINGSDIALOG_H_
 #define QTCLIP_QCAISETTINGSDIALOG_H_
 
 // File: qcaisettingsdialog.h
@@ -57,6 +57,7 @@ private:
     void switchAiProfile(int nProfileIndex);
     void applyProfileToEditors(const QCAiRuntimeSettings& aiSettings);
     void storeEditorStateToCurrentProfile();
+    void updateAiProfileLabels();
     void updateControlState();
     void updateDirtyState();
     void updateWindowTitle();

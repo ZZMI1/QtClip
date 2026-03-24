@@ -21,10 +21,12 @@ public:
     ~QCSessionService();
 
     bool createSession(QCStudySession *pSession);
+    bool updateSession(QCStudySession *pSession);
     bool finishSession(qint64 nSessionId, const QDateTime& dateTimeEndedAt);
     bool getSessionById(qint64 nSessionId, QCStudySession *pSession) const;
     bool getActiveSession(QCStudySession *pSession) const;
     QVector<QCStudySession> listSessions() const;
+    bool deleteSession(qint64 nSessionId);
 
     QString lastError() const;
     void clearError() const;

@@ -26,6 +26,7 @@ public:
     virtual bool getTagByName(const QString& strName, QCTag *pTag) const override;
     virtual QVector<QCTag> listTags() const override;
     virtual QVector<QCTag> listTagsBySnippet(qint64 nSnippetId) const override;
+    virtual int countSnippetsByTag(qint64 nTagId) const override;
     virtual bool replaceSnippetTags(qint64 nSnippetId, const QVector<qint64>& vecTagIds) override;
 
     QString lastError() const;

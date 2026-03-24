@@ -71,6 +71,50 @@ bool QCSessionService::createSession(QCStudySession *pSession)
     return true;
 }
 
+bool QCSessionService::updateSession(QCStudySession *pSession)
+{
+    clearError();
+
+    if (nullptr == pSession)
+    {
+        setLastError(QString::fromUtf8("QCStudySession input pointer is null."));
+        return false;
+    }
+
+    if (nullptr == m_pSessionRepository)
+    {
+        setLastError(QString::fromUtf8("Session repository is null."));
+        return false;
+    }
+
+    if (pSession->id() <= 0)
+    {
+        setLastError(QString::fromUtf8("Study session id is invalid."));
+        return false;
+    }
+
+    if (pSession->title().trimmed().isEmpty())
+    {
+        setLastError(QString::fromUtf8("Study session title is empty."));
+        return false;
+    }
+
+    if (!pSession->startedAt().isValid() || !pSession->createdAt().isValid())
+    {
+        setLastError(QString::fromUtf8("Study session time fields are invalid."));
+        return false;
+    }
+
+    pSession->setUpdatedAt(CurrentTimestamp());
+    if (!m_pSessionRepository->updateSession(*pSession))
+    {
+        setLastError(QString::fromUtf8("Failed to update study session."));
+        return false;
+    }
+
+    return true;
+}
+
 bool QCSessionService::finishSession(qint64 nSessionId, const QDateTime& dateTimeEndedAt)
 {
     clearError();
@@ -169,6 +213,31 @@ QVector<QCStudySession> QCSessionService::listSessions() const
     }
 
     return m_pSessionRepository->listSessions();
+}
+
+bool QCSessionService::deleteSession(qint64 nSessionId)
+{
+    clearError();
+
+    if (nullptr == m_pSessionRepository)
+    {
+        setLastError(QString::fromUtf8("Session repository is null."));
+        return false;
+    }
+
+    if (nSessionId <= 0)
+    {
+        setLastError(QString::fromUtf8("Study session id is invalid."));
+        return false;
+    }
+
+    if (!m_pSessionRepository->deleteSession(nSessionId))
+    {
+        setLastError(QString::fromUtf8("Failed to delete study session."));
+        return false;
+    }
+
+    return true;
 }
 
 QString QCSessionService::lastError() const

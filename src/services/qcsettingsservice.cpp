@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QHash>
 #include <QStandardPaths>
+#include <QStringList>
 
 namespace
 {
@@ -24,7 +25,9 @@ const char *g_pszLegacyCaptureOutputDirectoryKey = "capture.outputDir";
 const char *g_pszScreenshotSaveDirectoryKey = "screenshot.saveDir";
 const char *g_pszExportDirectoryKey = "markdown.exportDir";
 const char *g_pszDefaultCopyImportedImageKey = "import.defaultCopyToCaptureDir";
+const char *g_pszSnippetSearchHistoryKey = "search.history";
 const int g_nAiSettingsProfileCount = 3;
+const int g_nSnippetSearchHistoryLimit = 8;
 
 QCAppSetting BuildSetting(const QString& strKey, const QString& strValue)
 {
@@ -217,6 +220,33 @@ bool SaveOptionalStringSetting(IQCSettingsRepository *pSettingsRepository,
         return DeleteSetting(pSettingsRepository, strKey, pstrError);
 
     return SaveSetting(pSettingsRepository, strKey, strNormalizedValue, pstrError);
+}
+
+QStringList NormalizeSearchHistory(const QStringList& strHistory)
+{
+    QStringList vecNormalizedHistory;
+    for (int i = 0; i < strHistory.size(); ++i)
+    {
+        const QString strValue = strHistory.at(i).trimmed();
+        if (strValue.isEmpty())
+            continue;
+        if (!vecNormalizedHistory.contains(strValue, Qt::CaseInsensitive))
+            vecNormalizedHistory.append(strValue);
+        if (vecNormalizedHistory.size() >= g_nSnippetSearchHistoryLimit)
+            break;
+    }
+
+    return vecNormalizedHistory;
+}
+
+QString SerializeSearchHistory(const QStringList& strHistory)
+{
+    return NormalizeSearchHistory(strHistory).join(QString::fromUtf8("\n"));
+}
+
+QStringList DeserializeSearchHistory(const QString& strValue)
+{
+    return NormalizeSearchHistory(strValue.split(QString::fromUtf8("\n"), Qt::SkipEmptyParts));
 }
 
 bool SaveLegacyAiSettings(IQCSettingsRepository *pSettingsRepository,
@@ -733,6 +763,67 @@ bool QCSettingsService::setDefaultCopyImportedImageToCaptureDirectory(bool bEnab
                      &strError))
     {
         setLastError(QString::fromUtf8("Failed to save import.defaultCopyToCaptureDir."));
+        return false;
+    }
+
+    return true;
+}
+
+QStringList QCSettingsService::defaultSnippetSearchHistory() const
+{
+    return QStringList();
+}
+
+bool QCSettingsService::getSnippetSearchHistory(QStringList *pstrHistory) const
+{
+    clearError();
+
+    if (nullptr == pstrHistory)
+    {
+        setLastError(QString::fromUtf8("Search history output pointer is null."));
+        return false;
+    }
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    const QHash<QString, QString> hashValues = BuildSettingsMap(m_pSettingsRepository->listSettings());
+    *pstrHistory = DeserializeSearchHistory(hashValues.value(QString::fromUtf8(g_pszSnippetSearchHistoryKey)));
+    return true;
+}
+
+bool QCSettingsService::setSnippetSearchHistory(const QStringList& strHistory)
+{
+    clearError();
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    const QStringList vecNormalizedHistory = NormalizeSearchHistory(strHistory);
+    QString strError;
+    if (vecNormalizedHistory.isEmpty())
+    {
+        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszSnippetSearchHistoryKey), &strError))
+        {
+            setLastError(QString::fromUtf8("Failed to clear search.history."));
+            return false;
+        }
+
+        return true;
+    }
+
+    if (!SaveSetting(m_pSettingsRepository,
+                     QString::fromUtf8(g_pszSnippetSearchHistoryKey),
+                     SerializeSearchHistory(vecNormalizedHistory),
+                     &strError))
+    {
+        setLastError(QString::fromUtf8("Failed to save search.history."));
         return false;
     }
 

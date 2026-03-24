@@ -1,4 +1,4 @@
-﻿// File: qcsnippetservice.cpp
+// File: qcsnippetservice.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the thin snippet service used to drive the first QtClip workflow.
@@ -8,12 +8,35 @@
 #include "qcsnippetservice.h"
 
 #include <QDateTime>
+#include <QSet>
 
 namespace
 {
 QDateTime CurrentTimestamp()
 {
     return QDateTime::currentDateTimeUtc();
+}
+
+QString BuildTimestampTitleSuffix(const QDateTime& dateTimeValue)
+{
+    return dateTimeValue.isValid()
+        ? dateTimeValue.toLocalTime().toString(QString::fromUtf8("yyyy-MM-dd hh:mm"))
+        : QString::fromUtf8("Unknown Time");
+}
+
+QString FirstMeaningfulLine(const QString& strText)
+{
+    const QStringList vecLines = strText.split('\n');
+    for (int i = 0; i < vecLines.size(); ++i)
+    {
+        QString strLine = vecLines.at(i);
+        strLine.replace(QString::fromUtf8("\r"), QString());
+        strLine = strLine.trimmed();
+        if (!strLine.isEmpty())
+            return strLine;
+    }
+
+    return QString();
 }
 }
 
@@ -176,6 +199,140 @@ bool QCSnippetService::updateSnippet(QCSnippet *pSnippet)
     if (!m_pSnippetRepository->updateSnippet(*pSnippet))
     {
         setLastError(QString::fromUtf8("Failed to update snippet."));
+        return false;
+    }
+
+    return true;
+}
+
+
+bool QCSnippetService::duplicateSnippet(qint64 nSnippetId, qint64 nTargetSessionId, qint64 *pnNewSnippetId)
+{
+    clearError();
+
+    if (nullptr == pnNewSnippetId)
+    {
+        setLastError(QString::fromUtf8("Duplicate snippet output pointer is null."));
+        return false;
+    }
+
+    *pnNewSnippetId = 0;
+
+    if (nTargetSessionId <= 0)
+    {
+        setLastError(QString::fromUtf8("Target session id is invalid."));
+        return false;
+    }
+
+    QCSnippet sourceSnippet;
+    if (!getSnippetById(nSnippetId, &sourceSnippet))
+        return false;
+
+    QCSnippet duplicateSnippet = sourceSnippet;
+    duplicateSnippet.setId(0);
+    duplicateSnippet.setSessionId(nTargetSessionId);
+    duplicateSnippet.setIsArchived(false);
+    duplicateSnippet.setCreatedAt(QDateTime());
+    duplicateSnippet.setUpdatedAt(QDateTime());
+    duplicateSnippet.setCapturedAt(CurrentTimestamp());
+
+    const QString strBaseTitle = sourceSnippet.title().trimmed().isEmpty()
+        ? buildDefaultTitle(sourceSnippet)
+        : sourceSnippet.title().trimmed();
+    duplicateSnippet.setTitle(QString::fromUtf8("%1 (Copy)").arg(strBaseTitle));
+
+    if (sourceSnippet.type() == QCSnippetType::ImageSnippetType)
+    {
+        QCAttachment primaryAttachment;
+        if (!getPrimaryAttachmentBySnippetId(nSnippetId, &primaryAttachment))
+            return false;
+
+        primaryAttachment.setId(0);
+        primaryAttachment.setSnippetId(0);
+        primaryAttachment.setCreatedAt(CurrentTimestamp());
+        if (!createImageSnippetWithPrimaryAttachment(&duplicateSnippet, &primaryAttachment))
+            return false;
+    }
+    else if (sourceSnippet.type() == QCSnippetType::CodeSnippetType)
+    {
+        if (!createCodeSnippet(&duplicateSnippet))
+            return false;
+    }
+    else
+    {
+        if (!createTextSnippet(&duplicateSnippet))
+            return false;
+    }
+
+    *pnNewSnippetId = duplicateSnippet.id();
+    return true;
+}
+
+bool QCSnippetService::moveSnippetsToSession(const QVector<qint64>& vecSnippetIds, qint64 nTargetSessionId)
+{
+    clearError();
+
+    if (nTargetSessionId <= 0)
+    {
+        setLastError(QString::fromUtf8("Target session id is invalid."));
+        return false;
+    }
+
+    if (vecSnippetIds.isEmpty())
+    {
+        setLastError(QString::fromUtf8("Snippet selection is empty."));
+        return false;
+    }
+
+    QSet<qint64> setUniqueSnippetIds;
+    for (int i = 0; i < vecSnippetIds.size(); ++i)
+    {
+        const qint64 nSnippetId = vecSnippetIds.at(i);
+        if (nSnippetId <= 0)
+        {
+            setLastError(QString::fromUtf8("Snippet id is invalid."));
+            return false;
+        }
+
+        if (setUniqueSnippetIds.contains(nSnippetId))
+            continue;
+
+        setUniqueSnippetIds.insert(nSnippetId);
+
+        QCSnippet snippet;
+        if (!getSnippetById(nSnippetId, &snippet))
+            return false;
+
+        if (snippet.sessionId() == nTargetSessionId)
+            continue;
+
+        snippet.setSessionId(nTargetSessionId);
+        if (!updateSnippet(&snippet))
+            return false;
+    }
+
+    return true;
+}
+
+bool QCSnippetService::deleteSnippet(qint64 nSnippetId)
+{
+    clearError();
+
+    if (nullptr == m_pSnippetRepository)
+    {
+        setLastError(QString::fromUtf8("Snippet repository is null."));
+        return false;
+    }
+
+    if (nSnippetId <= 0)
+    {
+        setLastError(QString::fromUtf8("Snippet id is invalid."));
+        return false;
+    }
+
+    if (!m_pSnippetRepository->deleteSnippet(nSnippetId))
+    {
+        setLastError(QString::fromUtf8("Failed to delete snippet."));
         return false;
     }
 
@@ -396,6 +553,39 @@ bool QCSnippetService::validateSnippetInput(const QCSnippet& snippet) const
     return true;
 }
 
+QString QCSnippetService::buildDefaultTitle(const QCSnippet& snippet) const
+{
+    const QString strTimestampSuffix = BuildTimestampTitleSuffix(snippet.capturedAt().isValid()
+        ? snippet.capturedAt()
+        : snippet.createdAt());
+    const QString strSource = snippet.source().trimmed().toLower();
+
+    if (snippet.type() == QCSnippetType::ImageSnippetType)
+    {
+        if (strSource == QString::fromUtf8("screen"))
+            return QString::fromUtf8("Screen Capture %1").arg(strTimestampSuffix);
+        if (strSource == QString::fromUtf8("region"))
+            return QString::fromUtf8("Region Capture %1").arg(strTimestampSuffix);
+        if (strSource == QString::fromUtf8("file"))
+            return QString::fromUtf8("Imported Image %1").arg(strTimestampSuffix);
+        return QString::fromUtf8("Image Snippet %1").arg(strTimestampSuffix);
+    }
+
+    if (snippet.type() == QCSnippetType::TextSnippetType)
+    {
+        const QString strContentPreview = FirstMeaningfulLine(snippet.contentText()).left(48).trimmed();
+        if (!strContentPreview.isEmpty())
+            return strContentPreview;
+
+        return QString::fromUtf8("Text Snippet %1").arg(strTimestampSuffix);
+    }
+
+    if (snippet.type() == QCSnippetType::CodeSnippetType)
+        return QString::fromUtf8("Code Snippet %1").arg(strTimestampSuffix);
+
+    return QString::fromUtf8("Snippet %1").arg(strTimestampSuffix);
+}
+
 void QCSnippetService::normalizeSnippetForCreate(QCSnippet *pSnippet) const
 {
     if (nullptr == pSnippet)
@@ -410,6 +600,9 @@ void QCSnippetService::normalizeSnippetForCreate(QCSnippet *pSnippet) const
 
     if (!pSnippet->updatedAt().isValid())
         pSnippet->setUpdatedAt(pSnippet->createdAt());
+
+    if (pSnippet->title().trimmed().isEmpty())
+        pSnippet->setTitle(buildDefaultTitle(*pSnippet));
 }
 
 void QCSnippetService::setLastError(const QString& strError) const

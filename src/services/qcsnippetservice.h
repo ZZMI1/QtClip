@@ -1,4 +1,4 @@
-﻿#ifndef QTCLIP_QCSNIPPETSERVICE_H_
+#ifndef QTCLIP_QCSNIPPETSERVICE_H_
 #define QTCLIP_QCSNIPPETSERVICE_H_
 
 // File: qcsnippetservice.h
@@ -25,6 +25,9 @@ public:
     bool createCodeSnippet(QCSnippet *pSnippet);
     bool createImageSnippetWithPrimaryAttachment(QCSnippet *pSnippet, QCAttachment *pPrimaryAttachment);
     bool updateSnippet(QCSnippet *pSnippet);
+    bool duplicateSnippet(qint64 nSnippetId, qint64 nTargetSessionId, qint64 *pnNewSnippetId);
+    bool moveSnippetsToSession(const QVector<qint64>& vecSnippetIds, qint64 nTargetSessionId);
+    bool deleteSnippet(qint64 nSnippetId);
     bool getSnippetById(qint64 nSnippetId, QCSnippet *pSnippet) const;
     bool getPrimaryAttachmentBySnippetId(qint64 nSnippetId, QCAttachment *pPrimaryAttachment) const;
     QVector<QCSnippet> listSnippetsBySession(qint64 nSessionId) const;
@@ -45,6 +48,7 @@ private:
     QCSnippetService& operator=(const QCSnippetService& other);
 
     bool validateSnippetInput(const QCSnippet& snippet) const;
+    QString buildDefaultTitle(const QCSnippet& snippet) const;
     void normalizeSnippetForCreate(QCSnippet *pSnippet) const;
     void setLastError(const QString& strError) const;
 

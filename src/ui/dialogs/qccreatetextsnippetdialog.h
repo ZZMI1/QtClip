@@ -23,6 +23,10 @@ public:
     QString note() const;
     QString content() const;
 
+    void setTitle(const QString& strTitle);
+    void setNote(const QString& strNote);
+    void setContent(const QString& strContent);
+
 private:
     QCCreateTextSnippetDialog(const QCCreateTextSnippetDialog& other);
     QCCreateTextSnippetDialog& operator=(const QCCreateTextSnippetDialog& other);

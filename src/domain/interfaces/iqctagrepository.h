@@ -24,6 +24,7 @@ public:
     virtual bool getTagByName(const QString& strName, QCTag *pTag) const = 0;
     virtual QVector<QCTag> listTags() const = 0;
     virtual QVector<QCTag> listTagsBySnippet(qint64 nSnippetId) const = 0;
+    virtual int countSnippetsByTag(qint64 nTagId) const = 0;
     virtual bool replaceSnippetTags(qint64 nSnippetId, const QVector<qint64>& vecTagIds) = 0;
 
 protected:

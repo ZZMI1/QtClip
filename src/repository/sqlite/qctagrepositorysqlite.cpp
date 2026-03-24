@@ -41,6 +41,9 @@ static const char *g_pszSelectTagsBySnippetSql =
     "WHERE st.snippet_id = :snippet_id "
     "ORDER BY t.name COLLATE NOCASE ASC, t.id ASC;";
 
+static const char *g_pszCountSnippetsByTagSql =
+    "SELECT COUNT(DISTINCT snippet_id) AS snippet_count FROM snippet_tags WHERE tag_id = :tag_id;";
+
 static const char *g_pszDeleteSnippetTagsSql =
     "DELETE FROM snippet_tags WHERE snippet_id = :snippet_id;";
 
@@ -290,6 +293,35 @@ QVector<QCTag> QCTagRepositorySqlite::listTagsBySnippet(qint64 nSnippetId) const
 
     setLastFailedSql(QString());
     return vecTags;
+}
+
+int QCTagRepositorySqlite::countSnippetsByTag(qint64 nTagId) const
+{
+    clearErrors();
+
+    if (!ensureDatabaseReady())
+        return -1;
+
+    QSqlQuery query(m_pDatabaseManager->database());
+    const QString strSql = QString::fromUtf8(g_pszCountSnippetsByTagSql);
+    setLastFailedSql(strSql);
+    query.prepare(strSql);
+    query.bindValue(QString::fromUtf8(":tag_id"), nTagId);
+
+    if (!query.exec())
+    {
+        setLastError(query.lastError().text());
+        return -1;
+    }
+
+    if (!query.next())
+    {
+        setLastError(QString::fromUtf8("Failed to count snippets by tag."));
+        return -1;
+    }
+
+    setLastFailedSql(QString());
+    return query.value(QString::fromUtf8("snippet_count")).toInt();
 }
 
 bool QCTagRepositorySqlite::replaceSnippetTags(qint64 nSnippetId, const QVector<qint64>& vecTagIds)

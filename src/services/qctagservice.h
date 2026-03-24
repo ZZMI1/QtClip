@@ -27,6 +27,7 @@ public:
     bool getTagByName(const QString& strName, QCTag *pTag) const;
     QVector<QCTag> listTags() const;
     QVector<QCTag> listTagsBySnippet(qint64 nSnippetId) const;
+    int countSnippetsByTag(qint64 nTagId) const;
     bool replaceSnippetTags(qint64 nSnippetId, const QVector<qint64>& vecTagIds);
 
     QString lastError() const;
@@ -36,6 +37,7 @@ private:
     QCTagService(const QCTagService& other);
     QCTagService& operator=(const QCTagService& other);
 
+    qint64 findExistingTagIdByName(const QString& strName, qint64 nIgnoredTagId) const;
     void setLastError(const QString& strError) const;
 
 private:

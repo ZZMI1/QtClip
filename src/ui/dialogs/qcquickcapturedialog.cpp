@@ -91,3 +91,13 @@ QString QCQuickCaptureDialog::imagePath() const
 {
     return m_strImagePath;
 }
+
+void QCQuickCaptureDialog::setTitle(const QString& strTitle)
+{
+    m_pTitleLineEdit->setText(strTitle.trimmed());
+}
+
+void QCQuickCaptureDialog::setNote(const QString& strNote)
+{
+    m_pNoteTextEdit->setPlainText(strNote.trimmed());
+}

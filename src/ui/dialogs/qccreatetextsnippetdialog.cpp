@@ -58,3 +58,18 @@ QString QCCreateTextSnippetDialog::content() const
 {
     return m_pContentTextEdit->toPlainText().trimmed();
 }
+
+void QCCreateTextSnippetDialog::setTitle(const QString& strTitle)
+{
+    m_pTitleLineEdit->setText(strTitle.trimmed());
+}
+
+void QCCreateTextSnippetDialog::setNote(const QString& strNote)
+{
+    m_pNoteTextEdit->setPlainText(strNote.trimmed());
+}
+
+void QCCreateTextSnippetDialog::setContent(const QString& strContent)
+{
+    m_pContentTextEdit->setPlainText(strContent.trimmed());
+}

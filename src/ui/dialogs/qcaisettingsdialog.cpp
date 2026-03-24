@@ -1,4 +1,4 @@
-﻿// File: qcaisettingsdialog.cpp
+// File: qcaisettingsdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal AI settings dialog used by the first QtClip UI workflow.
@@ -66,6 +66,31 @@ QString DefaultConnectionTestHint()
     return QString::fromUtf8("Run a connection test to verify the selected AI configuration.");
 }
 
+QString BuildProfileDisplayLabel(const QCAiRuntimeSettings& aiSettings, int nProfileIndex)
+{
+    QString strSummary;
+    if (aiSettings.m_bUseMockProvider)
+    {
+        strSummary = aiSettings.m_strModel.trimmed().isEmpty()
+            ? QString::fromUtf8("Mock")
+            : QString::fromUtf8("Mock / %1").arg(aiSettings.m_strModel.trimmed());
+    }
+    else if (!aiSettings.m_strModel.trimmed().isEmpty())
+    {
+        strSummary = aiSettings.m_strModel.trimmed();
+    }
+    else if (!aiSettings.m_strBaseUrl.trimmed().isEmpty())
+    {
+        strSummary = QString::fromUtf8("Configured Endpoint");
+    }
+    else
+    {
+        strSummary = QString::fromUtf8("Empty");
+    }
+
+    return QString::fromUtf8("Profile %1 - %2").arg(nProfileIndex + 1).arg(strSummary);
+}
+
 QCAiConnectionTestResult RunConnectionTest(QCAiProcessService *pAiProcessService,
                                            const QCAiRuntimeSettings& aiSettings)
 {
@@ -125,7 +150,7 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
     resize(720, 560);
 
     for (int i = 0; i < m_vecAiSettingsProfiles.size(); ++i)
-        m_pAiProfileComboBox->addItem(QString::fromUtf8("Profile %1").arg(i + 1));
+        m_pAiProfileComboBox->addItem(BuildProfileDisplayLabel(m_vecAiSettingsProfiles.at(i), i));
 
     m_pApiKeyLineEdit->setEchoMode(QLineEdit::Password);
     m_pApiKeyLineEdit->setPlaceholderText(QString::fromUtf8("Optional for mock provider"));
@@ -422,6 +447,17 @@ void QCAiSettingsDialog::storeEditorStateToCurrentProfile()
     m_vecAiSettingsProfiles[nCurrentProfileIndex] = settings();
 }
 
+void QCAiSettingsDialog::updateAiProfileLabels()
+{
+    const QVector<QCAiRuntimeSettings> vecAiSettingsProfiles = aiSettingsProfiles();
+    const int nCurrentProfileIndex = activeAiProfileIndex();
+    m_pAiProfileComboBox->blockSignals(true);
+    for (int i = 0; i < m_pAiProfileComboBox->count() && i < vecAiSettingsProfiles.size(); ++i)
+        m_pAiProfileComboBox->setItemText(i, BuildProfileDisplayLabel(vecAiSettingsProfiles.at(i), i));
+    m_pAiProfileComboBox->setCurrentIndex(nCurrentProfileIndex);
+    m_pAiProfileComboBox->blockSignals(false);
+}
+
 void QCAiSettingsDialog::updateControlState()
 {
     const bool bUseMockProvider = m_pUseMockCheckBox->isChecked();
@@ -469,6 +505,7 @@ void QCAiSettingsDialog::updateDirtyState()
         || !IsSamePath(exportDirectory(), m_strInitialExportDirectory)
         || defaultCopyImportedImageToCaptureDirectory() != m_bInitialDefaultCopyImportedImageToCaptureDirectory;
 
+    updateAiProfileLabels();
     m_pSaveButton->setEnabled(bDirty && !m_bConnectionTestRunning);
     m_pStateLabel->setText(bDirty ? QString::fromUtf8("Unsaved changes.")
                                   : QString::fromUtf8("All changes saved."));
