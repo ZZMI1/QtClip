@@ -1,4 +1,4 @@
-// File: qcsettingsservice.cpp
+﻿// File: qcsettingsservice.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal settings service used by the first QtClip AI workflow.
@@ -19,10 +19,12 @@ const char *g_pszAiAutoSummarizeImageSnippetKey = "ai.autoSummarizeImageSnippet"
 const char *g_pszAiBaseUrlKey = "ai.baseUrl";
 const char *g_pszAiApiKeyKey = "ai.apiKey";
 const char *g_pszAiModelKey = "ai.model";
+const char *g_pszAiActiveProfileIndexKey = "ai.activeProfileIndex";
 const char *g_pszLegacyCaptureOutputDirectoryKey = "capture.outputDir";
 const char *g_pszScreenshotSaveDirectoryKey = "screenshot.saveDir";
 const char *g_pszExportDirectoryKey = "markdown.exportDir";
 const char *g_pszDefaultCopyImportedImageKey = "import.defaultCopyToCaptureDir";
+const int g_nAiSettingsProfileCount = 3;
 
 QCAppSetting BuildSetting(const QString& strKey, const QString& strValue)
 {
@@ -66,6 +68,16 @@ QCAiRuntimeSettings BuildDefaultAiSettings()
     return aiSettings;
 }
 
+QVector<QCAiRuntimeSettings> BuildDefaultAiSettingsProfiles()
+{
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles;
+    vecAiSettingsProfiles.reserve(g_nAiSettingsProfileCount);
+    for (int i = 0; i < g_nAiSettingsProfileCount; ++i)
+        vecAiSettingsProfiles.append(BuildDefaultAiSettings());
+
+    return vecAiSettingsProfiles;
+}
+
 QString DefaultScreenshotSaveDirectory()
 {
     return BuildDefaultDirectory(QStandardPaths::PicturesLocation, QString::fromUtf8("QtClip/Captures"));
@@ -79,6 +91,66 @@ QString DefaultExportDirectory()
 bool IsSamePath(const QString& strLeftPath, const QString& strRightPath)
 {
     return QDir::cleanPath(strLeftPath).compare(QDir::cleanPath(strRightPath), Qt::CaseInsensitive) == 0;
+}
+
+int NormalizeAiProfileIndex(int nProfileIndex)
+{
+    if (nProfileIndex < 0 || nProfileIndex >= g_nAiSettingsProfileCount)
+        return 0;
+
+    return nProfileIndex;
+}
+
+QString BuildAiProfileKey(int nProfileIndex, const QString& strSuffix)
+{
+    return QString::fromUtf8("ai.profile.%1.%2").arg(nProfileIndex + 1).arg(strSuffix);
+}
+
+QString BuildLegacyAiKeyForProfileIndex(int nProfileIndex, const QString& strSuffix)
+{
+    if (nProfileIndex != 0)
+        return QString();
+
+    if (strSuffix == QString::fromUtf8("useMockProvider"))
+        return QString::fromUtf8(g_pszAiUseMockKey);
+    if (strSuffix == QString::fromUtf8("autoSummarizeImageSnippet"))
+        return QString::fromUtf8(g_pszAiAutoSummarizeImageSnippetKey);
+    if (strSuffix == QString::fromUtf8("baseUrl"))
+        return QString::fromUtf8(g_pszAiBaseUrlKey);
+    if (strSuffix == QString::fromUtf8("apiKey"))
+        return QString::fromUtf8(g_pszAiApiKeyKey);
+    if (strSuffix == QString::fromUtf8("model"))
+        return QString::fromUtf8(g_pszAiModelKey);
+
+    return QString();
+}
+
+bool ReadBoolSetting(const QHash<QString, QString>& hashValues,
+                     const QString& strPrimaryKey,
+                     const QString& strFallbackKey,
+                     bool bDefaultValue)
+{
+    QString strValue = hashValues.value(strPrimaryKey);
+    if (strValue.trimmed().isEmpty() && !strFallbackKey.isEmpty())
+        strValue = hashValues.value(strFallbackKey);
+    if (strValue.trimmed().isEmpty())
+        return bDefaultValue;
+
+    return strValue.trimmed() == QString::fromUtf8("1");
+}
+
+QString ReadStringSetting(const QHash<QString, QString>& hashValues,
+                          const QString& strPrimaryKey,
+                          const QString& strFallbackKey,
+                          const QString& strDefaultValue)
+{
+    QString strValue = hashValues.value(strPrimaryKey).trimmed();
+    if (strValue.isEmpty() && !strFallbackKey.isEmpty())
+        strValue = hashValues.value(strFallbackKey).trimmed();
+    if (strValue.isEmpty())
+        strValue = strDefaultValue;
+
+    return strValue.trimmed();
 }
 
 bool DeleteSetting(IQCSettingsRepository *pSettingsRepository, const QString& strKey, QString *pstrError)
@@ -118,6 +190,87 @@ bool SaveSetting(IQCSettingsRepository *pSettingsRepository, const QString& strK
 
     return true;
 }
+
+bool SaveOptionalBoolSetting(IQCSettingsRepository *pSettingsRepository,
+                             const QString& strKey,
+                             bool bValue,
+                             bool bDefaultValue,
+                             QString *pstrError)
+{
+    if (bValue == bDefaultValue)
+        return DeleteSetting(pSettingsRepository, strKey, pstrError);
+
+    return SaveSetting(pSettingsRepository,
+                       strKey,
+                       bValue ? QString::fromUtf8("1") : QString::fromUtf8("0"),
+                       pstrError);
+}
+
+bool SaveOptionalStringSetting(IQCSettingsRepository *pSettingsRepository,
+                               const QString& strKey,
+                               const QString& strValue,
+                               const QString& strDefaultValue,
+                               QString *pstrError)
+{
+    const QString strNormalizedValue = strValue.trimmed();
+    if (strNormalizedValue.isEmpty() || strNormalizedValue == strDefaultValue.trimmed())
+        return DeleteSetting(pSettingsRepository, strKey, pstrError);
+
+    return SaveSetting(pSettingsRepository, strKey, strNormalizedValue, pstrError);
+}
+
+bool SaveLegacyAiSettings(IQCSettingsRepository *pSettingsRepository,
+                          const QCAiRuntimeSettings& aiSettings,
+                          const QCAiRuntimeSettings& defaultSettings,
+                          QString *pstrError)
+{
+    if (!SaveOptionalBoolSetting(pSettingsRepository,
+                                 QString::fromUtf8(g_pszAiUseMockKey),
+                                 aiSettings.m_bUseMockProvider,
+                                 defaultSettings.m_bUseMockProvider,
+                                 pstrError))
+    {
+        return false;
+    }
+
+    if (!SaveOptionalBoolSetting(pSettingsRepository,
+                                 QString::fromUtf8(g_pszAiAutoSummarizeImageSnippetKey),
+                                 aiSettings.m_bAutoSummarizeImageSnippet,
+                                 defaultSettings.m_bAutoSummarizeImageSnippet,
+                                 pstrError))
+    {
+        return false;
+    }
+
+    if (!SaveOptionalStringSetting(pSettingsRepository,
+                                   QString::fromUtf8(g_pszAiBaseUrlKey),
+                                   aiSettings.m_strBaseUrl,
+                                   defaultSettings.m_strBaseUrl,
+                                   pstrError))
+    {
+        return false;
+    }
+
+    if (!SaveOptionalStringSetting(pSettingsRepository,
+                                   QString::fromUtf8(g_pszAiApiKeyKey),
+                                   aiSettings.m_strApiKey,
+                                   defaultSettings.m_strApiKey,
+                                   pstrError))
+    {
+        return false;
+    }
+
+    if (!SaveOptionalStringSetting(pSettingsRepository,
+                                   QString::fromUtf8(g_pszAiModelKey),
+                                   aiSettings.m_strModel,
+                                   defaultSettings.m_strModel,
+                                   pstrError))
+    {
+        return false;
+    }
+
+    return true;
+}
 }
 
 QCSettingsService::QCSettingsService(IQCSettingsRepository *pSettingsRepository)
@@ -130,9 +283,222 @@ QCSettingsService::~QCSettingsService()
 {
 }
 
+int QCSettingsService::aiSettingsProfileCount() const
+{
+    return g_nAiSettingsProfileCount;
+}
+
+int QCSettingsService::defaultAiProfileIndex() const
+{
+    return 0;
+}
+
 QCAiRuntimeSettings QCSettingsService::defaultAiSettings() const
 {
     return BuildDefaultAiSettings();
+}
+
+QVector<QCAiRuntimeSettings> QCSettingsService::defaultAiSettingsProfiles() const
+{
+    return BuildDefaultAiSettingsProfiles();
+}
+
+bool QCSettingsService::getActiveAiProfileIndex(int *pnProfileIndex) const
+{
+    clearError();
+
+    if (nullptr == pnProfileIndex)
+    {
+        setLastError(QString::fromUtf8("AI profile index output pointer is null."));
+        return false;
+    }
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    const QHash<QString, QString> hashValues = BuildSettingsMap(m_pSettingsRepository->listSettings());
+    bool bOk = false;
+    const int nStoredIndex = hashValues.value(QString::fromUtf8(g_pszAiActiveProfileIndexKey)).trimmed().toInt(&bOk);
+    *pnProfileIndex = bOk ? NormalizeAiProfileIndex(nStoredIndex) : defaultAiProfileIndex();
+    return true;
+}
+
+bool QCSettingsService::setActiveAiProfileIndex(int nProfileIndex)
+{
+    clearError();
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    const int nNormalizedProfileIndex = NormalizeAiProfileIndex(nProfileIndex);
+    QString strError;
+    if (nNormalizedProfileIndex == defaultAiProfileIndex())
+    {
+        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiActiveProfileIndexKey), &strError))
+        {
+            setLastError(strError);
+            return false;
+        }
+
+        return true;
+    }
+
+    if (!SaveSetting(m_pSettingsRepository,
+                     QString::fromUtf8(g_pszAiActiveProfileIndexKey),
+                     QString::number(nNormalizedProfileIndex),
+                     &strError))
+    {
+        setLastError(strError);
+        return false;
+    }
+
+    return true;
+}
+
+bool QCSettingsService::loadAiSettingsProfiles(QVector<QCAiRuntimeSettings> *pvecAiSettingsProfiles) const
+{
+    clearError();
+
+    if (nullptr == pvecAiSettingsProfiles)
+    {
+        setLastError(QString::fromUtf8("AI settings profiles output pointer is null."));
+        return false;
+    }
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    const QHash<QString, QString> hashValues = BuildSettingsMap(m_pSettingsRepository->listSettings());
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles = defaultAiSettingsProfiles();
+    const QCAiRuntimeSettings defaultSettings = defaultAiSettings();
+
+    for (int i = 0; i < vecAiSettingsProfiles.size(); ++i)
+    {
+        QCAiRuntimeSettings aiSettings = defaultSettings;
+        const QString strUseMockFallbackKey = BuildLegacyAiKeyForProfileIndex(i, QString::fromUtf8("useMockProvider"));
+        const QString strAutoSummaryFallbackKey = BuildLegacyAiKeyForProfileIndex(i, QString::fromUtf8("autoSummarizeImageSnippet"));
+        const QString strBaseUrlFallbackKey = BuildLegacyAiKeyForProfileIndex(i, QString::fromUtf8("baseUrl"));
+        const QString strApiKeyFallbackKey = BuildLegacyAiKeyForProfileIndex(i, QString::fromUtf8("apiKey"));
+        const QString strModelFallbackKey = BuildLegacyAiKeyForProfileIndex(i, QString::fromUtf8("model"));
+
+        aiSettings.m_bUseMockProvider = ReadBoolSetting(hashValues,
+                                                        BuildAiProfileKey(i, QString::fromUtf8("useMockProvider")),
+                                                        strUseMockFallbackKey,
+                                                        defaultSettings.m_bUseMockProvider);
+        aiSettings.m_bAutoSummarizeImageSnippet = ReadBoolSetting(hashValues,
+                                                                  BuildAiProfileKey(i, QString::fromUtf8("autoSummarizeImageSnippet")),
+                                                                  strAutoSummaryFallbackKey,
+                                                                  defaultSettings.m_bAutoSummarizeImageSnippet);
+        aiSettings.m_strBaseUrl = ReadStringSetting(hashValues,
+                                                    BuildAiProfileKey(i, QString::fromUtf8("baseUrl")),
+                                                    strBaseUrlFallbackKey,
+                                                    defaultSettings.m_strBaseUrl);
+        aiSettings.m_strApiKey = ReadStringSetting(hashValues,
+                                                   BuildAiProfileKey(i, QString::fromUtf8("apiKey")),
+                                                   strApiKeyFallbackKey,
+                                                   defaultSettings.m_strApiKey);
+        aiSettings.m_strModel = ReadStringSetting(hashValues,
+                                                  BuildAiProfileKey(i, QString::fromUtf8("model")),
+                                                  strModelFallbackKey,
+                                                  defaultSettings.m_strModel);
+        if (aiSettings.m_strModel.isEmpty())
+            aiSettings.m_strModel = defaultSettings.m_strModel;
+
+        vecAiSettingsProfiles[i] = aiSettings;
+    }
+
+    *pvecAiSettingsProfiles = vecAiSettingsProfiles;
+    return true;
+}
+
+bool QCSettingsService::saveAiSettingsProfiles(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles)
+{
+    clearError();
+
+    if (nullptr == m_pSettingsRepository)
+    {
+        setLastError(QString::fromUtf8("Settings repository is null."));
+        return false;
+    }
+
+    if (vecAiSettingsProfiles.size() != aiSettingsProfileCount())
+    {
+        setLastError(QString::fromUtf8("AI settings profile count is invalid."));
+        return false;
+    }
+
+    const QCAiRuntimeSettings defaultSettings = defaultAiSettings();
+    QString strError;
+    for (int i = 0; i < vecAiSettingsProfiles.size(); ++i)
+    {
+        const QCAiRuntimeSettings& aiSettings = vecAiSettingsProfiles.at(i);
+        if (!SaveOptionalBoolSetting(m_pSettingsRepository,
+                                     BuildAiProfileKey(i, QString::fromUtf8("useMockProvider")),
+                                     aiSettings.m_bUseMockProvider,
+                                     defaultSettings.m_bUseMockProvider,
+                                     &strError))
+        {
+            setLastError(strError);
+            return false;
+        }
+
+        if (!SaveOptionalBoolSetting(m_pSettingsRepository,
+                                     BuildAiProfileKey(i, QString::fromUtf8("autoSummarizeImageSnippet")),
+                                     aiSettings.m_bAutoSummarizeImageSnippet,
+                                     defaultSettings.m_bAutoSummarizeImageSnippet,
+                                     &strError))
+        {
+            setLastError(strError);
+            return false;
+        }
+
+        if (!SaveOptionalStringSetting(m_pSettingsRepository,
+                                       BuildAiProfileKey(i, QString::fromUtf8("baseUrl")),
+                                       aiSettings.m_strBaseUrl,
+                                       defaultSettings.m_strBaseUrl,
+                                       &strError))
+        {
+            setLastError(strError);
+            return false;
+        }
+
+        if (!SaveOptionalStringSetting(m_pSettingsRepository,
+                                       BuildAiProfileKey(i, QString::fromUtf8("apiKey")),
+                                       aiSettings.m_strApiKey,
+                                       defaultSettings.m_strApiKey,
+                                       &strError))
+        {
+            setLastError(strError);
+            return false;
+        }
+
+        if (!SaveOptionalStringSetting(m_pSettingsRepository,
+                                       BuildAiProfileKey(i, QString::fromUtf8("model")),
+                                       aiSettings.m_strModel,
+                                       defaultSettings.m_strModel,
+                                       &strError))
+        {
+            setLastError(strError);
+            return false;
+        }
+    }
+
+    if (!SaveLegacyAiSettings(m_pSettingsRepository, vecAiSettingsProfiles.at(0), defaultSettings, &strError))
+    {
+        setLastError(strError);
+        return false;
+    }
+
+    return true;
 }
 
 bool QCSettingsService::loadAiSettings(QCAiRuntimeSettings *pAiSettings) const
@@ -145,21 +511,15 @@ bool QCSettingsService::loadAiSettings(QCAiRuntimeSettings *pAiSettings) const
         return false;
     }
 
-    if (nullptr == m_pSettingsRepository)
-    {
-        setLastError(QString::fromUtf8("Settings repository is null."));
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles;
+    if (!loadAiSettingsProfiles(&vecAiSettingsProfiles))
         return false;
-    }
 
-    const QCAiRuntimeSettings defaultSettings = defaultAiSettings();
-    const QHash<QString, QString> hashValues = BuildSettingsMap(m_pSettingsRepository->listSettings());
-    pAiSettings->m_bUseMockProvider = hashValues.value(QString::fromUtf8(g_pszAiUseMockKey), defaultSettings.m_bUseMockProvider ? QString::fromUtf8("1") : QString::fromUtf8("0")) == QString::fromUtf8("1");
-    pAiSettings->m_bAutoSummarizeImageSnippet = hashValues.value(QString::fromUtf8(g_pszAiAutoSummarizeImageSnippetKey), defaultSettings.m_bAutoSummarizeImageSnippet ? QString::fromUtf8("1") : QString::fromUtf8("0")) == QString::fromUtf8("1");
-    pAiSettings->m_strBaseUrl = hashValues.value(QString::fromUtf8(g_pszAiBaseUrlKey), defaultSettings.m_strBaseUrl).trimmed();
-    pAiSettings->m_strApiKey = hashValues.value(QString::fromUtf8(g_pszAiApiKeyKey), defaultSettings.m_strApiKey).trimmed();
-    pAiSettings->m_strModel = hashValues.value(QString::fromUtf8(g_pszAiModelKey), defaultSettings.m_strModel).trimmed();
-    if (pAiSettings->m_strModel.isEmpty())
-        pAiSettings->m_strModel = defaultSettings.m_strModel;
+    int nActiveProfileIndex = defaultAiProfileIndex();
+    if (!getActiveAiProfileIndex(&nActiveProfileIndex))
+        return false;
+
+    *pAiSettings = vecAiSettingsProfiles.at(NormalizeAiProfileIndex(nActiveProfileIndex));
     return true;
 }
 
@@ -167,95 +527,16 @@ bool QCSettingsService::saveAiSettings(const QCAiRuntimeSettings& aiSettings)
 {
     clearError();
 
-    if (nullptr == m_pSettingsRepository)
-    {
-        setLastError(QString::fromUtf8("Settings repository is null."));
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles;
+    if (!loadAiSettingsProfiles(&vecAiSettingsProfiles))
         return false;
-    }
 
-    const QCAiRuntimeSettings defaultSettings = defaultAiSettings();
-    QString strError;
-
-    if (aiSettings.m_bUseMockProvider == defaultSettings.m_bUseMockProvider)
-    {
-        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiUseMockKey), &strError))
-        {
-            setLastError(strError);
-            return false;
-        }
-    }
-    else if (!SaveSetting(m_pSettingsRepository,
-                          QString::fromUtf8(g_pszAiUseMockKey),
-                          aiSettings.m_bUseMockProvider ? QString::fromUtf8("1") : QString::fromUtf8("0"),
-                          &strError))
-    {
-        setLastError(strError);
+    int nActiveProfileIndex = defaultAiProfileIndex();
+    if (!getActiveAiProfileIndex(&nActiveProfileIndex))
         return false;
-    }
 
-    if (aiSettings.m_bAutoSummarizeImageSnippet == defaultSettings.m_bAutoSummarizeImageSnippet)
-    {
-        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiAutoSummarizeImageSnippetKey), &strError))
-        {
-            setLastError(strError);
-            return false;
-        }
-    }
-    else if (!SaveSetting(m_pSettingsRepository,
-                          QString::fromUtf8(g_pszAiAutoSummarizeImageSnippetKey),
-                          aiSettings.m_bAutoSummarizeImageSnippet ? QString::fromUtf8("1") : QString::fromUtf8("0"),
-                          &strError))
-    {
-        setLastError(strError);
-        return false;
-    }
-
-    const QString strBaseUrl = aiSettings.m_strBaseUrl.trimmed();
-    if (strBaseUrl.isEmpty())
-    {
-        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiBaseUrlKey), &strError))
-        {
-            setLastError(strError);
-            return false;
-        }
-    }
-    else if (!SaveSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiBaseUrlKey), strBaseUrl, &strError))
-    {
-        setLastError(strError);
-        return false;
-    }
-
-    const QString strApiKey = aiSettings.m_strApiKey.trimmed();
-    if (strApiKey.isEmpty())
-    {
-        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiApiKeyKey), &strError))
-        {
-            setLastError(strError);
-            return false;
-        }
-    }
-    else if (!SaveSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiApiKeyKey), strApiKey, &strError))
-    {
-        setLastError(strError);
-        return false;
-    }
-
-    const QString strModel = aiSettings.m_strModel.trimmed();
-    if (strModel.isEmpty() || strModel == defaultSettings.m_strModel)
-    {
-        if (!DeleteSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiModelKey), &strError))
-        {
-            setLastError(strError);
-            return false;
-        }
-    }
-    else if (!SaveSetting(m_pSettingsRepository, QString::fromUtf8(g_pszAiModelKey), strModel, &strError))
-    {
-        setLastError(strError);
-        return false;
-    }
-
-    return true;
+    vecAiSettingsProfiles[NormalizeAiProfileIndex(nActiveProfileIndex)] = aiSettings;
+    return saveAiSettingsProfiles(vecAiSettingsProfiles);
 }
 
 QString QCSettingsService::defaultScreenshotSaveDirectory() const

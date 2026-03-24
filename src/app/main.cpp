@@ -78,6 +78,18 @@ QString ResolveAppDataPath()
     return dataDirectory.filePath(QString::fromUtf8("qtclip.sqlite"));
 }
 
+QString BuildPreviewText(const QString& strText, int nMaxLength = 240)
+{
+    QString strPreview = strText;
+    strPreview.replace(QString::fromUtf8("\r"), QString());
+    strPreview.replace(QString::fromUtf8("\n"), QString::fromUtf8(" "));
+    strPreview = strPreview.trimmed();
+    if (strPreview.size() > nMaxLength)
+        strPreview = strPreview.left(nMaxLength) + QString::fromUtf8("...");
+
+    return strPreview;
+}
+
 int RunSmokeWorkflow()
 {
     QString strTempDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
@@ -152,6 +164,67 @@ int RunSmokeWorkflow()
         PrintError(QString::fromUtf8("Invalid real AI configuration error verification failed."));
         return 302;
     }
+
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles = settingsService.defaultAiSettingsProfiles();
+    vecAiSettingsProfiles[0].m_bUseMockProvider = true;
+    vecAiSettingsProfiles[0].m_strModel = QString::fromUtf8("mock-profile-1");
+    vecAiSettingsProfiles[1].m_bUseMockProvider = false;
+    vecAiSettingsProfiles[1].m_strBaseUrl = QString::fromUtf8("https://example.com/v1");
+    vecAiSettingsProfiles[1].m_strApiKey = QString::fromUtf8("test-key-2");
+    vecAiSettingsProfiles[1].m_strModel = QString::fromUtf8("gpt-profile-2");
+    vecAiSettingsProfiles[2].m_bUseMockProvider = false;
+    vecAiSettingsProfiles[2].m_strBaseUrl = QString::fromUtf8("https://example.org/v1");
+    vecAiSettingsProfiles[2].m_strApiKey = QString::fromUtf8("test-key-3");
+    vecAiSettingsProfiles[2].m_strModel = QString::fromUtf8("gpt-profile-3");
+    if (!settingsService.saveAiSettingsProfiles(vecAiSettingsProfiles))
+    {
+        PrintError(settingsService.lastError());
+        return 303;
+    }
+
+    if (!settingsService.setActiveAiProfileIndex(2))
+    {
+        PrintError(settingsService.lastError());
+        return 304;
+    }
+
+    QVector<QCAiRuntimeSettings> vecLoadedAiSettingsProfiles;
+    if (!settingsService.loadAiSettingsProfiles(&vecLoadedAiSettingsProfiles))
+    {
+        PrintError(settingsService.lastError());
+        return 305;
+    }
+
+    int nLoadedActiveAiProfileIndex = 0;
+    if (!settingsService.getActiveAiProfileIndex(&nLoadedActiveAiProfileIndex))
+    {
+        PrintError(settingsService.lastError());
+        return 306;
+    }
+
+    QCAiRuntimeSettings loadedActiveAiSettings;
+    if (!settingsService.loadAiSettings(&loadedActiveAiSettings))
+    {
+        PrintError(settingsService.lastError());
+        return 307;
+    }
+
+    if (vecLoadedAiSettingsProfiles.size() != settingsService.aiSettingsProfileCount()
+        || nLoadedActiveAiProfileIndex != 2
+        || vecLoadedAiSettingsProfiles.at(1).m_strModel != QString::fromUtf8("gpt-profile-2")
+        || vecLoadedAiSettingsProfiles.at(2).m_strModel != QString::fromUtf8("gpt-profile-3")
+        || loadedActiveAiSettings.m_strModel != QString::fromUtf8("gpt-profile-3"))
+    {
+        PrintError(QString::fromUtf8("AI settings profile round-trip verification failed."));
+        return 308;
+    }
+
+    if (!settingsService.setActiveAiProfileIndex(settingsService.defaultAiProfileIndex()))
+    {
+        PrintError(settingsService.lastError());
+        return 309;
+    }
+
     if (!settingsService.setScreenshotSaveDirectory(strSmokeScreenshotDirectory))
     {
         PrintError(settingsService.lastError());
@@ -669,8 +742,9 @@ int RunSmokeWorkflow()
 int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
+    const QStringList vecArguments = application.arguments();
 
-    if (application.arguments().contains(QString::fromUtf8("--smoke")))
+    if (vecArguments.contains(QString::fromUtf8("--smoke")))
         return RunSmokeWorkflow();
 
     const QString strDatabasePath = ResolveAppDataPath();
@@ -703,6 +777,65 @@ int main(int argc, char *argv[])
     QCMdExportService mdExportService(&exportDataService, &mdExportRenderer);
     QCScreenCaptureService screenCaptureService(&settingsService);
 
+    if (vecArguments.contains(QString::fromUtf8("--test-ai-config")))
+    {
+        QCAiRuntimeSettings aiSettings;
+        if (!settingsService.loadAiSettings(&aiSettings))
+        {
+            PrintError(settingsService.lastError());
+            return 11;
+        }
+
+        QCAiConnectionTestResult connectionTestResult;
+        if (!aiProcessService.testConnection(aiSettings, &connectionTestResult) || !connectionTestResult.m_bSuccess)
+        {
+            PrintError(connectionTestResult.m_strMessage.trimmed().isEmpty()
+                ? QString::fromUtf8("AI connection test failed.")
+                : connectionTestResult.m_strMessage);
+            return 12;
+        }
+
+        PrintInfo(connectionTestResult.m_strMessage);
+        return 0;
+    }
+
+    const int nSummarizeSnippetFlagIndex = vecArguments.indexOf(QString::fromUtf8("--summarize-snippet"));
+    if (nSummarizeSnippetFlagIndex >= 0)
+    {
+        if (nSummarizeSnippetFlagIndex + 1 >= vecArguments.size())
+        {
+            PrintError(QString::fromUtf8("Missing snippet id after --summarize-snippet."));
+            return 13;
+        }
+
+        bool bOk = false;
+        const qint64 nSnippetId = vecArguments.at(nSummarizeSnippetFlagIndex + 1).toLongLong(&bOk);
+        if (!bOk || nSnippetId <= 0)
+        {
+            PrintError(QString::fromUtf8("Snippet id is invalid."));
+            return 14;
+        }
+
+        if (!aiProcessService.summarizeSnippet(nSnippetId))
+        {
+            PrintError(aiProcessService.lastError().trimmed().isEmpty()
+                ? QString::fromUtf8("Summarize Snippet failed.")
+                : aiProcessService.lastError());
+            return 15;
+        }
+
+        QCSnippet snippet;
+        if (!snippetService.getSnippetById(nSnippetId, &snippet))
+        {
+            PrintError(snippetService.lastError());
+            return 16;
+        }
+
+        PrintInfo(QString::fromUtf8("Snippet %1 summarized.").arg(nSnippetId));
+        PrintInfo(QString::fromUtf8("Summary Preview: %1").arg(BuildPreviewText(snippet.summary())));
+        return 0;
+    }
+
     QCMainWindow mainWindow(&sessionService,
                             &snippetService,
                             &tagService,
@@ -715,6 +848,7 @@ int main(int argc, char *argv[])
 
     return application.exec();
 }
+
 
 
 

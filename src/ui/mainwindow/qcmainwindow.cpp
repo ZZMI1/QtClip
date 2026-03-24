@@ -1,4 +1,4 @@
-
+﻿
 // File: qcmainwindow.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
@@ -1381,9 +1381,16 @@ void QCMainWindow::onAiSettings()
         return;
     }
 
-    const QCAiRuntimeSettings defaultAiSettings = m_pSettingsService->defaultAiSettings();
-    QCAiRuntimeSettings aiSettings;
-    if (!m_pSettingsService->loadAiSettings(&aiSettings))
+    const QVector<QCAiRuntimeSettings> vecDefaultAiSettingsProfiles = m_pSettingsService->defaultAiSettingsProfiles();
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles;
+    if (!m_pSettingsService->loadAiSettingsProfiles(&vecAiSettingsProfiles))
+    {
+        QMessageBox::warning(this, QString::fromUtf8("Settings"), m_pSettingsService->lastError());
+        return;
+    }
+
+    int nActiveAiProfileIndex = m_pSettingsService->defaultAiProfileIndex();
+    if (!m_pSettingsService->getActiveAiProfileIndex(&nActiveAiProfileIndex))
     {
         QMessageBox::warning(this, QString::fromUtf8("Settings"), m_pSettingsService->lastError());
         return;
@@ -1411,18 +1418,26 @@ void QCMainWindow::onAiSettings()
     }
 
     QCAiSettingsDialog dialog(m_pAiProcessService, this);
-    dialog.setDefaultState(defaultAiSettings,
+    dialog.setDefaultState(vecDefaultAiSettingsProfiles,
+                           m_pSettingsService->defaultAiProfileIndex(),
                            m_pSettingsService->defaultScreenshotSaveDirectory(),
                            m_pSettingsService->defaultExportDirectory(),
                            m_pSettingsService->defaultCopyImportedImageToCaptureDirectory());
-    dialog.setDialogState(aiSettings,
+    dialog.setDialogState(vecAiSettingsProfiles,
+                          nActiveAiProfileIndex,
                           strScreenshotDirectory,
                           strExportDirectory,
                           bDefaultCopyImportedImage);
     if (QDialog::Accepted != dialog.exec())
         return;
 
-    if (!m_pSettingsService->saveAiSettings(dialog.settings()))
+    if (!m_pSettingsService->saveAiSettingsProfiles(dialog.aiSettingsProfiles()))
+    {
+        QMessageBox::warning(this, QString::fromUtf8("Settings"), m_pSettingsService->lastError());
+        return;
+    }
+
+    if (!m_pSettingsService->setActiveAiProfileIndex(dialog.activeAiProfileIndex()))
     {
         QMessageBox::warning(this, QString::fromUtf8("Settings"), m_pSettingsService->lastError());
         return;
@@ -1490,6 +1505,7 @@ void QCMainWindow::onRefresh()
     loadSessions();
     statusBar()->showMessage(QString::fromUtf8("Refreshed."), 3000);
 }
+
 
 
 

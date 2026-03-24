@@ -1,4 +1,4 @@
-#ifndef QTCLIP_QCSETTINGSSERVICE_H_
+﻿#ifndef QTCLIP_QCSETTINGSSERVICE_H_
 #define QTCLIP_QCSETTINGSSERVICE_H_
 
 // File: qcsettingsservice.h
@@ -9,6 +9,7 @@
 // Copyright (c) 2026 QtClip. All rights reserved.
 
 #include <QString>
+#include <QVector>
 
 #include "../domain/interfaces/iqcsettingsrepository.h"
 
@@ -27,7 +28,14 @@ public:
     explicit QCSettingsService(IQCSettingsRepository *pSettingsRepository);
     ~QCSettingsService();
 
+    int aiSettingsProfileCount() const;
+    int defaultAiProfileIndex() const;
     QCAiRuntimeSettings defaultAiSettings() const;
+    QVector<QCAiRuntimeSettings> defaultAiSettingsProfiles() const;
+    bool getActiveAiProfileIndex(int *pnProfileIndex) const;
+    bool setActiveAiProfileIndex(int nProfileIndex);
+    bool loadAiSettingsProfiles(QVector<QCAiRuntimeSettings> *pvecAiSettingsProfiles) const;
+    bool saveAiSettingsProfiles(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles);
     bool loadAiSettings(QCAiRuntimeSettings *pAiSettings) const;
     bool saveAiSettings(const QCAiRuntimeSettings& aiSettings);
     QString defaultScreenshotSaveDirectory() const;

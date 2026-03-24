@@ -253,7 +253,7 @@ bool QCAiProcessService::testConnection(const QCAiRuntimeSettings& aiSettings,
     aiRequest.m_strSystemPrompt = BuildConnectionTestSystemPrompt();
     aiRequest.m_strUserPrompt = BuildConnectionTestUserPrompt();
     aiRequest.m_strModelName = aiSettings.m_strModel;
-    aiRequest.m_nTimeoutMs = 15000;
+    aiRequest.m_nTimeoutMs = 20000;
 
     QCAiProviderResponse aiResponse;
     const bool bProviderSuccess = pAiProvider->generateText(aiRequest, &aiResponse);
@@ -360,7 +360,7 @@ bool QCAiProcessService::buildSnippetExecutionContext(const QCSnippet& snippet,
     pExecutionContext->m_aiRequest.m_strUserPrompt = buildSnippetPrompt(snippet);
     pExecutionContext->m_aiRequest.m_strLocalImageFilePath.clear();
     pExecutionContext->m_aiRequest.m_strModelName = aiSettings.m_strModel;
-    pExecutionContext->m_aiRequest.m_nTimeoutMs = 30000;
+    pExecutionContext->m_aiRequest.m_nTimeoutMs = snippet.type() == QCSnippetType::ImageSnippetType ? 90000 : 60000;
 
     if (snippet.type() == QCSnippetType::ImageSnippetType)
     {
@@ -404,7 +404,7 @@ bool QCAiProcessService::buildSessionExecutionContext(const QCStudySession& sess
     pExecutionContext->m_aiRequest.m_strUserPrompt = buildSessionPrompt(session, vecSnippets);
     pExecutionContext->m_aiRequest.m_strLocalImageFilePath.clear();
     pExecutionContext->m_aiRequest.m_strModelName = aiSettings.m_strModel;
-    pExecutionContext->m_aiRequest.m_nTimeoutMs = 30000;
+    pExecutionContext->m_aiRequest.m_nTimeoutMs = 60000;
     return true;
 }
 

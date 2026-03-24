@@ -1,4 +1,4 @@
-// File: qcaisettingsdialog.cpp
+﻿// File: qcaisettingsdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal AI settings dialog used by the first QtClip UI workflow.
@@ -10,6 +10,7 @@
 #include <QtConcurrent/QtConcurrent>
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFileDialog>
@@ -26,6 +27,43 @@ namespace
 bool IsSamePath(const QString& strLeftPath, const QString& strRightPath)
 {
     return QDir::cleanPath(strLeftPath).compare(QDir::cleanPath(strRightPath), Qt::CaseInsensitive) == 0;
+}
+
+bool AreAiSettingsEqual(const QCAiRuntimeSettings& leftAiSettings,
+                        const QCAiRuntimeSettings& rightAiSettings)
+{
+    return leftAiSettings.m_bUseMockProvider == rightAiSettings.m_bUseMockProvider
+        && leftAiSettings.m_bAutoSummarizeImageSnippet == rightAiSettings.m_bAutoSummarizeImageSnippet
+        && leftAiSettings.m_strBaseUrl == rightAiSettings.m_strBaseUrl
+        && leftAiSettings.m_strApiKey == rightAiSettings.m_strApiKey
+        && leftAiSettings.m_strModel == rightAiSettings.m_strModel;
+}
+
+int NormalizeProfileIndex(int nProfileIndex, int nProfileCount)
+{
+    if (nProfileCount <= 0)
+        return 0;
+    if (nProfileIndex < 0 || nProfileIndex >= nProfileCount)
+        return 0;
+
+    return nProfileIndex;
+}
+
+QVector<QCAiRuntimeSettings> EnsureProfileCount(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles,
+                                                int nProfileCount)
+{
+    QVector<QCAiRuntimeSettings> vecNormalizedProfiles = vecAiSettingsProfiles;
+    while (vecNormalizedProfiles.size() < nProfileCount)
+        vecNormalizedProfiles.append(QCAiRuntimeSettings());
+    while (vecNormalizedProfiles.size() > nProfileCount)
+        vecNormalizedProfiles.removeLast();
+
+    return vecNormalizedProfiles;
+}
+
+QString DefaultConnectionTestHint()
+{
+    return QString::fromUtf8("Run a connection test to verify the selected AI configuration.");
 }
 
 QCAiConnectionTestResult RunConnectionTest(QCAiProcessService *pAiProcessService,
@@ -50,6 +88,7 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
                                        QWidget *pParent)
     : QDialog(pParent)
     , m_pAiProcessService(pAiProcessService)
+    , m_pAiProfileComboBox(new QComboBox(this))
     , m_pUseMockCheckBox(new QCheckBox(QString::fromUtf8("Use Mock Provider"), this))
     , m_pAutoSummarizeImageSnippetCheckBox(new QCheckBox(QString::fromUtf8("Auto Summarize Image Snippet After Save"), this))
     , m_pBaseUrlLineEdit(new QLineEdit(this))
@@ -67,19 +106,26 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
     , m_pSaveButton(nullptr)
     , m_pCancelButton(nullptr)
     , m_pConnectionTestWatcher(new QFutureWatcher<QCAiConnectionTestResult>(this))
-    , m_initialAiSettings()
-    , m_defaultAiSettings()
+    , m_vecAiSettingsProfiles(EnsureProfileCount(QVector<QCAiRuntimeSettings>(), 3))
+    , m_vecInitialAiSettingsProfiles(EnsureProfileCount(QVector<QCAiRuntimeSettings>(), 3))
+    , m_vecDefaultAiSettingsProfiles(EnsureProfileCount(QVector<QCAiRuntimeSettings>(), 3))
     , m_strInitialScreenshotSaveDirectory()
     , m_strInitialExportDirectory()
     , m_strDefaultScreenshotSaveDirectory()
     , m_strDefaultExportDirectory()
     , m_bInitialDefaultCopyImportedImageToCaptureDirectory(false)
     , m_bDefaultCopyImportedImageToCaptureDirectory(false)
+    , m_nCurrentAiProfileIndex(0)
+    , m_nInitialActiveAiProfileIndex(0)
+    , m_nDefaultActiveAiProfileIndex(0)
     , m_bLoadingState(false)
     , m_bConnectionTestRunning(false)
 {
     setWindowTitle(QString::fromUtf8("Settings"));
-    resize(700, 520);
+    resize(720, 560);
+
+    for (int i = 0; i < m_vecAiSettingsProfiles.size(); ++i)
+        m_pAiProfileComboBox->addItem(QString::fromUtf8("Profile %1").arg(i + 1));
 
     m_pApiKeyLineEdit->setEchoMode(QLineEdit::Password);
     m_pApiKeyLineEdit->setPlaceholderText(QString::fromUtf8("Optional for mock provider"));
@@ -88,11 +134,12 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
     m_pScreenshotSaveDirectoryLineEdit->setClearButtonEnabled(true);
     m_pExportDirectoryLineEdit->setClearButtonEnabled(true);
     m_pConnectionTestResultLabel->setWordWrap(true);
-    m_pConnectionTestResultLabel->setText(QString::fromUtf8("Run a connection test to verify the current AI provider settings."));
+    m_pConnectionTestResultLabel->setText(DefaultConnectionTestHint());
 
-    QLabel *pAiHintLabel = new QLabel(QString::fromUtf8("Controls the current AI provider, model, and whether image snippets summarize automatically after save."), this);
+    QLabel *pAiHintLabel = new QLabel(QString::fromUtf8("Keep up to three AI configurations and switch the active one here. Test AI Connection always uses the currently selected profile."), this);
     pAiHintLabel->setWordWrap(true);
     QFormLayout *pAiFormLayout = new QFormLayout();
+    pAiFormLayout->addRow(QString::fromUtf8("Configuration Slot"), m_pAiProfileComboBox);
     pAiFormLayout->addRow(QString::fromUtf8("Provider"), m_pUseMockCheckBox);
     pAiFormLayout->addRow(QString::fromUtf8("Auto Image Summary"), m_pAutoSummarizeImageSnippetCheckBox);
     pAiFormLayout->addRow(QString::fromUtf8("Base URL"), m_pBaseUrlLineEdit);
@@ -138,7 +185,8 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
     m_pScreenshotSaveDirectoryLineEdit->setToolTip(QString::fromUtf8("Used by Capture Screen and Capture Region output files."));
     m_pExportDirectoryLineEdit->setToolTip(QString::fromUtf8("Used as the default folder when choosing a Markdown export file."));
     m_pDefaultCopyImportedImageCheckBox->setToolTip(QString::fromUtf8("Uses the screenshot save directory as the default copy target for Import Image."));
-    m_pTestConnectionButton->setToolTip(QString::fromUtf8("Tests the current provider using the values currently shown in this dialog."));
+    m_pTestConnectionButton->setToolTip(QString::fromUtf8("Tests the selected profile using the values currently shown in this dialog."));
+    m_pAiProfileComboBox->setToolTip(QString::fromUtf8("Each profile stores its own provider mode, base URL, API key, and model."));
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
     m_pRestoreDefaultsButton = pButtonBox->addButton(QString::fromUtf8("Restore Defaults"), QDialogButtonBox::ResetRole);
@@ -159,6 +207,9 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
     pLayout->addLayout(pFooterLayout);
     setLayout(pLayout);
 
+    connect(m_pAiProfileComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int nIndex) {
+        switchAiProfile(nIndex);
+    });
     connect(m_pUseMockCheckBox, &QCheckBox::toggled, this, [this]() {
         updateControlState();
         updateDirtyState();
@@ -187,20 +238,21 @@ QCAiSettingsDialog::~QCAiSettingsDialog()
 {
 }
 
-void QCAiSettingsDialog::setDialogState(const QCAiRuntimeSettings& aiSettings,
+void QCAiSettingsDialog::setDialogState(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles,
+                                       int nActiveAiProfileIndex,
                                        const QString& strScreenshotDirectory,
                                        const QString& strExportDirectory,
                                        bool bDefaultCopyImportedImageToCaptureDirectory)
 {
     m_bLoadingState = true;
-    m_pUseMockCheckBox->setChecked(aiSettings.m_bUseMockProvider);
-    m_pAutoSummarizeImageSnippetCheckBox->setChecked(aiSettings.m_bAutoSummarizeImageSnippet);
-    m_pBaseUrlLineEdit->setText(aiSettings.m_strBaseUrl);
-    m_pApiKeyLineEdit->setText(aiSettings.m_strApiKey);
-    m_pModelLineEdit->setText(aiSettings.m_strModel);
+    m_vecAiSettingsProfiles = EnsureProfileCount(vecAiSettingsProfiles, m_pAiProfileComboBox->count());
+    m_nCurrentAiProfileIndex = NormalizeProfileIndex(nActiveAiProfileIndex, m_vecAiSettingsProfiles.size());
+    m_pAiProfileComboBox->setCurrentIndex(m_nCurrentAiProfileIndex);
+    applyProfileToEditors(m_vecAiSettingsProfiles.at(m_nCurrentAiProfileIndex));
     m_pScreenshotSaveDirectoryLineEdit->setText(strScreenshotDirectory.trimmed());
     m_pExportDirectoryLineEdit->setText(strExportDirectory.trimmed());
     m_pDefaultCopyImportedImageCheckBox->setChecked(bDefaultCopyImportedImageToCaptureDirectory);
+    m_pConnectionTestResultLabel->setText(DefaultConnectionTestHint());
     m_bLoadingState = false;
 
     markCurrentStateAsSaved();
@@ -209,12 +261,14 @@ void QCAiSettingsDialog::setDialogState(const QCAiRuntimeSettings& aiSettings,
     updateConnectionTestState();
 }
 
-void QCAiSettingsDialog::setDefaultState(const QCAiRuntimeSettings& aiSettings,
+void QCAiSettingsDialog::setDefaultState(const QVector<QCAiRuntimeSettings>& vecAiSettingsProfiles,
+                                        int nActiveAiProfileIndex,
                                         const QString& strScreenshotDirectory,
                                         const QString& strExportDirectory,
                                         bool bDefaultCopyImportedImageToCaptureDirectory)
 {
-    m_defaultAiSettings = aiSettings;
+    m_vecDefaultAiSettingsProfiles = EnsureProfileCount(vecAiSettingsProfiles, m_pAiProfileComboBox->count());
+    m_nDefaultActiveAiProfileIndex = NormalizeProfileIndex(nActiveAiProfileIndex, m_vecDefaultAiSettingsProfiles.size());
     m_strDefaultScreenshotSaveDirectory = strScreenshotDirectory.trimmed();
     m_strDefaultExportDirectory = strExportDirectory.trimmed();
     m_bDefaultCopyImportedImageToCaptureDirectory = bDefaultCopyImportedImageToCaptureDirectory;
@@ -229,6 +283,19 @@ QCAiRuntimeSettings QCAiSettingsDialog::settings() const
     aiSettings.m_strApiKey = m_pApiKeyLineEdit->text().trimmed();
     aiSettings.m_strModel = m_pModelLineEdit->text().trimmed();
     return aiSettings;
+}
+
+QVector<QCAiRuntimeSettings> QCAiSettingsDialog::aiSettingsProfiles() const
+{
+    QVector<QCAiRuntimeSettings> vecAiSettingsProfiles = EnsureProfileCount(m_vecAiSettingsProfiles, m_pAiProfileComboBox->count());
+    const int nCurrentProfileIndex = NormalizeProfileIndex(activeAiProfileIndex(), vecAiSettingsProfiles.size());
+    vecAiSettingsProfiles[nCurrentProfileIndex] = settings();
+    return vecAiSettingsProfiles;
+}
+
+int QCAiSettingsDialog::activeAiProfileIndex() const
+{
+    return NormalizeProfileIndex(m_pAiProfileComboBox->currentIndex(), m_pAiProfileComboBox->count());
 }
 
 QString QCAiSettingsDialog::screenshotSaveDirectory() const
@@ -271,14 +338,14 @@ void QCAiSettingsDialog::chooseExportDirectory()
 void QCAiSettingsDialog::restoreDefaults()
 {
     m_bLoadingState = true;
-    m_pUseMockCheckBox->setChecked(m_defaultAiSettings.m_bUseMockProvider);
-    m_pAutoSummarizeImageSnippetCheckBox->setChecked(m_defaultAiSettings.m_bAutoSummarizeImageSnippet);
-    m_pBaseUrlLineEdit->setText(m_defaultAiSettings.m_strBaseUrl);
-    m_pApiKeyLineEdit->setText(m_defaultAiSettings.m_strApiKey);
-    m_pModelLineEdit->setText(m_defaultAiSettings.m_strModel);
+    m_vecAiSettingsProfiles = EnsureProfileCount(m_vecDefaultAiSettingsProfiles, m_pAiProfileComboBox->count());
+    m_nCurrentAiProfileIndex = NormalizeProfileIndex(m_nDefaultActiveAiProfileIndex, m_vecAiSettingsProfiles.size());
+    m_pAiProfileComboBox->setCurrentIndex(m_nCurrentAiProfileIndex);
+    applyProfileToEditors(m_vecAiSettingsProfiles.at(m_nCurrentAiProfileIndex));
     m_pScreenshotSaveDirectoryLineEdit->setText(m_strDefaultScreenshotSaveDirectory);
     m_pExportDirectoryLineEdit->setText(m_strDefaultExportDirectory);
     m_pDefaultCopyImportedImageCheckBox->setChecked(m_bDefaultCopyImportedImageToCaptureDirectory);
+    m_pConnectionTestResultLabel->setText(DefaultConnectionTestHint());
     m_bLoadingState = false;
 
     updateControlState();
@@ -291,6 +358,7 @@ void QCAiSettingsDialog::startConnectionTest()
     if (m_bConnectionTestRunning)
         return;
 
+    storeEditorStateToCurrentProfile();
     m_bConnectionTestRunning = true;
     m_pConnectionTestResultLabel->setText(QString::fromUtf8("Testing AI connection..."));
     updateConnectionTestState();
@@ -318,9 +386,46 @@ void QCAiSettingsDialog::handleConnectionTestFinished()
     updateConnectionTestState();
 }
 
+void QCAiSettingsDialog::switchAiProfile(int nProfileIndex)
+{
+    if (m_bLoadingState)
+        return;
+
+    storeEditorStateToCurrentProfile();
+    m_nCurrentAiProfileIndex = NormalizeProfileIndex(nProfileIndex, m_vecAiSettingsProfiles.size());
+
+    m_bLoadingState = true;
+    applyProfileToEditors(m_vecAiSettingsProfiles.at(m_nCurrentAiProfileIndex));
+    m_pConnectionTestResultLabel->setText(DefaultConnectionTestHint());
+    m_bLoadingState = false;
+
+    updateControlState();
+    updateDirtyState();
+    updateConnectionTestState();
+}
+
+void QCAiSettingsDialog::applyProfileToEditors(const QCAiRuntimeSettings& aiSettings)
+{
+    m_pUseMockCheckBox->setChecked(aiSettings.m_bUseMockProvider);
+    m_pAutoSummarizeImageSnippetCheckBox->setChecked(aiSettings.m_bAutoSummarizeImageSnippet);
+    m_pBaseUrlLineEdit->setText(aiSettings.m_strBaseUrl);
+    m_pApiKeyLineEdit->setText(aiSettings.m_strApiKey);
+    m_pModelLineEdit->setText(aiSettings.m_strModel);
+}
+
+void QCAiSettingsDialog::storeEditorStateToCurrentProfile()
+{
+    if (m_bLoadingState || m_vecAiSettingsProfiles.isEmpty())
+        return;
+
+    const int nCurrentProfileIndex = NormalizeProfileIndex(m_nCurrentAiProfileIndex, m_vecAiSettingsProfiles.size());
+    m_vecAiSettingsProfiles[nCurrentProfileIndex] = settings();
+}
+
 void QCAiSettingsDialog::updateControlState()
 {
     const bool bUseMockProvider = m_pUseMockCheckBox->isChecked();
+    m_pAiProfileComboBox->setEnabled(!m_bConnectionTestRunning);
     m_pBaseUrlLineEdit->setEnabled(!bUseMockProvider && !m_bConnectionTestRunning);
     m_pApiKeyLineEdit->setEnabled(!bUseMockProvider && !m_bConnectionTestRunning);
     m_pModelLineEdit->setEnabled(!m_bConnectionTestRunning);
@@ -342,12 +447,24 @@ void QCAiSettingsDialog::updateDirtyState()
     if (m_bLoadingState)
         return;
 
-    const QCAiRuntimeSettings currentAiSettings = settings();
-    const bool bDirty = currentAiSettings.m_bUseMockProvider != m_initialAiSettings.m_bUseMockProvider
-        || currentAiSettings.m_bAutoSummarizeImageSnippet != m_initialAiSettings.m_bAutoSummarizeImageSnippet
-        || currentAiSettings.m_strBaseUrl != m_initialAiSettings.m_strBaseUrl
-        || currentAiSettings.m_strApiKey != m_initialAiSettings.m_strApiKey
-        || currentAiSettings.m_strModel != m_initialAiSettings.m_strModel
+    storeEditorStateToCurrentProfile();
+    const QVector<QCAiRuntimeSettings> vecCurrentAiSettingsProfiles = aiSettingsProfiles();
+    bool bAiSettingsDirty = activeAiProfileIndex() != m_nInitialActiveAiProfileIndex
+        || vecCurrentAiSettingsProfiles.size() != m_vecInitialAiSettingsProfiles.size();
+
+    if (!bAiSettingsDirty)
+    {
+        for (int i = 0; i < vecCurrentAiSettingsProfiles.size(); ++i)
+        {
+            if (!AreAiSettingsEqual(vecCurrentAiSettingsProfiles.at(i), m_vecInitialAiSettingsProfiles.at(i)))
+            {
+                bAiSettingsDirty = true;
+                break;
+            }
+        }
+    }
+
+    const bool bDirty = bAiSettingsDirty
         || !IsSamePath(screenshotSaveDirectory(), m_strInitialScreenshotSaveDirectory)
         || !IsSamePath(exportDirectory(), m_strInitialExportDirectory)
         || defaultCopyImportedImageToCaptureDirectory() != m_bInitialDefaultCopyImportedImageToCaptureDirectory;
@@ -378,13 +495,12 @@ void QCAiSettingsDialog::updateConnectionTestState()
     updateDirtyState();
 }
 
-
 void QCAiSettingsDialog::markCurrentStateAsSaved()
 {
-    m_initialAiSettings = settings();
+    storeEditorStateToCurrentProfile();
+    m_vecInitialAiSettingsProfiles = aiSettingsProfiles();
     m_strInitialScreenshotSaveDirectory = screenshotSaveDirectory();
     m_strInitialExportDirectory = exportDirectory();
     m_bInitialDefaultCopyImportedImageToCaptureDirectory = defaultCopyImportedImageToCaptureDirectory();
+    m_nInitialActiveAiProfileIndex = activeAiProfileIndex();
 }
-
-
