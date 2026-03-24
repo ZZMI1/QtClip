@@ -9,6 +9,7 @@
 // Copyright (c) 2026 QtClip. All rights reserved.
 
 #include <QString>
+#include <QVector>
 
 #include "qcexportdataservice.h"
 
@@ -35,7 +36,9 @@ public:
     ~QCMdExportService();
 
     bool buildExportPreview(qint64 nSessionId, QCMdExportPreview *pExportPreview) const;
+    bool buildExportPreviewForSnippets(qint64 nSessionId, const QVector<qint64>& vecSnippetIds, QCMdExportPreview *pExportPreview) const;
     bool exportSessionToFile(qint64 nSessionId, const QString& strOutputFilePath);
+    bool exportSnippetsToFile(qint64 nSessionId, const QVector<qint64>& vecSnippetIds, const QString& strOutputFilePath);
 
     QString lastError() const;
     void clearError() const;

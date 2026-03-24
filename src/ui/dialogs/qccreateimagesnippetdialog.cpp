@@ -45,7 +45,7 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     , m_pTitleLineEdit(new QLineEdit(this))
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pFilePathLineEdit(new QLineEdit(this))
-    , m_pCopyToDefaultCaptureDirectoryCheckBox(new QCheckBox(QString::fromUtf8("Copy imported image to default capture directory"), this))
+    , m_pCopyToDefaultCaptureDirectoryCheckBox(new QCheckBox(UiText(QString::fromUtf8("?????????????"), QString::fromUtf8("Copy imported image to default capture directory")), this))
     , m_pImportModeDescriptionLabel(new QLabel(this))
     , m_pTargetPreviewLabel(new QLabel(this))
     , m_pBrowseButton(new QPushButton(UiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")), this))
@@ -55,7 +55,7 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     m_pCopyToDefaultCaptureDirectoryCheckBox->setChecked(bDefaultCopyToCaptureDirectory);
     m_pImportModeDescriptionLabel->setWordWrap(true);
     m_pTargetPreviewLabel->setWordWrap(true);
-    m_pCopyToDefaultCaptureDirectoryCheckBox->setToolTip(QString::fromUtf8("Unchecked: use the original image file. Checked: copy the image to the default capture directory first."));
+    m_pCopyToDefaultCaptureDirectoryCheckBox->setToolTip(UiText(QString::fromUtf8("???????????????????????????????"), QString::fromUtf8("Unchecked: use the original image file. Checked: copy the image to the default capture directory first.")));
     connect(m_pBrowseButton, &QPushButton::clicked, this, [this]() { chooseImageFile(); });
     connect(m_pCopyToDefaultCaptureDirectoryCheckBox, &QCheckBox::toggled, this, [this]() {
         updateImportModeDescription();
@@ -122,11 +122,11 @@ void QCCreateImageSnippetDialog::updateImportModeDescription()
 {
     if (m_pCopyToDefaultCaptureDirectoryCheckBox->isChecked())
     {
-        m_pImportModeDescriptionLabel->setText(QString::fromUtf8("Checked: copy the image to the default capture directory, then use the copied file."));
+        m_pImportModeDescriptionLabel->setText(UiText(QString::fromUtf8("???????????????????????????"), QString::fromUtf8("Checked: copy the image to the default capture directory, then use the copied file.")));
     }
     else
     {
-        m_pImportModeDescriptionLabel->setText(QString::fromUtf8("Unchecked: use the original image file directly. The file is not moved or copied."));
+        m_pImportModeDescriptionLabel->setText(UiText(QString::fromUtf8("???????????????????????"), QString::fromUtf8("Unchecked: use the original image file directly. The file is not moved or copied.")));
     }
 }
 void QCCreateImageSnippetDialog::updateTargetPreview()

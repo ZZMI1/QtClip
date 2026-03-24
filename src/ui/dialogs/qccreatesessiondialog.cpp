@@ -34,7 +34,7 @@ QCCreateSessionDialog::QCCreateSessionDialog(QWidget *pParent)
     , m_pCourseNameLineEdit(new QLineEdit(this))
     , m_pDescriptionTextEdit(new QPlainTextEdit(this))
 {
-    setWindowTitle(UiText(QString::fromUtf8("????"), QString::fromUtf8("New Session")));
+    setWindowTitle(UiText(QString::fromUtf8("?? Session"), QString::fromUtf8("New Session")));
     m_pDescriptionTextEdit->setMinimumHeight(90);
 
     QFormLayout *pFormLayout = new QFormLayout();

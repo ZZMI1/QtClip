@@ -73,6 +73,9 @@ private:
     void updateViewSummary(int nVisibleSnippetCount, int nTotalSnippetCount);
     void updateAiStatusDisplay();
     void updateSelectionContextDisplay();
+    void focusSummaryEditor(QPlainTextEdit *pTextEdit);
+    QString currentSnippetSummaryText() const;
+    QString currentSessionSummaryText() const;
     void updateMenuTexts();
     QString currentSearchText() const;
     QString currentSnippetTypeFilter() const;
@@ -115,6 +118,7 @@ private:
     void onSnippetFilterChanged();
     void onSearchHistoryChanged();
     void onClearSearch();
+    void onClearSearchHistory();
     void onResetFilters();
     void onFavoriteToggled(bool bChecked);
     void onReviewToggled(bool bChecked);
@@ -131,6 +135,7 @@ private:
     void onDuplicateSnippet();
     void onMoveSnippet();
     void onManageTags();
+    void onClearSnippetTags();
     void onOpenTagLibrary();
     void onDeleteSnippet();
     void onToggleArchiveSnippet();
@@ -138,8 +143,12 @@ private:
     void onDeleteCurrentItem();
     void onSummarizeSnippet();
     void onRetrySnippetSummary();
+    void onViewSnippetSummary();
+    void onCopySnippetSummary();
     void onSummarizeSession();
     void onRetrySessionSummary();
+    void onViewSessionSummary();
+    void onCopySessionSummary();
     void onAiSettings();
     void onExportMarkdown();
     void onFocusSearch();
@@ -167,14 +176,19 @@ private:
     QAction *m_pDuplicateSnippetAction;
     QAction *m_pMoveSnippetAction;
     QAction *m_pManageTagsAction;
+    QAction *m_pClearSnippetTagsAction;
     QAction *m_pTagLibraryAction;
     QAction *m_pDeleteSnippetAction;
     QAction *m_pToggleArchiveSnippetAction;
     QAction *m_pDeleteSessionAction;
     QAction *m_pSummarizeSnippetAction;
     QAction *m_pRetrySnippetSummaryAction;
+    QAction *m_pViewSnippetSummaryAction;
+    QAction *m_pCopySnippetSummaryAction;
     QAction *m_pSummarizeSessionAction;
     QAction *m_pRetrySessionSummaryAction;
+    QAction *m_pViewSessionSummaryAction;
+    QAction *m_pCopySessionSummaryAction;
     QAction *m_pAiSettingsAction;
     QAction *m_pExportMarkdownAction;
     QAction *m_pRefreshAction;
@@ -187,6 +201,7 @@ private:
     QLineEdit *m_pSnippetSearchLineEdit;
     QComboBox *m_pSearchHistoryComboBox;
     QPushButton *m_pClearSearchButton;
+    QPushButton *m_pClearSearchHistoryButton;
     QPushButton *m_pResetFiltersButton;
     QCheckBox *m_pQuickFavoriteCheckBox;
     QCheckBox *m_pQuickReviewCheckBox;

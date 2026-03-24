@@ -11,6 +11,7 @@
 #include <QtConcurrent/QtConcurrent>
 
 #include <QAction>
+#include <QClipboard>
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QCheckBox>
@@ -65,13 +66,25 @@
 
 namespace
 {
+QString UiTextGlobal(const QString& strChinese, const QString& strEnglish)
+{
+    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0
+        ? strEnglish
+        : strChinese;
+}
+
+QString SessionStatusText(QCSessionStatus sessionStatus)
+{
+    return sessionStatus == QCSessionStatus::FinishedSessionStatus
+        ? UiTextGlobal(QString::fromUtf8("???"), QString::fromUtf8("Finished"))
+        : UiTextGlobal(QString::fromUtf8("???"), QString::fromUtf8("Active"));
+}
+
 QString SessionItemText(const QCStudySession& session)
 {
-    const QString strStatus = session.status() == QCSessionStatus::FinishedSessionStatus
-        ? QString::fromUtf8("Finished")
-        : QString::fromUtf8("Active");
+    const QString strStatus = SessionStatusText(session.status());
     const QString strTitle = QString::fromUtf8("[%1] %2").arg(strStatus, session.title().trimmed().isEmpty()
-        ? QString::fromUtf8("Untitled Session")
+        ? UiTextGlobal(QString::fromUtf8("??? Session"), QString::fromUtf8("Untitled Session"))
         : session.title().trimmed());
 
     if (session.courseName().trimmed().isEmpty())
@@ -91,16 +104,16 @@ QString SnippetItemText(const QCSnippet& snippet)
         ? snippet.capturedAt().toLocalTime().toString(QString::fromUtf8("MM-dd hh:mm"))
         : QString::fromUtf8("--:--");
     const QString strTitle = snippet.title().trimmed().isEmpty()
-        ? QString::fromUtf8("Untitled Snippet")
+        ? UiTextGlobal(QString::fromUtf8("?????"), QString::fromUtf8("Untitled Snippet"))
         : snippet.title();
 
     QStringList vecStateTokens;
     if (snippet.isFavorite())
-        vecStateTokens.append(QString::fromUtf8("Fav"));
+        vecStateTokens.append(UiTextGlobal(QString::fromUtf8("??"), QString::fromUtf8("Fav")));
     if (IsSnippetMarkedForReview(snippet))
-        vecStateTokens.append(QString::fromUtf8("Review"));
+        vecStateTokens.append(UiTextGlobal(QString::fromUtf8("??"), QString::fromUtf8("Review")));
     if (snippet.isArchived())
-        vecStateTokens.append(QString::fromUtf8("Archived"));
+        vecStateTokens.append(UiTextGlobal(QString::fromUtf8("??"), QString::fromUtf8("Archived")));
 
     const QString strStatePrefix = vecStateTokens.isEmpty()
         ? QString()
@@ -155,11 +168,16 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     , m_pDuplicateSnippetAction(nullptr)
     , m_pMoveSnippetAction(nullptr)
     , m_pManageTagsAction(nullptr)
+    , m_pClearSnippetTagsAction(nullptr)
     , m_pTagLibraryAction(nullptr)
     , m_pSummarizeSnippetAction(nullptr)
     , m_pRetrySnippetSummaryAction(nullptr)
+    , m_pViewSnippetSummaryAction(nullptr)
+    , m_pCopySnippetSummaryAction(nullptr)
     , m_pSummarizeSessionAction(nullptr)
     , m_pRetrySessionSummaryAction(nullptr)
+    , m_pViewSessionSummaryAction(nullptr)
+    , m_pCopySessionSummaryAction(nullptr)
     , m_pAiSettingsAction(nullptr)
     , m_pExportMarkdownAction(nullptr)
     , m_pRefreshAction(nullptr)
@@ -174,6 +192,7 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     , m_pSnippetSearchLineEdit(nullptr)
     , m_pSearchHistoryComboBox(nullptr)
     , m_pClearSearchButton(nullptr)
+    , m_pClearSearchHistoryButton(nullptr)
     , m_pResetFiltersButton(nullptr)
     , m_pQuickFavoriteCheckBox(nullptr)
     , m_pQuickReviewCheckBox(nullptr)
@@ -203,7 +222,7 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     , m_bHasRetryableSessionSummary(false)
     , m_nRetrySnippetId(0)
     , m_nRetrySessionId(0)
-    , m_strAiStatusMessage(QString::fromUtf8("AI ???"))
+    , m_strAiStatusMessage(QString::fromUtf8("AI ??"))
     , m_strAppLanguage(QString::fromUtf8("zh-CN"))
     , m_pSnippetSummaryWatcher(new QFutureWatcher<QCAiTaskExecutionResult>(this))
     , m_pSessionSummaryWatcher(new QFutureWatcher<QCAiTaskExecutionResult>(this))
@@ -258,10 +277,20 @@ void QCMainWindow::applyLocalizedTexts()
         m_pClearSearchButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Clear")));
     if (nullptr != m_pResetFiltersButton)
         m_pResetFiltersButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Reset")));
+    if (nullptr != m_pClearSearchHistoryButton)
+        m_pClearSearchHistoryButton->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("History")));
+    if (nullptr != m_pSearchHistoryComboBox && m_pSearchHistoryComboBox->count() > 0)
+        m_pSearchHistoryComboBox->setItemText(0, uiText(QString::fromUtf8("????"), QString::fromUtf8("Recent Searches")));
+    if (nullptr != m_pSnippetTypeFilterComboBox && m_pSnippetTypeFilterComboBox->count() >= 3)
+    {
+        m_pSnippetTypeFilterComboBox->setItemText(0, uiText(QString::fromUtf8("????"), QString::fromUtf8("All Types")));
+        m_pSnippetTypeFilterComboBox->setItemText(1, uiText(QString::fromUtf8("??"), QString::fromUtf8("Text")));
+        m_pSnippetTypeFilterComboBox->setItemText(2, uiText(QString::fromUtf8("??"), QString::fromUtf8("Image")));
+    }
     if (nullptr != m_pQuickFavoriteCheckBox)
-        m_pQuickFavoriteCheckBox->setText(uiText(QString::fromUtf8("?????"), QString::fromUtf8("Selected Favorite")));
+        m_pQuickFavoriteCheckBox->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Selected Favorite")));
     if (nullptr != m_pQuickReviewCheckBox)
-        m_pQuickReviewCheckBox->setText(uiText(QString::fromUtf8("?????"), QString::fromUtf8("Selected Review")));
+        m_pQuickReviewCheckBox->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Selected Review")));
     if (nullptr != m_pFavoriteOnlyCheckBox)
         m_pFavoriteOnlyCheckBox->setText(uiText(QString::fromUtf8("???"), QString::fromUtf8("Favorites Only")));
     if (nullptr != m_pReviewOnlyCheckBox)
@@ -275,11 +304,11 @@ void QCMainWindow::applyLocalizedTexts()
     if (nullptr != m_pImagePreviewLabel && m_pImagePreviewLabel->pixmap() == nullptr)
         m_pImagePreviewLabel->setText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No image preview available.")));
 
-    if (nullptr != m_pNewSessionAction) m_pNewSessionAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("New Session")));
-    if (nullptr != m_pEditSessionAction) m_pEditSessionAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Session")));
+    if (nullptr != m_pNewSessionAction) m_pNewSessionAction->setText(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("New Session")));
+    if (nullptr != m_pEditSessionAction) m_pEditSessionAction->setText(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Edit Session")));
     if (nullptr != m_pNewTextSnippetAction) m_pNewTextSnippetAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("New Text")));
-    if (nullptr != m_pFinishSessionAction) m_pFinishSessionAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Finish Session")));
-    if (nullptr != m_pReopenSessionAction) m_pReopenSessionAction->setText(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Reopen Session")));
+    if (nullptr != m_pFinishSessionAction) m_pFinishSessionAction->setText(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Finish Session")));
+    if (nullptr != m_pReopenSessionAction) m_pReopenSessionAction->setText(uiText(QString::fromUtf8("???? Session"), QString::fromUtf8("Reopen Session")));
     if (nullptr != m_pEditSnippetAction) m_pEditSnippetAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Snippet")));
     if (nullptr != m_pCaptureScreenAction) m_pCaptureScreenAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Screen")));
     if (nullptr != m_pCaptureRegionAction) m_pCaptureRegionAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Region")));
@@ -287,15 +316,19 @@ void QCMainWindow::applyLocalizedTexts()
     if (nullptr != m_pTagLibraryAction) m_pTagLibraryAction->setText(uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")));
     if (nullptr != m_pSummarizeSnippetAction) m_pSummarizeSnippetAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Snippet")));
     if (nullptr != m_pRetrySnippetSummaryAction) m_pRetrySnippetSummaryAction->setText(uiText(QString::fromUtf8("???? AI"), QString::fromUtf8("Retry Snippet AI")));
-    if (nullptr != m_pSummarizeSessionAction) m_pSummarizeSessionAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Session")));
-    if (nullptr != m_pRetrySessionSummaryAction) m_pRetrySessionSummaryAction->setText(uiText(QString::fromUtf8("???? AI"), QString::fromUtf8("Retry Session AI")));
+    if (nullptr != m_pViewSnippetSummaryAction) m_pViewSnippetSummaryAction->setText(uiText(QString::fromUtf8("??????"), QString::fromUtf8("View Snippet Summary")));
+    if (nullptr != m_pCopySnippetSummaryAction) m_pCopySnippetSummaryAction->setText(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Copy Snippet Summary")));
+    if (nullptr != m_pSummarizeSessionAction) m_pSummarizeSessionAction->setText(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Summarize Session")));
+    if (nullptr != m_pRetrySessionSummaryAction) m_pRetrySessionSummaryAction->setText(uiText(QString::fromUtf8("?? Session AI"), QString::fromUtf8("Retry Session AI")));
+    if (nullptr != m_pViewSessionSummaryAction) m_pViewSessionSummaryAction->setText(uiText(QString::fromUtf8("?? Session ??"), QString::fromUtf8("View Session Summary")));
+    if (nullptr != m_pCopySessionSummaryAction) m_pCopySessionSummaryAction->setText(uiText(QString::fromUtf8("?? Session ??"), QString::fromUtf8("Copy Session Summary")));
     if (nullptr != m_pAiSettingsAction) m_pAiSettingsAction->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Settings")));
     if (nullptr != m_pExportMarkdownAction) m_pExportMarkdownAction->setText(uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")));
     if (nullptr != m_pRefreshAction) m_pRefreshAction->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Refresh")));
     if (nullptr != m_pFocusSearchAction) m_pFocusSearchAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Focus Search")));
 
     if (nullptr != m_pSessionSummaryTextEdit && m_pSessionSummaryTextEdit->toPlainText().trimmed().isEmpty())
-        m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No session summary available.")));
+        m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("?? Session ???"), QString::fromUtf8("No session summary available.")));
 }
 
 
@@ -306,7 +339,7 @@ void QCMainWindow::updateMenuTexts()
 
     const QList<QAction *> vecMenuActions = menuBar()->actions();
     if (vecMenuActions.size() > 0 && nullptr != vecMenuActions.at(0))
-        vecMenuActions.at(0)->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Session")));
+        vecMenuActions.at(0)->setText(uiText(QString::fromUtf8("Session"), QString::fromUtf8("Session")));
     if (vecMenuActions.size() > 1 && nullptr != vecMenuActions.at(1))
         vecMenuActions.at(1)->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Snippet")));
     if (vecMenuActions.size() > 2 && nullptr != vecMenuActions.at(2))
@@ -325,6 +358,7 @@ void QCMainWindow::setupUi()
     m_pSnippetSearchLineEdit = new QLineEdit(this);
     m_pSearchHistoryComboBox = new QComboBox(this);
     m_pClearSearchButton = new QPushButton(QString::fromUtf8("Clear"), this);
+    m_pClearSearchHistoryButton = new QPushButton(QString::fromUtf8("History"), this);
     m_pResetFiltersButton = new QPushButton(QString::fromUtf8("Reset"), this);
     m_pQuickFavoriteCheckBox = new QCheckBox(QString::fromUtf8("Selected Favorite"), this);
     m_pQuickReviewCheckBox = new QCheckBox(QString::fromUtf8("Selected Review"), this);
@@ -390,7 +424,7 @@ void QCMainWindow::setupUi()
     pStateLayout->addStretch(1);
     pStateLayout->setContentsMargins(0, 0, 0, 0);
     pStateWidget->setLayout(pStateLayout);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("????"), QString::fromUtf8("Session Summary")), m_pSessionSummaryTextEdit);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("Session ??"), QString::fromUtf8("Session Summary")), m_pSessionSummaryTextEdit);
     pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pSnippetTitleValueLabel);
     pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Tags")), m_pSnippetTagsValueLabel);
     pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("State")), pStateWidget);
@@ -408,6 +442,7 @@ void QCMainWindow::setupUi()
     pFilterLayout->addWidget(m_pSnippetSearchLineEdit, 1);
     pFilterLayout->addWidget(m_pSearchHistoryComboBox);
     pFilterLayout->addWidget(m_pClearSearchButton);
+    pFilterLayout->addWidget(m_pClearSearchHistoryButton);
     pFilterLayout->addWidget(m_pResetFiltersButton);
     pFilterLayout->addWidget(m_pFavoriteOnlyCheckBox);
     pFilterLayout->addWidget(m_pReviewOnlyCheckBox);
@@ -416,7 +451,7 @@ void QCMainWindow::setupUi()
     pFilterLayout->addWidget(m_pShowArchivedCheckBox);
     pFilterLayout->addWidget(new QLabel(uiText(QString::fromUtf8("??"), QString::fromUtf8("Tag")), this));
     pFilterLayout->addWidget(m_pTagFilterComboBox);
-    pQuickStateLayout->addWidget(new QLabel(uiText(QString::fromUtf8("???"), QString::fromUtf8("Selected")), this));
+    pQuickStateLayout->addWidget(new QLabel(uiText(QString::fromUtf8("??"), QString::fromUtf8("Selected")), this));
     pQuickStateLayout->addWidget(m_pQuickFavoriteCheckBox);
     pQuickStateLayout->addWidget(m_pQuickReviewCheckBox);
     pQuickStateLayout->addStretch(1);
@@ -444,6 +479,7 @@ void QCMainWindow::setupUi()
     connect(m_pSnippetSearchLineEdit, &QLineEdit::returnPressed, this, [this]() { onSnippetFilterChanged(); });
     connect(m_pSearchHistoryComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) { onSearchHistoryChanged(); });
     connect(m_pClearSearchButton, &QPushButton::clicked, this, [this]() { onClearSearch(); });
+    connect(m_pClearSearchHistoryButton, &QPushButton::clicked, this, [this]() { onClearSearchHistory(); });
     connect(m_pResetFiltersButton, &QPushButton::clicked, this, [this]() { onResetFilters(); });
     connect(m_pFavoriteOnlyCheckBox, &QCheckBox::toggled, this, [this](bool) { onSnippetFilterChanged(); });
     connect(m_pReviewOnlyCheckBox, &QCheckBox::toggled, this, [this](bool) { onSnippetFilterChanged(); });
@@ -459,6 +495,7 @@ void QCMainWindow::setupUi()
     m_pSnippetSearchLineEdit->setObjectName(QString::fromUtf8("snippetSearchLineEdit"));
     m_pSearchHistoryComboBox->setObjectName(QString::fromUtf8("searchHistoryComboBox"));
     m_pClearSearchButton->setObjectName(QString::fromUtf8("clearSearchButton"));
+    m_pClearSearchHistoryButton->setObjectName(QString::fromUtf8("clearSearchHistoryButton"));
     m_pResetFiltersButton->setObjectName(QString::fromUtf8("resetFiltersButton"));
     m_pQuickFavoriteCheckBox->setObjectName(QString::fromUtf8("quickFavoriteCheckBox"));
     m_pQuickReviewCheckBox->setObjectName(QString::fromUtf8("quickReviewCheckBox"));
@@ -473,10 +510,12 @@ void QCMainWindow::setupUi()
     m_pSelectionContextLabel->setObjectName(QString::fromUtf8("selectionContextLabel"));
     m_pViewSummaryLabel->setObjectName(QString::fromUtf8("viewSummaryLabel"));
     m_pAiStatusLabel->setObjectName(QString::fromUtf8("aiStatusLabel"));
+    m_pSessionSummaryTextEdit->setObjectName(QString::fromUtf8("sessionSummaryTextEdit"));
+    m_pSnippetSummaryTextEdit->setObjectName(QString::fromUtf8("snippetSummaryTextEdit"));
 
     statusBar()->showMessage(uiText(QString::fromUtf8("???"), QString::fromUtf8("Ready.")));
     clearSnippetDetails();
-    m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No session summary available.")));
+    m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("?? Session ???"), QString::fromUtf8("No session summary available.")));
     loadTagFilterOptions();
     loadSearchHistoryOptions();
     applyLocalizedTexts();
@@ -500,14 +539,19 @@ void QCMainWindow::setupActions()
     m_pDuplicateSnippetAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")));
     m_pMoveSnippetAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")));
     m_pManageTagsAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Snippet Tags")));
+    m_pClearSnippetTagsAction = pToolBar->addAction(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Clear Snippet Tags")));
     m_pTagLibraryAction = pToolBar->addAction(uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")));
     m_pDeleteSnippetAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Delete Snippet")));
     m_pToggleArchiveSnippetAction = pToolBar->addAction(uiText(QString::fromUtf8("?? / ??"), QString::fromUtf8("Archive / Restore")));
-    m_pDeleteSessionAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Delete Session")));
+    m_pDeleteSessionAction = pToolBar->addAction(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Delete Session")));
     m_pSummarizeSnippetAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Snippet")));
     m_pRetrySnippetSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("???? AI"), QString::fromUtf8("Retry Snippet AI")));
-    m_pSummarizeSessionAction = pToolBar->addAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Session")));
-    m_pRetrySessionSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("???? AI"), QString::fromUtf8("Retry Session AI")));
+    m_pViewSnippetSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("??????"), QString::fromUtf8("View Snippet Summary")));
+    m_pCopySnippetSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Copy Snippet Summary")));
+    m_pSummarizeSessionAction = pToolBar->addAction(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Summarize Session")));
+    m_pRetrySessionSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("?? Session AI"), QString::fromUtf8("Retry Session AI")));
+    m_pViewSessionSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("?? Session ??"), QString::fromUtf8("View Session Summary")));
+    m_pCopySessionSummaryAction = pToolBar->addAction(uiText(QString::fromUtf8("?? Session ??"), QString::fromUtf8("Copy Session Summary")));
     m_pAiSettingsAction = pToolBar->addAction(uiText(QString::fromUtf8("??"), QString::fromUtf8("Settings")));
     m_pExportMarkdownAction = pToolBar->addAction(uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")));
     m_pRefreshAction = pToolBar->addAction(uiText(QString::fromUtf8("??"), QString::fromUtf8("Refresh")));
@@ -530,8 +574,12 @@ void QCMainWindow::setupActions()
     m_pTagLibraryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+T")));
     m_pSummarizeSnippetAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+M")));
     m_pRetrySnippetSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+Y")));
+    m_pViewSnippetSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+L")));
+    m_pCopySnippetSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+C")));
     m_pSummarizeSessionAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Alt+M")));
     m_pRetrySessionSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Alt+Y")));
+    m_pViewSessionSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Alt+L")));
+    m_pCopySessionSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Alt+C")));
     m_pAiSettingsAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+,")));
     m_pExportMarkdownAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+E")));
     m_pRefreshAction->setShortcuts(QList<QKeySequence>() << QKeySequence::Refresh << QKeySequence(QString::fromUtf8("Ctrl+R")));
@@ -552,14 +600,19 @@ void QCMainWindow::setupActions()
         << m_pDuplicateSnippetAction
         << m_pMoveSnippetAction
         << m_pManageTagsAction
+        << m_pClearSnippetTagsAction
         << m_pTagLibraryAction
         << m_pDeleteSnippetAction
         << m_pToggleArchiveSnippetAction
         << m_pDeleteSessionAction
         << m_pSummarizeSnippetAction
         << m_pRetrySnippetSummaryAction
+        << m_pViewSnippetSummaryAction
+        << m_pCopySnippetSummaryAction
         << m_pSummarizeSessionAction
         << m_pRetrySessionSummaryAction
+        << m_pViewSessionSummaryAction
+        << m_pCopySessionSummaryAction
         << m_pAiSettingsAction
         << m_pExportMarkdownAction
         << m_pRefreshAction
@@ -589,14 +642,19 @@ void QCMainWindow::setupActions()
     connect(m_pDuplicateSnippetAction, &QAction::triggered, this, [this]() { onDuplicateSnippet(); });
     connect(m_pMoveSnippetAction, &QAction::triggered, this, [this]() { onMoveSnippet(); });
     connect(m_pManageTagsAction, &QAction::triggered, this, [this]() { onManageTags(); });
+    connect(m_pClearSnippetTagsAction, &QAction::triggered, this, [this]() { onClearSnippetTags(); });
     connect(m_pTagLibraryAction, &QAction::triggered, this, [this]() { onOpenTagLibrary(); });
     connect(m_pDeleteSnippetAction, &QAction::triggered, this, [this]() { onDeleteSnippet(); });
     connect(m_pToggleArchiveSnippetAction, &QAction::triggered, this, [this]() { onToggleArchiveSnippet(); });
     connect(m_pDeleteSessionAction, &QAction::triggered, this, [this]() { onDeleteSession(); });
     connect(m_pSummarizeSnippetAction, &QAction::triggered, this, [this]() { onSummarizeSnippet(); });
     connect(m_pRetrySnippetSummaryAction, &QAction::triggered, this, [this]() { onRetrySnippetSummary(); });
+    connect(m_pViewSnippetSummaryAction, &QAction::triggered, this, [this]() { onViewSnippetSummary(); });
+    connect(m_pCopySnippetSummaryAction, &QAction::triggered, this, [this]() { onCopySnippetSummary(); });
     connect(m_pSummarizeSessionAction, &QAction::triggered, this, [this]() { onSummarizeSession(); });
     connect(m_pRetrySessionSummaryAction, &QAction::triggered, this, [this]() { onRetrySessionSummary(); });
+    connect(m_pViewSessionSummaryAction, &QAction::triggered, this, [this]() { onViewSessionSummary(); });
+    connect(m_pCopySessionSummaryAction, &QAction::triggered, this, [this]() { onCopySessionSummary(); });
     connect(m_pAiSettingsAction, &QAction::triggered, this, [this]() { onAiSettings(); });
     connect(m_pExportMarkdownAction, &QAction::triggered, this, [this]() { onExportMarkdown(); });
     connect(m_pRefreshAction, &QAction::triggered, this, [this]() { onRefresh(); });
@@ -619,11 +677,16 @@ void QCMainWindow::setupActions()
     m_pToggleArchiveSnippetAction->setObjectName(QString::fromUtf8("toggleArchiveSnippetAction"));
     m_pDeleteSnippetAction->setObjectName(QString::fromUtf8("deleteSnippetAction"));
     m_pManageTagsAction->setObjectName(QString::fromUtf8("manageTagsAction"));
+    m_pClearSnippetTagsAction->setObjectName(QString::fromUtf8("clearSnippetTagsAction"));
     m_pTagLibraryAction->setObjectName(QString::fromUtf8("tagLibraryAction"));
     m_pSummarizeSnippetAction->setObjectName(QString::fromUtf8("summarizeSnippetAction"));
     m_pRetrySnippetSummaryAction->setObjectName(QString::fromUtf8("retrySnippetSummaryAction"));
+    m_pViewSnippetSummaryAction->setObjectName(QString::fromUtf8("viewSnippetSummaryAction"));
+    m_pCopySnippetSummaryAction->setObjectName(QString::fromUtf8("copySnippetSummaryAction"));
     m_pSummarizeSessionAction->setObjectName(QString::fromUtf8("summarizeSessionAction"));
     m_pRetrySessionSummaryAction->setObjectName(QString::fromUtf8("retrySessionSummaryAction"));
+    m_pViewSessionSummaryAction->setObjectName(QString::fromUtf8("viewSessionSummaryAction"));
+    m_pCopySessionSummaryAction->setObjectName(QString::fromUtf8("copySessionSummaryAction"));
     m_pAiSettingsAction->setObjectName(QString::fromUtf8("aiSettingsAction"));
     m_pExportMarkdownAction->setObjectName(QString::fromUtf8("exportMarkdownAction"));
     m_pRefreshAction->setObjectName(QString::fromUtf8("refreshAction"));
@@ -631,7 +694,7 @@ void QCMainWindow::setupActions()
     m_pDeleteCurrentAction->setObjectName(QString::fromUtf8("deleteCurrentAction"));
     m_pFocusSearchAction->setObjectName(QString::fromUtf8("focusSearchAction"));
 
-    QMenu *pSessionMenu = menuBar()->addMenu(uiText(QString::fromUtf8("??"), QString::fromUtf8("Session")));
+    QMenu *pSessionMenu = menuBar()->addMenu(uiText(QString::fromUtf8("Session"), QString::fromUtf8("Session")));
     pSessionMenu->addAction(m_pNewSessionAction);
     pSessionMenu->addAction(m_pEditSessionAction);
     pSessionMenu->addAction(m_pFinishSessionAction);
@@ -652,14 +715,20 @@ void QCMainWindow::setupActions()
     pSnippetMenu->addAction(m_pDuplicateSnippetAction);
     pSnippetMenu->addAction(m_pMoveSnippetAction);
     pSnippetMenu->addAction(m_pManageTagsAction);
+    pSnippetMenu->addAction(m_pClearSnippetTagsAction);
     pSnippetMenu->addAction(m_pToggleArchiveSnippetAction);
     pSnippetMenu->addAction(m_pDeleteSnippetAction);
 
     QMenu *pAiMenu = menuBar()->addMenu(QString::fromUtf8("AI"));
     pAiMenu->addAction(m_pSummarizeSnippetAction);
     pAiMenu->addAction(m_pRetrySnippetSummaryAction);
+    pAiMenu->addAction(m_pViewSnippetSummaryAction);
+    pAiMenu->addAction(m_pCopySnippetSummaryAction);
+    pAiMenu->addSeparator();
     pAiMenu->addAction(m_pSummarizeSessionAction);
     pAiMenu->addAction(m_pRetrySessionSummaryAction);
+    pAiMenu->addAction(m_pViewSessionSummaryAction);
+    pAiMenu->addAction(m_pCopySessionSummaryAction);
     pAiMenu->addSeparator();
     pAiMenu->addAction(m_pAiSettingsAction);
 
@@ -674,6 +743,9 @@ void QCMainWindow::setupActions()
         m_pSessionListWidget->addAction(m_pFinishSessionAction);
         m_pSessionListWidget->addAction(m_pReopenSessionAction);
         m_pSessionListWidget->addAction(m_pSummarizeSessionAction);
+        m_pSessionListWidget->addAction(m_pRetrySessionSummaryAction);
+        m_pSessionListWidget->addAction(m_pViewSessionSummaryAction);
+        m_pSessionListWidget->addAction(m_pCopySessionSummaryAction);
         m_pSessionListWidget->addAction(m_pExportMarkdownAction);
         m_pSessionListWidget->addAction(m_pDeleteSessionAction);
     }
@@ -684,7 +756,11 @@ void QCMainWindow::setupActions()
         m_pSnippetListWidget->addAction(m_pDuplicateSnippetAction);
         m_pSnippetListWidget->addAction(m_pMoveSnippetAction);
         m_pSnippetListWidget->addAction(m_pManageTagsAction);
+        m_pSnippetListWidget->addAction(m_pClearSnippetTagsAction);
         m_pSnippetListWidget->addAction(m_pSummarizeSnippetAction);
+        m_pSnippetListWidget->addAction(m_pRetrySnippetSummaryAction);
+        m_pSnippetListWidget->addAction(m_pViewSnippetSummaryAction);
+        m_pSnippetListWidget->addAction(m_pCopySnippetSummaryAction);
         m_pSnippetListWidget->addAction(m_pToggleArchiveSnippetAction);
         m_pSnippetListWidget->addAction(m_pDeleteSnippetAction);
     }
@@ -701,7 +777,7 @@ void QCMainWindow::loadSessions()
     const QVector<QCStudySession> vecSessions = m_pSessionService->listSessions();
     if (!m_pSessionService->lastError().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("Load Sessions"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Load Sessions")), m_pSessionService->lastError());
         return;
     }
 
@@ -744,7 +820,7 @@ void QCMainWindow::loadSessions()
     QSignalBlocker snippetBlocker(m_pSnippetListWidget);
     m_pSnippetListWidget->clear();
     clearSnippetDetails();
-    m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No session summary available.")));
+    m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("?? Session ???"), QString::fromUtf8("No session summary available.")));
     updateViewSummary(0, 0);
     updateActionState();
 }
@@ -757,7 +833,7 @@ void QCMainWindow::loadTagFilterOptions()
     const qint64 nCurrentTagId = currentTagFilterId();
     m_pTagFilterComboBox->blockSignals(true);
     m_pTagFilterComboBox->clear();
-    m_pTagFilterComboBox->addItem(QString::fromUtf8("All Tags"), 0);
+    m_pTagFilterComboBox->addItem(uiText(QString::fromUtf8("????"), QString::fromUtf8("All Tags")), 0);
 
     if (nullptr != m_pTagService)
     {
@@ -808,7 +884,7 @@ void QCMainWindow::applySnippetFilters()
     const QVector<QCSnippet> vecAllSnippets = m_pSnippetService->listSnippetsBySession(nSessionId);
     if (!m_pSnippetService->lastError().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("Load Snippets"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Snippet"), QString::fromUtf8("Load Snippets")), m_pSnippetService->lastError());
         return;
     }
 
@@ -820,7 +896,7 @@ void QCMainWindow::applySnippetFilters()
                                                                             currentTagFilterId());
     if (!m_pSnippetService->lastError().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("Load Snippets"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Snippet"), QString::fromUtf8("Load Snippets")), m_pSnippetService->lastError());
         return;
     }
 
@@ -858,18 +934,26 @@ void QCMainWindow::applySnippetFilters()
 
 void QCMainWindow::showSessionSummary(qint64 nSessionId)
 {
-    m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No session summary available.")));
+    m_pSessionSummaryTextEdit->setPlainText(uiText(QString::fromUtf8("?? session ???"), QString::fromUtf8("No session summary available.")));
 
     if (nSessionId <= 0)
+    {
+        applyPlainTextHighlight(m_pSessionSummaryTextEdit, currentSearchText());
         return;
+    }
 
     const QVector<QCAiRecord> vecAiRecords = m_pAiService->listAiRecordsBySession(nSessionId);
     if (!m_pAiService->lastError().isEmpty())
+    {
+        applyPlainTextHighlight(m_pSessionSummaryTextEdit, currentSearchText());
         return;
+    }
 
     const QString strSessionSummary = findSessionSummaryFromAiRecords(vecAiRecords);
     if (!strSessionSummary.trimmed().isEmpty())
         m_pSessionSummaryTextEdit->setPlainText(strSessionSummary);
+
+    applyPlainTextHighlight(m_pSessionSummaryTextEdit, currentSearchText());
 }
 void QCMainWindow::showSnippetDetails(qint64 nSnippetId)
 {
@@ -881,7 +965,7 @@ void QCMainWindow::showSnippetDetails(qint64 nSnippetId)
     QCSnippet snippet;
     if (!m_pSnippetService->getSnippetById(nSnippetId, &snippet))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Load Snippet"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Snippet"), QString::fromUtf8("Load Snippet")), m_pSnippetService->lastError());
         return;
     }
 
@@ -915,13 +999,13 @@ void QCMainWindow::showSnippetDetails(qint64 nSnippetId)
         }
         else
         {
-            m_pImagePathValueLabel->setText(QString::fromUtf8("Image attachment unavailable."));
+            m_pImagePathValueLabel->setText(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Image attachment unavailable.")));
             m_pImagePreviewLabel->setText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No image preview available.")));
         }
     }
     else
     {
-        m_pImagePathValueLabel->setText(QString::fromUtf8("No image attachment."));
+        m_pImagePathValueLabel->setText(uiText(QString::fromUtf8("??????"), QString::fromUtf8("No image attachment.")));
         m_pImagePreviewLabel->setText(uiText(QString::fromUtf8("???????"), QString::fromUtf8("No image preview available.")));
     }
 
@@ -932,7 +1016,7 @@ void QCMainWindow::clearSnippetDetails()
 {
     m_pSnippetTitleValueLabel->setTextFormat(Qt::PlainText);
     m_pSnippetTitleValueLabel->clear();
-    m_pSnippetTagsValueLabel->setText(QString::fromUtf8("No tags."));
+    m_pSnippetTagsValueLabel->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("No tags.")));
     m_pSnippetNoteTextEdit->clear();
     m_pSnippetContentTextEdit->clear();
     m_pSnippetSummaryTextEdit->clear();
@@ -978,7 +1062,7 @@ void QCMainWindow::updateDetailImage(const QString& strImagePath)
     QPixmap pixmapImage(strImagePath);
     if (pixmapImage.isNull())
     {
-        m_pImagePreviewLabel->setText(QString::fromUtf8("Image preview unavailable."));
+        m_pImagePreviewLabel->setText(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Image preview unavailable.")));
         return;
     }
 
@@ -988,6 +1072,28 @@ void QCMainWindow::updateDetailImage(const QString& strImagePath)
                                                        Qt::SmoothTransformation));
 }
 
+void QCMainWindow::focusSummaryEditor(QPlainTextEdit *pTextEdit)
+{
+    if (nullptr == pTextEdit)
+        return;
+
+    pTextEdit->setFocus();
+    QTextCursor cursor = pTextEdit->textCursor();
+    cursor.movePosition(QTextCursor::Start);
+    pTextEdit->setTextCursor(cursor);
+    pTextEdit->ensureCursorVisible();
+}
+
+QString QCMainWindow::currentSnippetSummaryText() const
+{
+    return nullptr == m_pSnippetSummaryTextEdit ? QString() : m_pSnippetSummaryTextEdit->toPlainText().trimmed();
+}
+
+QString QCMainWindow::currentSessionSummaryText() const
+{
+    return nullptr == m_pSessionSummaryTextEdit ? QString() : m_pSessionSummaryTextEdit->toPlainText().trimmed();
+}
+
 void QCMainWindow::updateAiStatusDisplay()
 {
     if (nullptr == m_pAiStatusLabel)
@@ -995,12 +1101,12 @@ void QCMainWindow::updateAiStatusDisplay()
 
     QString strStatusMessage = m_strAiStatusMessage.trimmed();
     if (strStatusMessage.isEmpty())
-        strStatusMessage = uiText(QString::fromUtf8("AI ???"), QString::fromUtf8("AI idle."));
+        strStatusMessage = uiText(QString::fromUtf8("AI ???????????????????"), QString::fromUtf8("AI idle. You can summarize, view, or copy the current result."));
 
     if (m_bSnippetSummaryRunning)
-        strStatusMessage = QString::fromUtf8("Snippet AI running. The current summary will update when the background task finishes.");
+        strStatusMessage = uiText(QString::fromUtf8("?? AI ????????????????????????????"), QString::fromUtf8("Snippet AI is running. The current summary will refresh when the task finishes; retry stays available if it fails."));
     else if (m_bSessionSummaryRunning)
-        strStatusMessage = QString::fromUtf8("Session AI running. The current session summary will update when the background task finishes.");
+        strStatusMessage = uiText(QString::fromUtf8("Session AI ????????????? Session ?????????????"), QString::fromUtf8("Session AI is running. The session summary will refresh when the task finishes; retry stays available if it fails."));
 
     m_pAiStatusLabel->setText(strStatusMessage);
 }
@@ -1024,11 +1130,9 @@ QString QCMainWindow::buildSelectionContextText() const
         return uiText(QString::fromUtf8("????????????"), QString::fromUtf8("Current context: no session selected."));
 
     const QString strSessionTitle = session.title().trimmed().isEmpty()
-        ? QString::fromUtf8("Untitled Session")
+        ? uiText(QString::fromUtf8("??? Session"), QString::fromUtf8("Untitled Session"))
         : session.title().trimmed();
-    const QString strSessionStatus = session.status() == QCSessionStatus::FinishedSessionStatus
-        ? QString::fromUtf8("Finished")
-        : QString::fromUtf8("Active");
+    const QString strSessionStatus = SessionStatusText(session.status());
 
     if (nSelectedSnippetCount <= 0)
     {
@@ -1133,14 +1237,26 @@ void QCMainWindow::updateActionState()
     }
     if (nullptr != m_pTagLibraryAction)
         m_pTagLibraryAction->setEnabled(nullptr != m_pTagService && !bAnyAiTaskRunning);
+    if (nullptr != m_pClearSnippetTagsAction)
+        m_pClearSnippetTagsAction->setEnabled(bCanManageTags);
+    const bool bHasSnippetSummaryText = !currentSnippetSummaryText().trimmed().isEmpty();
+    const bool bHasSessionSummaryText = !currentSessionSummaryText().trimmed().isEmpty();
     if (nullptr != m_pSummarizeSnippetAction)
         m_pSummarizeSnippetAction->setEnabled(bCanSummarizeSnippet);
     if (nullptr != m_pRetrySnippetSummaryAction)
         m_pRetrySnippetSummaryAction->setEnabled(m_bHasRetryableSnippetSummary && !bAnyAiTaskRunning);
+    if (nullptr != m_pViewSnippetSummaryAction)
+        m_pViewSnippetSummaryAction->setEnabled(bHasSingleSnippet && bHasSnippetSummaryText);
+    if (nullptr != m_pCopySnippetSummaryAction)
+        m_pCopySnippetSummaryAction->setEnabled(bHasSingleSnippet && bHasSnippetSummaryText);
     if (nullptr != m_pSummarizeSessionAction)
         m_pSummarizeSessionAction->setEnabled(bHasSession && !bAnyAiTaskRunning);
     if (nullptr != m_pRetrySessionSummaryAction)
         m_pRetrySessionSummaryAction->setEnabled(m_bHasRetryableSessionSummary && !bAnyAiTaskRunning);
+    if (nullptr != m_pViewSessionSummaryAction)
+        m_pViewSessionSummaryAction->setEnabled(bHasSession && bHasSessionSummaryText);
+    if (nullptr != m_pCopySessionSummaryAction)
+        m_pCopySessionSummaryAction->setEnabled(bHasSession && bHasSessionSummaryText);
     if (nullptr != m_pExportMarkdownAction)
         m_pExportMarkdownAction->setEnabled(bHasSession && !bAnyAiTaskRunning);
     if (nullptr != m_pEditCurrentAction)
@@ -1177,34 +1293,32 @@ void QCMainWindow::updateViewSummary(int nVisibleSnippetCount, int nTotalSnippet
     QCStudySession session;
     if (!currentSession(&session))
     {
-        m_pViewSummaryLabel->setText(QString::fromUtf8("No session selected."));
+        m_pViewSummaryLabel->setText(uiText(QString::fromUtf8("??????"), QString::fromUtf8("No session selected.")));
         return;
     }
 
     QStringList vecTokens;
-    vecTokens.append(session.status() == QCSessionStatus::FinishedSessionStatus
-        ? QString::fromUtf8("Finished")
-        : QString::fromUtf8("Active"));
-    vecTokens.append(QString::fromUtf8("Visible %1/%2 snippets").arg(nVisibleSnippetCount).arg(nTotalSnippetCount));
+    vecTokens.append(SessionStatusText(session.status()));
+    vecTokens.append(uiText(QString::fromUtf8("?? %1/%2 ? snippet"), QString::fromUtf8("Visible %1/%2 snippets")).arg(nVisibleSnippetCount).arg(nTotalSnippetCount));
     if (nullptr != m_pFavoriteOnlyCheckBox && m_pFavoriteOnlyCheckBox->isChecked())
-        vecTokens.append(QString::fromUtf8("Favorites"));
+        vecTokens.append(uiText(QString::fromUtf8("???"), QString::fromUtf8("Favorites")));
     if (nullptr != m_pReviewOnlyCheckBox && m_pReviewOnlyCheckBox->isChecked())
-        vecTokens.append(QString::fromUtf8("Review"));
+        vecTokens.append(uiText(QString::fromUtf8("???"), QString::fromUtf8("Review")));
     if (nullptr != m_pSnippetTypeFilterComboBox && currentSnippetTypeFilter() != QString::fromUtf8("all"))
-        vecTokens.append(QString::fromUtf8("Type: %1").arg(m_pSnippetTypeFilterComboBox->currentText()));
+        vecTokens.append(uiText(QString::fromUtf8("??: %1"), QString::fromUtf8("Type: %1")).arg(m_pSnippetTypeFilterComboBox->currentText()));
     if (nullptr != m_pShowArchivedCheckBox && m_pShowArchivedCheckBox->isChecked())
-        vecTokens.append(QString::fromUtf8("Archived Visible"));
+        vecTokens.append(uiText(QString::fromUtf8("????"), QString::fromUtf8("Archived Visible")));
     if (currentTagFilterId() > 0 && nullptr != m_pTagFilterComboBox)
-        vecTokens.append(QString::fromUtf8("Tag: %1").arg(m_pTagFilterComboBox->currentText()));
+        vecTokens.append(uiText(QString::fromUtf8("??: %1"), QString::fromUtf8("Tag: %1")).arg(m_pTagFilterComboBox->currentText()));
     if (!currentSearchText().isEmpty())
-        vecTokens.append(QString::fromUtf8("Search: %1").arg(currentSearchText()));
+        vecTokens.append(uiText(QString::fromUtf8("??: %1"), QString::fromUtf8("Search: %1")).arg(currentSearchText()));
     if (nullptr != m_pSearchHistoryComboBox && m_pSearchHistoryComboBox->count() > 1)
-        vecTokens.append(QString::fromUtf8("History: %1").arg(m_pSearchHistoryComboBox->count() - 1));
+        vecTokens.append(uiText(QString::fromUtf8("??: %1"), QString::fromUtf8("History: %1")).arg(m_pSearchHistoryComboBox->count() - 1));
     if (selectedSnippetCount() > 0)
-        vecTokens.append(QString::fromUtf8("Selected: %1").arg(selectedSnippetCount()));
+        vecTokens.append(uiText(QString::fromUtf8("??: %1"), QString::fromUtf8("Selected: %1")).arg(selectedSnippetCount()));
 
     m_pViewSummaryLabel->setText(QString::fromUtf8("%1 | %2")
-        .arg(session.title().trimmed().isEmpty() ? QString::fromUtf8("Untitled Session") : session.title().trimmed(),
+        .arg(session.title().trimmed().isEmpty() ? uiText(QString::fromUtf8("??? Session"), QString::fromUtf8("Untitled Session")) : session.title().trimmed(),
              vecTokens.join(QString::fromUtf8(" | "))));
 }
 
@@ -1244,6 +1358,9 @@ void QCMainWindow::loadSearchHistoryOptions()
     for (int i = 0; i < vecSearchHistory.size(); ++i)
         m_pSearchHistoryComboBox->addItem(vecSearchHistory.at(i), vecSearchHistory.at(i));
     m_pSearchHistoryComboBox->setCurrentIndex(0);
+
+    if (nullptr != m_pClearSearchHistoryButton)
+        m_pClearSearchHistoryButton->setEnabled(!vecSearchHistory.isEmpty());
 }
 
 void QCMainWindow::appendSearchHistory(const QString& strSearchText)
@@ -1258,6 +1375,8 @@ void QCMainWindow::appendSearchHistory(const QString& strSearchText)
 
     vecSearchHistory.removeAll(strNormalizedSearchText);
     vecSearchHistory.prepend(strNormalizedSearchText);
+    while (vecSearchHistory.size() > 8)
+        vecSearchHistory.removeLast();
     if (!m_pSettingsService->setSnippetSearchHistory(vecSearchHistory))
         return;
 
@@ -1579,7 +1698,8 @@ void QCMainWindow::handleSnippetSummaryFinished()
 
     m_bHasRetryableSnippetSummary = false;
     m_nRetrySnippetId = executionResult.m_context.m_nSnippetId;
-    m_strAiStatusMessage = QString::fromUtf8("Snippet AI succeeded for snippet %1.").arg(executionResult.m_context.m_nSnippetId);
+    const QString strSnippetPreview = executionResult.m_aiResponse.m_strText.trimmed().isEmpty() ? executionResult.m_aiResponse.m_strRawResponse.trimmed() : executionResult.m_aiResponse.m_strText.trimmed();
+    m_strAiStatusMessage = uiText(QString::fromUtf8("?? AI ?????????????????%1"), QString::fromUtf8("Snippet AI completed. View or copy the current summary: %1")).arg(strSnippetPreview.isEmpty() ? QString::number(executionResult.m_context.m_nSnippetId) : strSnippetPreview);
     updateAiStatusDisplay();
     updateActionState();
     loadSnippets(executionResult.m_context.m_nSessionId);
@@ -1592,6 +1712,7 @@ void QCMainWindow::handleSnippetSummaryFinished()
     }
 
     showSnippetDetails(executionResult.m_context.m_nSnippetId);
+    focusSummaryEditor(m_pSnippetSummaryTextEdit);
     statusBar()->showMessage(bAutomaticSnippetSummary
         ? QString::fromUtf8("Image snippet saved and summarized.")
         : QString::fromUtf8("Snippet summary generated."), 5000);
@@ -1609,18 +1730,20 @@ void QCMainWindow::handleSessionSummaryFinished()
         m_strAiStatusMessage = QString::fromUtf8("Session AI failed. Use Retry Session AI to run the same request again.\n%1").arg(m_pAiProcessService->lastError());
         updateAiStatusDisplay();
         updateActionState();
-        QMessageBox::warning(this, QString::fromUtf8("Summarize Session"), m_pAiProcessService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Session")), m_pAiProcessService->lastError());
         statusBar()->showMessage(QString::fromUtf8("Session summary failed."), 5000);
         return;
     }
 
     m_bHasRetryableSessionSummary = false;
     m_nRetrySessionId = executionResult.m_context.m_nSessionId;
-    m_strAiStatusMessage = QString::fromUtf8("Session AI succeeded for session %1.").arg(executionResult.m_context.m_nSessionId);
+    const QString strSessionPreview = executionResult.m_aiResponse.m_strText.trimmed().isEmpty() ? executionResult.m_aiResponse.m_strRawResponse.trimmed() : executionResult.m_aiResponse.m_strText.trimmed();
+    m_strAiStatusMessage = uiText(QString::fromUtf8("Session AI ?????????????????%1"), QString::fromUtf8("Session AI completed. View or copy the current summary: %1")).arg(strSessionPreview.isEmpty() ? QString::number(executionResult.m_context.m_nSessionId) : strSessionPreview);
     updateAiStatusDisplay();
     updateActionState();
     showSessionSummary(executionResult.m_context.m_nSessionId);
-    statusBar()->showMessage(QString::fromUtf8("Session summary generated."), 5000);
+    focusSummaryEditor(m_pSessionSummaryTextEdit);
+    statusBar()->showMessage(uiText(QString::fromUtf8("Session ??????"), QString::fromUtf8("Session summary generated.")), 5000);
 }
 
 QString QCMainWindow::findSummaryFromAiRecords(const QVector<QCAiRecord>& vecAiRecords) const
@@ -1797,14 +1920,18 @@ bool QCMainWindow::startSnippetSummary(qint64 nSnippetId, bool bAutomatic)
     m_bSnippetSummaryRunning = true;
     m_bAutomaticSnippetSummary = bAutomatic;
     m_nRetrySnippetId = nSnippetId;
+    QCSnippet snippet;
+    const QString strSnippetTitle = (m_pSnippetService != nullptr && m_pSnippetService->getSnippetById(nSnippetId, &snippet) && !snippet.title().trimmed().isEmpty())
+        ? snippet.title().trimmed()
+        : QString::number(nSnippetId);
     m_strAiStatusMessage = bAutomatic
-        ? QString::fromUtf8("Image snippet AI started in background. Retry stays available if this run fails.")
-        : QString::fromUtf8("Snippet AI started in background. Retry stays available if this run fails.");
+        ? uiText(QString::fromUtf8("???? AI ???????%1"), QString::fromUtf8("Image snippet AI started in background: %1")).arg(strSnippetTitle)
+        : uiText(QString::fromUtf8("?? AI ???????%1"), QString::fromUtf8("Snippet AI started in background: %1")).arg(strSnippetTitle);
     updateAiStatusDisplay();
     updateActionState();
     statusBar()->showMessage(bAutomatic
-        ? QString::fromUtf8("Generating image snippet summary in background...")
-        : QString::fromUtf8("Generating snippet summary in background..."));
+        ? uiText(QString::fromUtf8("????????????..."), QString::fromUtf8("Generating image snippet summary in background..."))
+        : uiText(QString::fromUtf8("??????????..."), QString::fromUtf8("Generating snippet summary in background...")));
     m_pSnippetSummaryWatcher->setFuture(QtConcurrent::run(RunAiTaskInBackground,
                                                           m_pAiProcessService,
                                                           executionContext));
@@ -1840,7 +1967,7 @@ void QCMainWindow::handleSavedImageSnippet(qint64 nSessionId, qint64 nSnippetId,
 
 void QCMainWindow::refreshSnippetTagsDisplay(qint64 nSnippetId)
 {
-    m_pSnippetTagsValueLabel->setText(QString::fromUtf8("No tags."));
+    m_pSnippetTagsValueLabel->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("No tags.")));
 
     if (nSnippetId <= 0 || nullptr == m_pTagService)
         return;
@@ -1887,72 +2014,110 @@ void QCMainWindow::updateSnippetStateControls(const QCSnippet& snippet)
 }
 void QCMainWindow::onDuplicateSnippet()
 {
-    const QVector<qint64> vecSnippetIds = selectedSnippetIds();
+    QVector<qint64> vecSnippetIds = selectedSnippetIds();
     if (vecSnippetIds.isEmpty())
     {
-        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), QString::fromUtf8("Select one or more snippets first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("Select one or more snippets first.")));
         return;
     }
 
     const qint64 nTargetSessionId = currentSessionId();
     if (nTargetSessionId <= 0)
     {
-        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), QString::fromUtf8("Current session is invalid."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("???????"), QString::fromUtf8("Current session is invalid.")));
         return;
     }
 
-    QVector<qint64> vecNewSnippetIds;
+    QSet<qint64> setUniqueIds;
+    QVector<qint64> vecUniqueSnippetIds;
     for (int i = 0; i < vecSnippetIds.size(); ++i)
     {
-        qint64 nNewSnippetId = 0;
-        if (!m_pSnippetService->duplicateSnippet(vecSnippetIds.at(i), nTargetSessionId, &nNewSnippetId))
+        if (!setUniqueIds.contains(vecSnippetIds.at(i)))
         {
-            QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), m_pSnippetService->lastError());
-            return;
+            setUniqueIds.insert(vecSnippetIds.at(i));
+            vecUniqueSnippetIds.append(vecSnippetIds.at(i));
+        }
+    }
+
+    QVector<qint64> vecNewSnippetIds;
+    QStringList vecFailedIds;
+    int nTagCopyWarningCount = 0;
+    for (int i = 0; i < vecUniqueSnippetIds.size(); ++i)
+    {
+        qint64 nNewSnippetId = 0;
+        if (!m_pSnippetService->duplicateSnippet(vecUniqueSnippetIds.at(i), nTargetSessionId, &nNewSnippetId))
+        {
+            vecFailedIds.append(QString::number(vecUniqueSnippetIds.at(i)));
+            continue;
         }
 
         if (nullptr != m_pTagService)
         {
-            const QVector<QCTag> vecSourceTags = m_pTagService->listTagsBySnippet(vecSnippetIds.at(i));
-            if (!m_pTagService->lastError().isEmpty())
+            const QVector<QCTag> vecSourceTags = m_pTagService->listTagsBySnippet(vecUniqueSnippetIds.at(i));
+            if (m_pTagService->lastError().isEmpty())
             {
-                QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), m_pTagService->lastError());
-                return;
+                QVector<qint64> vecTagIds;
+                for (int j = 0; j < vecSourceTags.size(); ++j)
+                    vecTagIds.append(vecSourceTags.at(j).id());
+
+                if (!vecTagIds.isEmpty() && !m_pTagService->replaceSnippetTags(nNewSnippetId, vecTagIds))
+                    ++nTagCopyWarningCount;
             }
-
-            QVector<qint64> vecTagIds;
-            for (int j = 0; j < vecSourceTags.size(); ++j)
-                vecTagIds.append(vecSourceTags.at(j).id());
-
-            if (!vecTagIds.isEmpty() && !m_pTagService->replaceSnippetTags(nNewSnippetId, vecTagIds))
+            else
             {
-                QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), m_pTagService->lastError());
-                return;
+                ++nTagCopyWarningCount;
             }
         }
 
         vecNewSnippetIds.append(nNewSnippetId);
     }
 
+    if (vecNewSnippetIds.isEmpty())
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("?????????"), QString::fromUtf8("No snippets were duplicated.")));
+        return;
+    }
+
     loadSnippets(nTargetSessionId);
     selectSnippetsByIds(vecNewSnippetIds);
     onSnippetSelectionChanged();
-    statusBar()->showMessage(QString::fromUtf8("Duplicated %1 snippet(s).").arg(vecNewSnippetIds.size()), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??? %1 ????"), QString::fromUtf8("Duplicated %1 snippet(s).")).arg(vecNewSnippetIds.size()), 4000);
+
+    if (!vecFailedIds.isEmpty() || nTagCopyWarningCount > 0)
+    {
+        QStringList vecWarnings;
+        if (!vecFailedIds.isEmpty())
+            vecWarnings.append(uiText(QString::fromUtf8("??????? ID?%1"), QString::fromUtf8("Failed snippet ids: %1")).arg(vecFailedIds.join(QString::fromUtf8(", "))));
+        if (nTagCopyWarningCount > 0)
+            vecWarnings.append(uiText(QString::fromUtf8("? %1 ?????????????"), QString::fromUtf8("%1 duplicated snippet(s) did not copy tags completely.")).arg(nTagCopyWarningCount));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), vecWarnings.join(QString::fromUtf8("\n")));
+    }
 }
 
 void QCMainWindow::onMoveSnippet()
 {
-    const QVector<qint64> vecSnippetIds = selectedSnippetIds();
+    QVector<qint64> vecSnippetIds = selectedSnippetIds();
     if (vecSnippetIds.isEmpty())
     {
-        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), QString::fromUtf8("Select one or more snippets first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("Select one or more snippets first.")));
         return;
     }
 
     if (nullptr == m_pSnippetService || nullptr == m_pSessionService)
     {
-        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), QString::fromUtf8("Required services are unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Required services are unavailable.")));
         return;
+    }
+
+    QSet<qint64> setUniqueIds;
+    QVector<qint64> vecUniqueSnippetIds;
+    for (int i = 0; i < vecSnippetIds.size(); ++i)
+    {
+        if (!setUniqueIds.contains(vecSnippetIds.at(i)))
+        {
+            setUniqueIds.insert(vecSnippetIds.at(i));
+            vecUniqueSnippetIds.append(vecSnippetIds.at(i));
+        }
     }
 
     const qint64 nCurrentSessionId = currentSessionId();
@@ -1972,25 +2137,25 @@ void QCMainWindow::onMoveSnippet()
             continue;
 
         const QString strTitle = session.title().trimmed().isEmpty()
-            ? QString::fromUtf8("Untitled Session")
+            ? uiText(QString::fromUtf8("?????"), QString::fromUtf8("Untitled Session"))
             : session.title().trimmed();
         const QString strStatus = session.status() == QCSessionStatus::FinishedSessionStatus
-            ? QString::fromUtf8("Finished")
-            : QString::fromUtf8("Active");
+            ? uiText(QString::fromUtf8("???"), QString::fromUtf8("Finished"))
+            : uiText(QString::fromUtf8("???"), QString::fromUtf8("Active"));
         vecSessionLabels.append(QString::fromUtf8("%1 [%2]").arg(strTitle, strStatus));
         vecSessionIds.append(session.id());
     }
 
     if (vecSessionIds.isEmpty())
     {
-        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), QString::fromUtf8("No other session is available."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("No other session is available.")));
         return;
     }
 
     bool bAccepted = false;
     const QString strSelectedLabel = QInputDialog::getItem(this,
                                                            uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")),
-                                                           vecSnippetIds.size() > 1 ? QString::fromUtf8("Move selected snippets to session") : QString::fromUtf8("Move to session"),
+                                                           vecUniqueSnippetIds.size() > 1 ? uiText(QString::fromUtf8("???????????"), QString::fromUtf8("Move selected snippets to session")) : uiText(QString::fromUtf8("?????"), QString::fromUtf8("Move to session")),
                                                            vecSessionLabels,
                                                            0,
                                                            false,
@@ -2003,7 +2168,16 @@ void QCMainWindow::onMoveSnippet()
         return;
 
     const qint64 nTargetSessionId = vecSessionIds.at(nSelectedIndex);
-    if (!m_pSnippetService->moveSnippetsToSession(vecSnippetIds, nTargetSessionId))
+
+    int nAlreadyInTargetCount = 0;
+    for (int i = 0; i < vecUniqueSnippetIds.size(); ++i)
+    {
+        QCSnippet snippet;
+        if (m_pSnippetService->getSnippetById(vecUniqueSnippetIds.at(i), &snippet) && snippet.sessionId() == nTargetSessionId)
+            ++nAlreadyInTargetCount;
+    }
+
+    if (!m_pSnippetService->moveSnippetsToSession(vecUniqueSnippetIds, nTargetSessionId))
     {
         QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), m_pSnippetService->lastError());
         return;
@@ -2020,9 +2194,60 @@ void QCMainWindow::onMoveSnippet()
         }
     }
     loadSnippets(nTargetSessionId);
+    selectSnippetsByIds(vecUniqueSnippetIds);
+    onSnippetSelectionChanged();
+
+    statusBar()->showMessage(uiText(QString::fromUtf8("?? %1 ???????????"), QString::fromUtf8("Moved %1 snippet(s) to another session.")).arg(vecUniqueSnippetIds.size() - nAlreadyInTargetCount), 4000);
+    if (nAlreadyInTargetCount > 0)
+    {
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), uiText(QString::fromUtf8("? %1 ?????????????????"), QString::fromUtf8("%1 snippet(s) were already in the target session and were skipped.")).arg(nAlreadyInTargetCount));
+    }
+}
+
+void QCMainWindow::onClearSnippetTags()
+{
+    const QVector<qint64> vecSnippetIds = selectedSnippetIds();
+    if (vecSnippetIds.isEmpty())
+    {
+        QMessageBox::information(this, uiText(QString::fromUtf8("??????"), QString::fromUtf8("Clear Snippet Tags")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("Select one or more snippets first.")));
+        return;
+    }
+
+    if (nullptr == m_pTagService)
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("??????"), QString::fromUtf8("Clear Snippet Tags")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Tag service is unavailable.")));
+        return;
+    }
+
+    const QMessageBox::StandardButton button = QMessageBox::question(this,
+                                                                     uiText(QString::fromUtf8("??????"), QString::fromUtf8("Clear Snippet Tags")),
+                                                                     uiText(QString::fromUtf8("?????? %1 ???????????"), QString::fromUtf8("Clear all tags from %1 selected snippet(s)?")).arg(vecSnippetIds.size()),
+                                                                     QMessageBox::Yes | QMessageBox::No,
+                                                                     QMessageBox::No);
+    if (button != QMessageBox::Yes)
+        return;
+
+    int nUpdatedCount = 0;
+    QStringList vecFailedIds;
+    for (int i = 0; i < vecSnippetIds.size(); ++i)
+    {
+        if (m_pTagService->replaceSnippetTags(vecSnippetIds.at(i), QVector<qint64>()))
+            ++nUpdatedCount;
+        else
+            vecFailedIds.append(QString::number(vecSnippetIds.at(i)));
+    }
+
+    loadTagFilterOptions();
+    loadSnippets(currentSessionId());
     selectSnippetsByIds(vecSnippetIds);
     onSnippetSelectionChanged();
-    statusBar()->showMessage(QString::fromUtf8("Moved %1 snippet(s) to another session.").arg(vecSnippetIds.size()), 4000);
+
+    if (!vecFailedIds.isEmpty())
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("??????"), QString::fromUtf8("Clear Snippet Tags")), uiText(QString::fromUtf8("??? %1 ??????????????%2"), QString::fromUtf8("Cleared tags for %1 snippet(s), but these snippet ids failed: %2")).arg(nUpdatedCount).arg(vecFailedIds.join(QString::fromUtf8(", "))));
+    }
+
+    statusBar()->showMessage(uiText(QString::fromUtf8("??? %1 ???????"), QString::fromUtf8("Cleared tags for %1 snippet(s).")).arg(nUpdatedCount), 4000);
 }
 
 void QCMainWindow::onManageTags()
@@ -2095,35 +2320,36 @@ void QCMainWindow::onManageTags()
     loadSnippets(nSessionId);
     selectSnippetsByIds(vecSnippetIds);
     onSnippetSelectionChanged();
-    statusBar()->showMessage(QString::fromUtf8("Tags updated for %1 snippet(s).") .arg(vecSnippetIds.size()), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??? %1 ???????"), QString::fromUtf8("Tags updated for %1 snippet(s).")).arg(vecSnippetIds.size()), 4000);
 }
 
 void QCMainWindow::onOpenTagLibrary()
 {
     if (nullptr == m_pTagService)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Tag Library"), QString::fromUtf8("Tag service is unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Tag service is unavailable.")));
         return;
     }
 
     const QVector<QCTag> vecAvailableTags = m_pTagService->listTags();
     if (!m_pTagService->lastError().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("Tag Library"), m_pTagService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")), m_pTagService->lastError());
         return;
     }
 
     const QHash<qint64, int> hashUsageCounts = buildTagUsageCounts(vecAvailableTags);
     if (!m_pTagService->lastError().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("Tag Library"), m_pTagService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")), m_pTagService->lastError());
         return;
     }
 
     QCSnippetTagDialog dialog(this);
-    dialog.setWindowTitle(QString::fromUtf8("Tag Library"));
+    dialog.setWindowTitle(uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")));
     dialog.setBindingEnabled(false);
-    dialog.setContextText(QString::fromUtf8("Manage reusable tags here. Usage counts show how many snippets currently reference each tag."));
+    dialog.setContextText(uiText(QString::fromUtf8("?????????????????????? snippet ????????"),
+                                 QString::fromUtf8("Manage reusable tags here. Usage counts show how many snippets currently reference each tag.")));
     dialog.setAvailableTags(vecAvailableTags);
     dialog.setTagUsageCounts(hashUsageCounts);
     if (QDialog::Accepted != dialog.exec())
@@ -2131,13 +2357,13 @@ void QCMainWindow::onOpenTagLibrary()
 
     qint64 nCreatedTagId = 0;
     QVector<qint64> vecDeletedTagIds;
-    if (!applyTagDialogChanges(dialog, &nCreatedTagId, &vecDeletedTagIds, QString::fromUtf8("Tag Library")))
+    if (!applyTagDialogChanges(dialog, &nCreatedTagId, &vecDeletedTagIds, uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library"))))
         return;
 
     loadTagFilterOptions();
     applySnippetFilters();
     onSnippetSelectionChanged();
-    statusBar()->showMessage(QString::fromUtf8("Tag library updated."), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("???????"), QString::fromUtf8("Tag library updated.")), 4000);
 }
 
 void QCMainWindow::onDeleteSnippet()
@@ -2171,7 +2397,7 @@ void QCMainWindow::onDeleteSnippet()
     }
 
     loadSnippets(nSessionId);
-    statusBar()->showMessage(QString::fromUtf8("Deleted %1 snippet(s).").arg(vecSnippetIds.size()), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??? %1 ????"), QString::fromUtf8("Deleted %1 snippet(s).")).arg(vecSnippetIds.size()), 4000);
 }
 
 void QCMainWindow::onToggleArchiveSnippet()
@@ -2219,14 +2445,14 @@ void QCMainWindow::onDeleteSession()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Delete Session"), QString::fromUtf8("Select a session first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Delete Session")), uiText(QString::fromUtf8("?????? Session?"), QString::fromUtf8("Select a session first.")));
         return;
     }
 
     QCStudySession session;
     if (!m_pSessionService->getSessionById(nSessionId, &session))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Delete Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Delete Session")), m_pSessionService->lastError());
         return;
     }
 
@@ -2242,12 +2468,12 @@ void QCMainWindow::onDeleteSession()
 
     if (!m_pSessionService->deleteSession(nSessionId))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Delete Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Delete Session")), m_pSessionService->lastError());
         return;
     }
 
     loadSessions();
-    statusBar()->showMessage(QString::fromUtf8("Session deleted."), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Session deleted.")), 4000);
 }
 
 void QCMainWindow::onSessionSelectionChanged()
@@ -2270,9 +2496,9 @@ void QCMainWindow::onSnippetSelectionChanged()
     if (vecSnippetIds.size() > 1)
     {
         m_pSnippetTitleValueLabel->setText(QString::fromUtf8("%1 snippets selected.").arg(vecSnippetIds.size()));
-        m_pSnippetTagsValueLabel->setText(QString::fromUtf8("Batch organize and batch tag actions are available from the toolbar, menus, and right-click menu."));
-        m_pSnippetNoteTextEdit->setPlainText(QString::fromUtf8("Use Duplicate, Move, Tag, Archive/Restore, or Delete for batch organization."));
-        m_pSnippetContentTextEdit->setPlainText(QString::fromUtf8("Edit and Summarize stay single-snippet actions. Session actions remain available from the session list and menu bar."));
+        m_pSnippetTagsValueLabel->setText(uiText(QString::fromUtf8("?????????????????????????/??????"), QString::fromUtf8("Available batch actions: tag, clear tags, move, duplicate, archive/restore, and delete.")));
+        m_pSnippetNoteTextEdit->setPlainText(uiText(QString::fromUtf8("???????????????????????"), QString::fromUtf8("Batch mode keeps the current selection and focuses on organize actions.")));
+        m_pSnippetContentTextEdit->setPlainText(uiText(QString::fromUtf8("??????????????????????????????????"), QString::fromUtf8("Edit and summarize stay single-snippet actions. Session actions remain available from the session list and menu bar.")));
     }
     updateActionState();
 }
@@ -2305,7 +2531,25 @@ void QCMainWindow::onClearSearch()
     if (nullptr != m_pSearchHistoryComboBox)
         m_pSearchHistoryComboBox->setCurrentIndex(0);
     applySnippetFilters();
-    statusBar()->showMessage(QString::fromUtf8("Search cleared."), 3000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Search cleared.")), 3000);
+}
+
+void QCMainWindow::onClearSearchHistory()
+{
+    if (nullptr == m_pSettingsService)
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Search History")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Settings service is unavailable.")));
+        return;
+    }
+
+    if (!m_pSettingsService->setSnippetSearchHistory(QStringList()))
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Search History")), m_pSettingsService->lastError());
+        return;
+    }
+
+    loadSearchHistoryOptions();
+    statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Search history cleared.")), 3000);
 }
 
 void QCMainWindow::restoreDefaultFilters()
@@ -2330,7 +2574,7 @@ void QCMainWindow::onResetFilters()
 {
     restoreDefaultFilters();
     applySnippetFilters();
-    statusBar()->showMessage(QString::fromUtf8("Filters reset."), 3000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Filters reset.")), 3000);
 }
 
 void QCMainWindow::onFavoriteToggled(bool bChecked)
@@ -2434,7 +2678,7 @@ void QCMainWindow::onCreateSession()
         if (pItem->data(Qt::UserRole).toLongLong() == session.id())
         {
             m_pSessionListWidget->setCurrentItem(pItem);
-            statusBar()->showMessage(QString::fromUtf8("Session created."), 4000);
+            statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Session created.")), 4000);
             break;
         }
     }
@@ -2445,19 +2689,19 @@ void QCMainWindow::onEditSession()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Edit Session"), QString::fromUtf8("Select a session first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Edit Session")), uiText(QString::fromUtf8("?????? Session?"), QString::fromUtf8("Select a session first.")));
         return;
     }
 
     QCStudySession session;
     if (!m_pSessionService->getSessionById(nSessionId, &session))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Edit Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Edit Session")), m_pSessionService->lastError());
         return;
     }
 
     QCCreateSessionDialog dialog(this);
-    dialog.setWindowTitle(QString::fromUtf8("Edit Session"));
+    dialog.setWindowTitle(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Edit Session")));
     dialog.setTitle(session.title());
     dialog.setCourseName(session.courseName());
     dialog.setDescription(session.description());
@@ -2469,12 +2713,12 @@ void QCMainWindow::onEditSession()
     session.setDescription(dialog.description());
     if (!m_pSessionService->updateSession(&session))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Edit Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Edit Session")), m_pSessionService->lastError());
         return;
     }
 
     loadSessions();
-    statusBar()->showMessage(QString::fromUtf8("Session updated."), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Session updated.")), 4000);
 }
 
 void QCMainWindow::onFinishSession()
@@ -2482,20 +2726,20 @@ void QCMainWindow::onFinishSession()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Finish Session"), QString::fromUtf8("Select a session first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Finish Session")), uiText(QString::fromUtf8("?????? Session?"), QString::fromUtf8("Select a session first.")));
         return;
     }
 
     QCStudySession session;
     if (!m_pSessionService->getSessionById(nSessionId, &session))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Finish Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Finish Session")), m_pSessionService->lastError());
         return;
     }
 
     if (session.status() == QCSessionStatus::FinishedSessionStatus)
     {
-        QMessageBox::information(this, QString::fromUtf8("Finish Session"), QString::fromUtf8("The selected session is already finished."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Finish Session")), uiText(QString::fromUtf8("????? Session ?????"), QString::fromUtf8("The selected session is already finished.")));
         return;
     }
 
@@ -2511,12 +2755,12 @@ void QCMainWindow::onFinishSession()
 
     if (!m_pSessionService->finishSession(nSessionId, QDateTime::currentDateTimeUtc()))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Finish Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Finish Session")), m_pSessionService->lastError());
         return;
     }
 
     loadSessions();
-    statusBar()->showMessage(QString::fromUtf8("Session finished."), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Session finished.")), 4000);
 }
 
 void QCMainWindow::onReopenSession()
@@ -2524,20 +2768,20 @@ void QCMainWindow::onReopenSession()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Reopen Session"), QString::fromUtf8("Select a session first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("???? Session"), QString::fromUtf8("Reopen Session")), uiText(QString::fromUtf8("?????? Session?"), QString::fromUtf8("Select a session first.")));
         return;
     }
 
     QCStudySession session;
     if (!m_pSessionService->getSessionById(nSessionId, &session))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Reopen Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("???? Session"), QString::fromUtf8("Reopen Session")), m_pSessionService->lastError());
         return;
     }
 
     if (session.status() == QCSessionStatus::ActiveSessionStatus)
     {
-        QMessageBox::information(this, QString::fromUtf8("Reopen Session"), QString::fromUtf8("The selected session is already active."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("???? Session"), QString::fromUtf8("Reopen Session")), uiText(QString::fromUtf8("????? Session ?????????"), QString::fromUtf8("The selected session is already active.")));
         return;
     }
 
@@ -2545,12 +2789,12 @@ void QCMainWindow::onReopenSession()
     session.setEndedAt(QDateTime());
     if (!m_pSessionService->updateSession(&session))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Reopen Session"), m_pSessionService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("???? Session"), QString::fromUtf8("Reopen Session")), m_pSessionService->lastError());
         return;
     }
 
     loadSessions();
-    statusBar()->showMessage(QString::fromUtf8("Session reopened."), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Session reopened.")), 4000);
 }
 
 void QCMainWindow::onEditCurrentItem()
@@ -2570,7 +2814,7 @@ void QCMainWindow::onCreateTextSnippet()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("New Text Snippet"), QString::fromUtf8("Select a session first before creating a text snippet."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("??????"), QString::fromUtf8("New Text Snippet")), uiText(QString::fromUtf8("????????????? Session?"), QString::fromUtf8("Select a session first before creating a text snippet.")));
         return;
     }
 
@@ -2591,36 +2835,36 @@ void QCMainWindow::onCreateTextSnippet()
 
     if (!m_pSnippetService->createTextSnippet(&snippet))
     {
-        QMessageBox::warning(this, QString::fromUtf8("New Text Snippet"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("??????"), QString::fromUtf8("New Text Snippet")), m_pSnippetService->lastError());
         return;
     }
 
     loadSnippets(nSessionId);
     if (!selectSnippetById(snippet.id()))
-        QMessageBox::warning(this, QString::fromUtf8("New Text Snippet"), QString::fromUtf8("Snippet was saved, but automatic selection failed."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("??????"), QString::fromUtf8("New Text Snippet")), uiText(QString::fromUtf8("??????????????"), QString::fromUtf8("Snippet was saved, but automatic selection failed.")));
     else
-        statusBar()->showMessage(QString::fromUtf8("Text snippet created."), 4000);
+        statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Text snippet created.")), 4000);
 }
 
 void QCMainWindow::onEditSnippet()
 {
     if (!hasSingleSelectedSnippet())
     {
-        QMessageBox::information(this, QString::fromUtf8("Edit Snippet"), QString::fromUtf8("Select exactly one snippet first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Snippet")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("Select exactly one snippet first.")));
         return;
     }
 
     QCSnippet snippet;
     if (!currentSnippetForAction(&snippet))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Edit Snippet"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Snippet")), m_pSnippetService->lastError());
         return;
     }
 
     if (snippet.type() == QCSnippetType::TextSnippetType)
     {
         QCCreateTextSnippetDialog dialog(this);
-        dialog.setWindowTitle(QString::fromUtf8("Edit Text Snippet"));
+        dialog.setWindowTitle(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Edit Text Snippet")));
         dialog.setTitle(snippet.title());
         dialog.setNote(snippet.note());
         dialog.setContent(snippet.contentText());
@@ -2636,12 +2880,12 @@ void QCMainWindow::onEditSnippet()
         QCAttachment primaryAttachment;
         if (!m_pSnippetService->getPrimaryAttachmentBySnippetId(snippet.id(), &primaryAttachment))
         {
-            QMessageBox::warning(this, QString::fromUtf8("Edit Snippet"), m_pSnippetService->lastError());
+            QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Snippet")), m_pSnippetService->lastError());
             return;
         }
 
         QCQuickCaptureDialog dialog(primaryAttachment.filePath(), this);
-        dialog.setWindowTitle(QString::fromUtf8("Edit Image Snippet"));
+        dialog.setWindowTitle(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Edit Image Snippet")));
         dialog.setTitle(snippet.title());
         dialog.setNote(snippet.note());
         if (QDialog::Accepted != dialog.exec())
@@ -2652,13 +2896,13 @@ void QCMainWindow::onEditSnippet()
     }
     else
     {
-        QMessageBox::information(this, QString::fromUtf8("Edit Snippet"), QString::fromUtf8("Editing is currently available for text and image snippets."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Snippet")), uiText(QString::fromUtf8("?????????????????"), QString::fromUtf8("Editing is currently available for text and image snippets.")));
         return;
     }
 
     if (!m_pSnippetService->updateSnippet(&snippet))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Edit Snippet"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Edit Snippet")), m_pSnippetService->lastError());
         return;
     }
 
@@ -2666,7 +2910,7 @@ void QCMainWindow::onEditSnippet()
     if (selectSnippetById(snippet.id()))
         showSnippetDetails(snippet.id());
 
-    statusBar()->showMessage(QString::fromUtf8("Snippet updated."), 4000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Snippet updated.")), 4000);
 }
 
 void QCMainWindow::onCaptureScreen()
@@ -2674,29 +2918,29 @@ void QCMainWindow::onCaptureScreen()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Capture Screen"), QString::fromUtf8("Select a session first before capturing the screen."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Screen")), uiText(QString::fromUtf8("??????????? Session?"), QString::fromUtf8("Select a session first before capturing the screen.")));
         return;
     }
 
     if (nullptr == m_pScreenCaptureService)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Capture Screen"), QString::fromUtf8("Screen capture service is unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Screen")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Screen capture service is unavailable.")));
         return;
     }
 
-    statusBar()->showMessage(QString::fromUtf8("Capturing primary screen..."));
+    statusBar()->showMessage(uiText(QString::fromUtf8("???????..."), QString::fromUtf8("Capturing primary screen...")));
     QCScreenCaptureResult captureResult;
     if (!captureScreenToFile(&captureResult))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Capture Screen"), m_pScreenCaptureService->lastError());
-        statusBar()->showMessage(QString::fromUtf8("Screen capture failed."), 4000);
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Screen")), m_pScreenCaptureService->lastError());
+        statusBar()->showMessage(uiText(QString::fromUtf8("???????"), QString::fromUtf8("Screen capture failed.")), 4000);
         return;
     }
 
     QCQuickCaptureDialog dialog(captureResult.m_strFilePath, this);
     if (QDialog::Accepted != dialog.exec())
     {
-        statusBar()->showMessage(QString::fromUtf8("Screen capture cancelled."), 3000);
+        statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Screen capture cancelled.")), 3000);
         return;
     }
 
@@ -2722,7 +2966,7 @@ void QCMainWindow::onCaptureScreen()
     if (!m_pSnippetService->createImageSnippetWithPrimaryAttachment(&snippet, &primaryAttachment))
     {
         QMessageBox::warning(this, QString::fromUtf8("Capture Screen"), m_pSnippetService->lastError());
-        statusBar()->showMessage(QString::fromUtf8("Captured image could not be saved."), 5000);
+        statusBar()->showMessage(uiText(QString::fromUtf8("???????"), QString::fromUtf8("Captured image could not be saved.")), 5000);
         return;
     }
 
@@ -2733,17 +2977,17 @@ void QCMainWindow::onCaptureRegion()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Capture Region"), QString::fromUtf8("Select a session first before capturing a region."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Region")), uiText(QString::fromUtf8("??????????? Session?"), QString::fromUtf8("Select a session first before capturing a region.")));
         return;
     }
 
     if (nullptr == m_pScreenCaptureService)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Capture Region"), QString::fromUtf8("Screen capture service is unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Region")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Screen capture service is unavailable.")));
         return;
     }
 
-    statusBar()->showMessage(QString::fromUtf8("Select a capture region on the primary screen..."));
+    statusBar()->showMessage(uiText(QString::fromUtf8("????????????..."), QString::fromUtf8("Select a capture region on the primary screen...")));
     QCScreenCaptureResult captureResult;
     bool bCancelled = false;
     QString strCaptureFailureMessage;
@@ -2751,19 +2995,19 @@ void QCMainWindow::onCaptureRegion()
     {
         if (bCancelled)
         {
-            statusBar()->showMessage(QString::fromUtf8("Region capture cancelled."), 3000);
+            statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Region capture cancelled.")), 3000);
             return;
         }
 
         const QString strMessage = strCaptureFailureMessage.trimmed().isEmpty()
             ? QString::fromUtf8("Region capture failed.")
             : strCaptureFailureMessage;
-        QMessageBox::warning(this, QString::fromUtf8("Capture Region"), strMessage);
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Region")), strMessage);
         statusBar()->showMessage(strMessage, 4000);
         return;
     }
 
-    statusBar()->showMessage(QString::fromUtf8("Region captured: %1 x %2").arg(captureResult.m_nWidth).arg(captureResult.m_nHeight), 3000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("???????%1 x %2"), QString::fromUtf8("Region captured: %1 x %2")).arg(captureResult.m_nWidth).arg(captureResult.m_nHeight), 3000);
 
     QCQuickCaptureDialog dialog(captureResult.m_strFilePath, this);
     if (QDialog::Accepted != dialog.exec())
@@ -2794,7 +3038,7 @@ void QCMainWindow::onCaptureRegion()
     if (!m_pSnippetService->createImageSnippetWithPrimaryAttachment(&snippet, &primaryAttachment))
     {
         QMessageBox::warning(this, QString::fromUtf8("Capture Region"), m_pSnippetService->lastError());
-        statusBar()->showMessage(QString::fromUtf8("Region image could not be saved."), 5000);
+        statusBar()->showMessage(uiText(QString::fromUtf8("?????????"), QString::fromUtf8("Region image could not be saved.")), 5000);
         return;
     }
 
@@ -2806,7 +3050,7 @@ void QCMainWindow::onImportImageSnippet()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Import Image"), QString::fromUtf8("Select a session first before importing an image."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Import Image")), uiText(QString::fromUtf8("??????????? Session?"), QString::fromUtf8("Select a session first before importing an image.")));
         return;
     }
 
@@ -2831,14 +3075,14 @@ void QCMainWindow::onImportImageSnippet()
     {
         if (nullptr == m_pScreenCaptureService)
         {
-            QMessageBox::warning(this, QString::fromUtf8("Import Image"), QString::fromUtf8("Screen capture service is unavailable."));
+            QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Import Image")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Screen capture service is unavailable.")));
             return;
         }
 
         QString strCopiedFilePath;
         if (!m_pScreenCaptureService->copyImportedImageToCaptureDirectory(dialog.filePath(), &strCopiedFilePath))
         {
-            QMessageBox::warning(this, QString::fromUtf8("Import Image"), m_pScreenCaptureService->lastError());
+            QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Import Image")), m_pScreenCaptureService->lastError());
             return;
         }
 
@@ -2862,14 +3106,14 @@ void QCMainWindow::onImportImageSnippet()
 
     if (!m_pSnippetService->createImageSnippetWithPrimaryAttachment(&snippet, &primaryAttachment))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Import Image"), m_pSnippetService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Import Image")), m_pSnippetService->lastError());
         return;
     }
 
     handleSavedImageSnippet(nSessionId, snippet.id(), QString::fromUtf8("Imported image saved."));
     if (dialog.shouldCopyImportedImageToDefaultCaptureDirectory())
     {
-        statusBar()->showMessage(QString::fromUtf8("Imported image saved using copied file: %1").arg(strAttachmentFilePath), 6000);
+        statusBar()->showMessage(uiText(QString::fromUtf8("????????????????%1"), QString::fromUtf8("Imported image saved using copied file: %1")).arg(strAttachmentFilePath), 6000);
     }
 }
 
@@ -2889,14 +3133,14 @@ void QCMainWindow::onSummarizeSnippet()
 {
     if (!hasSingleSelectedSnippet())
     {
-        QMessageBox::information(this, QString::fromUtf8("Summarize Snippet"), QString::fromUtf8("Select exactly one snippet first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Snippet")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("Select exactly one snippet first.")));
         return;
     }
 
     const qint64 nSnippetId = selectedSnippetIds().first();
     if (nullptr == m_pAiProcessService)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Summarize Snippet"), QString::fromUtf8("AI process service is unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Snippet")), uiText(QString::fromUtf8("AI ????????"), QString::fromUtf8("AI process service is unavailable.")));
         return;
     }
 
@@ -2916,29 +3160,29 @@ void QCMainWindow::onSummarizeSession()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Summarize Session"), QString::fromUtf8("Select a session first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Session")), uiText(QString::fromUtf8("?????????"), QString::fromUtf8("Select a session first.")));
         return;
     }
 
     if (nullptr == m_pAiProcessService)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Summarize Session"), QString::fromUtf8("AI process service is unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Session")), uiText(QString::fromUtf8("AI ????????"), QString::fromUtf8("AI process service is unavailable.")));
         return;
     }
 
     QCAiTaskExecutionContext executionContext;
     if (!m_pAiProcessService->prepareSessionSummary(nSessionId, &executionContext))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Summarize Session"), m_pAiProcessService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Session")), m_pAiProcessService->lastError());
         return;
     }
 
     m_bSessionSummaryRunning = true;
     m_nRetrySessionId = nSessionId;
-    m_strAiStatusMessage = QString::fromUtf8("Session AI started in background. Retry stays available if this run fails.");
+    m_strAiStatusMessage = uiText(QString::fromUtf8("?? AI ????????????????"), QString::fromUtf8("Session AI started in background. Retry stays available if this run fails."));
     updateAiStatusDisplay();
     updateActionState();
-    statusBar()->showMessage(QString::fromUtf8("Generating session summary in background..."));
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????????..."), QString::fromUtf8("Generating session summary in background...")));
     m_pSessionSummaryWatcher->setFuture(QtConcurrent::run(RunAiTaskInBackground,
                                                           m_pAiProcessService,
                                                           executionContext));
@@ -2953,7 +3197,7 @@ void QCMainWindow::onRetrySnippetSummary()
     {
         const QString strErrorMessage = (nullptr != m_pAiProcessService) ? m_pAiProcessService->lastError() : QString();
         if (!strErrorMessage.trimmed().isEmpty())
-            QMessageBox::warning(this, QString::fromUtf8("Retry Snippet AI"), strErrorMessage);
+            QMessageBox::warning(this, uiText(QString::fromUtf8("???? AI"), QString::fromUtf8("Retry Snippet AI")), strErrorMessage);
     }
 }
 
@@ -2968,25 +3212,63 @@ void QCMainWindow::onRetrySessionSummary()
     QCAiTaskExecutionContext executionContext;
     if (!m_pAiProcessService->prepareSessionSummary(m_nRetrySessionId, &executionContext))
     {
-        QMessageBox::warning(this, QString::fromUtf8("Retry Session AI"), m_pAiProcessService->lastError());
+        QMessageBox::warning(this, uiText(QString::fromUtf8("?? Session AI"), QString::fromUtf8("Retry Session AI")), m_pAiProcessService->lastError());
         return;
     }
 
     m_bSessionSummaryRunning = true;
-    m_strAiStatusMessage = QString::fromUtf8("Session AI retry started in background.");
+    m_strAiStatusMessage = uiText(QString::fromUtf8("?? AI ?????????"), QString::fromUtf8("Session AI retry started in background."));
     updateAiStatusDisplay();
     updateActionState();
-    statusBar()->showMessage(QString::fromUtf8("Retrying session summary in background..."));
+    statusBar()->showMessage(uiText(QString::fromUtf8("??????????..."), QString::fromUtf8("Retrying session summary in background...")));
     m_pSessionSummaryWatcher->setFuture(QtConcurrent::run(RunAiTaskInBackground,
                                                           m_pAiProcessService,
                                                           executionContext));
+}
+
+void QCMainWindow::onViewSnippetSummary()
+{
+    if (currentSnippetSummaryText().isEmpty())
+        return;
+
+    focusSummaryEditor(m_pSnippetSummaryTextEdit);
+    statusBar()->showMessage(uiText(QString::fromUtf8("?????????"), QString::fromUtf8("Focused snippet summary.")), 2500);
+}
+
+void QCMainWindow::onCopySnippetSummary()
+{
+    const QString strSummary = currentSnippetSummaryText();
+    if (strSummary.isEmpty())
+        return;
+
+    QGuiApplication::clipboard()->setText(strSummary);
+    statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Snippet summary copied.")), 2500);
+}
+
+void QCMainWindow::onViewSessionSummary()
+{
+    if (currentSessionSummaryText().isEmpty())
+        return;
+
+    focusSummaryEditor(m_pSessionSummaryTextEdit);
+    statusBar()->showMessage(uiText(QString::fromUtf8("???? Session ???"), QString::fromUtf8("Focused session summary.")), 2500);
+}
+
+void QCMainWindow::onCopySessionSummary()
+{
+    const QString strSummary = currentSessionSummaryText();
+    if (strSummary.isEmpty())
+        return;
+
+    QGuiApplication::clipboard()->setText(strSummary);
+    statusBar()->showMessage(uiText(QString::fromUtf8("Session ??????"), QString::fromUtf8("Session summary copied.")), 2500);
 }
 
 void QCMainWindow::onAiSettings()
 {
     if (nullptr == m_pSettingsService)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Settings"), QString::fromUtf8("Settings service is unavailable."));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("??"), QString::fromUtf8("Settings")), uiText(QString::fromUtf8("????????"), QString::fromUtf8("Settings service is unavailable.")));
         return;
     }
 
@@ -3070,6 +3352,7 @@ void QCMainWindow::onAiSettings()
     m_strAppLanguage = dialog.appLanguage();
     qApp->setProperty("qtclip.uiLanguage", m_strAppLanguage);
     applyLocalizedTexts();
+    loadSessions();
     updateSelectionContextDisplay();
     updateActionState();
 
@@ -3099,67 +3382,106 @@ void QCMainWindow::onExportMarkdown()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, QString::fromUtf8("Export Markdown"), QString::fromUtf8("Select a session first."));
+        QMessageBox::information(this, uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")), uiText(QString::fromUtf8("?????? Session?"), QString::fromUtf8("Select a session first.")));
         return;
     }
+
+    QStringList vecScopeLabels;
+    QStringList vecScopeKeys;
+    vecScopeLabels.append(uiText(QString::fromUtf8("?? Session"), QString::fromUtf8("Current Session")));
+    vecScopeKeys.append(QString::fromUtf8("session"));
+
+    const QVector<qint64> vecSelectedSnippetIds = selectedSnippetIds();
+    if (!vecSelectedSnippetIds.isEmpty())
+    {
+        vecScopeLabels.append(uiText(QString::fromUtf8("?? Snippet?%1?"), QString::fromUtf8("Selected Snippets (%1)")).arg(vecSelectedSnippetIds.size()));
+        vecScopeKeys.append(QString::fromUtf8("selected"));
+    }
+
+    QVector<qint64> vecVisibleSnippetIds;
+    if (nullptr != m_pSnippetListWidget)
+    {
+        for (int i = 0; i < m_pSnippetListWidget->count(); ++i)
+        {
+            QListWidgetItem *pItem = m_pSnippetListWidget->item(i);
+            if (nullptr != pItem)
+                vecVisibleSnippetIds.append(pItem->data(Qt::UserRole).toLongLong());
+        }
+    }
+    if (!vecVisibleSnippetIds.isEmpty())
+    {
+        vecScopeLabels.append(uiText(QString::fromUtf8("???????%1?"), QString::fromUtf8("Visible Snippets (%1)")).arg(vecVisibleSnippetIds.size()));
+        vecScopeKeys.append(QString::fromUtf8("visible"));
+    }
+
+    bool bAccepted = false;
+    const QString strScopeLabel = QInputDialog::getItem(this,
+                                                        uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")),
+                                                        uiText(QString::fromUtf8("????"), QString::fromUtf8("Export Scope")),
+                                                        vecScopeLabels,
+                                                        0,
+                                                        false,
+                                                        &bAccepted);
+    if (!bAccepted || strScopeLabel.trimmed().isEmpty())
+        return;
+
+    const int nScopeIndex = vecScopeLabels.indexOf(strScopeLabel);
+    const QString strScopeKey = (nScopeIndex >= 0 && nScopeIndex < vecScopeKeys.size()) ? vecScopeKeys.at(nScopeIndex) : QString::fromUtf8("session");
+    const QVector<qint64> vecExportSnippetIds = strScopeKey == QString::fromUtf8("selected")
+        ? vecSelectedSnippetIds
+        : (strScopeKey == QString::fromUtf8("visible") ? vecVisibleSnippetIds : QVector<qint64>());
 
     QString strExportDirectory;
     if (nullptr != m_pSettingsService)
         m_pSettingsService->getExportDirectory(&strExportDirectory);
 
     QString strSuggestedFileName = QString::fromUtf8("qtclip_export.md");
-    if (nullptr != m_pMdExportService)
+    QCMdExportPreview exportPreview;
+    const bool bPreviewReady = (nullptr != m_pMdExportService)
+        && (vecExportSnippetIds.isEmpty()
+            ? m_pMdExportService->buildExportPreview(nSessionId, &exportPreview)
+            : m_pMdExportService->buildExportPreviewForSnippets(nSessionId, vecExportSnippetIds, &exportPreview));
+    if (!bPreviewReady)
     {
-        QCMdExportPreview exportPreview;
-        if (m_pMdExportService->buildExportPreview(nSessionId, &exportPreview))
-        {
-            QString strBaseName = exportPreview.m_strSessionTitle.trimmed();
-            if (strBaseName.isEmpty())
-                strBaseName = QString::fromUtf8("qtclip_export");
+        QMessageBox::warning(this,
+                             uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")),
+                             uiText(QString::fromUtf8("?????????\n%1"), QString::fromUtf8("Unable to build export preview:\n%1")).arg(m_pMdExportService != nullptr ? m_pMdExportService->lastError() : uiText(QString::fromUtf8("????????"), QString::fromUtf8("Export service is unavailable."))));
+        return;
+    }
 
-            strBaseName.replace(QRegularExpression(QString::fromUtf8("[^A-Za-z0-9_-]+")),
-                                QString::fromUtf8("_"));
-            strBaseName.replace(QRegularExpression(QString::fromUtf8("_+")),
-                                QString::fromUtf8("_"));
-            strBaseName = strBaseName.trimmed();
-            if (strBaseName.isEmpty())
-                strBaseName = QString::fromUtf8("qtclip_export");
+    QString strBaseName = exportPreview.m_strSessionTitle.trimmed();
+    if (strBaseName.isEmpty())
+        strBaseName = QString::fromUtf8("qtclip_export");
+    if (strScopeKey == QString::fromUtf8("selected"))
+        strBaseName += QString::fromUtf8("_selected");
+    else if (strScopeKey == QString::fromUtf8("visible"))
+        strBaseName += QString::fromUtf8("_visible");
+    strBaseName.replace(QRegularExpression(QString::fromUtf8("[^A-Za-z0-9_-]+")), QString::fromUtf8("_"));
+    strBaseName.replace(QRegularExpression(QString::fromUtf8("_+")), QString::fromUtf8("_"));
+    strBaseName = strBaseName.trimmed();
+    if (strBaseName.isEmpty())
+        strBaseName = QString::fromUtf8("qtclip_export");
+    strSuggestedFileName = strBaseName + QString::fromUtf8(".md");
 
-            strSuggestedFileName = strBaseName + QString::fromUtf8(".md");
-
-            const QString strPreviewText = QString::fromUtf8(
-                                               "Session: %1\n"
-                                               "Course: %2\n"
-                                               "Snippets: %3\n"
-                                               "Image snippets: %4\n"
-                                               "Archived snippets: %5\n"
-                                               "Favorite snippets: %6\n"
-                                               "Summarized snippets: %7\n"
-                                               "Session summary: %8\n\n"
-                                               "Continue to choose an export file path?")
-                                               .arg(exportPreview.m_strSessionTitle.trimmed().isEmpty()
-                                                        ? QString::fromUtf8("Untitled Session")
-                                                        : exportPreview.m_strSessionTitle.trimmed())
-                                               .arg(exportPreview.m_strCourseName.trimmed().isEmpty()
-                                                        ? QString::fromUtf8("N/A")
-                                                        : exportPreview.m_strCourseName.trimmed())
-                                               .arg(exportPreview.m_nSnippetCount)
-                                               .arg(exportPreview.m_nImageSnippetCount)
-                                               .arg(exportPreview.m_nArchivedSnippetCount)
-                                               .arg(exportPreview.m_nFavoriteSnippetCount)
-                                               .arg(exportPreview.m_nSummarizedSnippetCount)
-                                               .arg(exportPreview.m_bHasSessionSummary
-                                                        ? QString::fromUtf8("Available")
-                                                        : QString::fromUtf8("Not available"));
-            if (QMessageBox::Yes != QMessageBox::question(this,
-                                                          QString::fromUtf8("Export Markdown"),
-                                                          strPreviewText,
-                                                          QMessageBox::Yes | QMessageBox::Cancel,
-                                                          QMessageBox::Yes))
-            {
-                return;
-            }
-        }
+    const QString strPreviewText = uiText(
+        QString::fromUtf8("??: %1\nSession: %2\n??: %3\nSnippet ?: %4\n?? Snippet: %5\n?? Snippet: %6\n?? Snippet: %7\n????? Snippet: %8\nSession ??: %9\n\n??????????"),
+        QString::fromUtf8("Scope: %1\nSession: %2\nCourse: %3\nSnippets: %4\nImage snippets: %5\nArchived snippets: %6\nFavorite snippets: %7\nSummarized snippets: %8\nSession summary: %9\n\nContinue to choose an export file path?"))
+        .arg(strScopeLabel)
+        .arg(exportPreview.m_strSessionTitle.trimmed().isEmpty() ? uiText(QString::fromUtf8("??? Session"), QString::fromUtf8("Untitled Session")) : exportPreview.m_strSessionTitle.trimmed())
+        .arg(exportPreview.m_strCourseName.trimmed().isEmpty() ? uiText(QString::fromUtf8("???"), QString::fromUtf8("N/A")) : exportPreview.m_strCourseName.trimmed())
+        .arg(exportPreview.m_nSnippetCount)
+        .arg(exportPreview.m_nImageSnippetCount)
+        .arg(exportPreview.m_nArchivedSnippetCount)
+        .arg(exportPreview.m_nFavoriteSnippetCount)
+        .arg(exportPreview.m_nSummarizedSnippetCount)
+        .arg(exportPreview.m_bHasSessionSummary ? uiText(QString::fromUtf8("?"), QString::fromUtf8("Available")) : uiText(QString::fromUtf8("?"), QString::fromUtf8("Not available")));
+    if (QMessageBox::Yes != QMessageBox::question(this,
+                                                  uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")),
+                                                  strPreviewText,
+                                                  QMessageBox::Yes | QMessageBox::Cancel,
+                                                  QMessageBox::Yes))
+    {
+        return;
     }
 
     const QString strSuggestedOutputPath = strExportDirectory.trimmed().isEmpty()
@@ -3167,36 +3489,49 @@ void QCMainWindow::onExportMarkdown()
         : QDir(strExportDirectory).filePath(strSuggestedFileName);
 
     const QString strOutputFilePath = QFileDialog::getSaveFileName(this,
-                                                                   QString::fromUtf8("Export Markdown"),
+                                                                   uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")),
                                                                    strSuggestedOutputPath,
                                                                    QString::fromUtf8("Markdown (*.md)"));
     if (strOutputFilePath.isEmpty())
         return;
 
-    if (!m_pMdExportService->exportSessionToFile(nSessionId, strOutputFilePath))
+    const bool bExportSuccess = vecExportSnippetIds.isEmpty()
+        ? m_pMdExportService->exportSessionToFile(nSessionId, strOutputFilePath)
+        : m_pMdExportService->exportSnippetsToFile(nSessionId, vecExportSnippetIds, strOutputFilePath);
+    if (!bExportSuccess)
     {
-        QMessageBox::warning(this, QString::fromUtf8("Export Markdown"), m_pMdExportService->lastError());
+        QMessageBox::warning(this,
+                             uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")),
+                             uiText(QString::fromUtf8("?????\n%1"), QString::fromUtf8("Export failed:\n%1")).arg(m_pMdExportService->lastError()));
         return;
     }
 
-    statusBar()->showMessage(QString::fromUtf8("Markdown exported to %1").arg(strOutputFilePath), 5000);
+    statusBar()->showMessage(uiText(QString::fromUtf8("Markdown ???? %1"), QString::fromUtf8("Markdown exported to %1")).arg(strOutputFilePath), 5000);
     QMessageBox messageBox(QMessageBox::Information,
-                           QString::fromUtf8("Export Markdown"),
-                           QString::fromUtf8("Markdown exported to:\n%1").arg(strOutputFilePath),
+                           uiText(QString::fromUtf8("?? Markdown"), QString::fromUtf8("Export Markdown")),
+                           uiText(QString::fromUtf8("??????\n%1\n\n????????"), QString::fromUtf8("Export completed:\n%1\n\nWhat do you want to do next?")).arg(strOutputFilePath),
                            QMessageBox::NoButton,
                            this);
-    QPushButton *pOpenFileButton = messageBox.addButton(QString::fromUtf8("Open File"), QMessageBox::AcceptRole);
-    QPushButton *pOpenFolderButton = messageBox.addButton(QString::fromUtf8("Open Folder"), QMessageBox::ActionRole);
-    messageBox.addButton(QMessageBox::Close);
+    QPushButton *pOpenFileButton = messageBox.addButton(uiText(QString::fromUtf8("????"), QString::fromUtf8("Open File")), QMessageBox::AcceptRole);
+    QPushButton *pOpenFolderButton = messageBox.addButton(uiText(QString::fromUtf8("????"), QString::fromUtf8("Open Folder")), QMessageBox::ActionRole);
+    QPushButton *pCopyPathButton = messageBox.addButton(uiText(QString::fromUtf8("????"), QString::fromUtf8("Copy Path")), QMessageBox::ActionRole);
+    messageBox.addButton(uiText(QString::fromUtf8("??"), QString::fromUtf8("Close")), QMessageBox::RejectRole);
     messageBox.exec();
 
     if (messageBox.clickedButton() == pOpenFileButton)
     {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(strOutputFilePath));
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(strOutputFilePath)))
+            statusBar()->showMessage(uiText(QString::fromUtf8("?????????"), QString::fromUtf8("Unable to open the exported file.")), 4000);
     }
     else if (messageBox.clickedButton() == pOpenFolderButton)
     {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(strOutputFilePath).absolutePath()));
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(strOutputFilePath).absolutePath())))
+            statusBar()->showMessage(uiText(QString::fromUtf8("?????????"), QString::fromUtf8("Unable to open the export folder.")), 4000);
+    }
+    else if (messageBox.clickedButton() == pCopyPathButton)
+    {
+        QGuiApplication::clipboard()->setText(QDir::toNativeSeparators(strOutputFilePath));
+        statusBar()->showMessage(uiText(QString::fromUtf8("????????"), QString::fromUtf8("Export path copied.")), 3000);
     }
 }
 

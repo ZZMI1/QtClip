@@ -1,0 +1,454 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4DE662BE-DF5C-3D21-AF75-B15F5878D4FA}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <VcpkgApplocalDeps>false</VcpkgApplocalDeps>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>qtclipsmoke</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\QtClip\out_stage\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">qtclipsmoke.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">qtclipsmoke</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\QtClip\out_stage\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">qtclipsmoke.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">qtclipsmoke</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\QtClip\out_stage\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">qtclipsmoke.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">qtclipsmoke</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\QtClip\out_stage\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">qtclipsmoke.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">qtclipsmoke</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\QtClip\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtConcurrent" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtCore" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/tools/qt5/mkspecs/win32-msvc" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtNetwork" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtSql" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtWidgets" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtGui"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>Deploying Qt runtime for qtclipsmoke.</Message>
+      <Command>setlocal
+D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\bin\windeployqt.exe --no-compiler-runtime --no-translations --no-angle --no-opengl-sw 
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/zlib1.dll D:/QtClip/out_stage/Debug/zlib1.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libssl-3-x64.dll D:/QtClip/out_stage/Debug/libssl-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libcrypto-3-x64.dll D:/QtClip/out_stage/Debug/libcrypto-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_directory D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin D:/QtClip/out_stage/Debug
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\debug\lib\Qt5Concurrentd.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\debug\lib\Qt5Networkd.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\debug\lib\Qt5Sqld.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\debug\lib\Qt5Widgetsd.lib;Shlwapi.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\debug\lib\Qt5Guid.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\debug\lib\Qt5Cored.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/QtClip/out_stage/Debug/qtclipsmoke.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/QtClip/out_stage/Debug/qtclipsmoke.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\QtClip\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtConcurrent" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtCore" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/tools/qt5/mkspecs/win32-msvc" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtNetwork" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtSql" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtWidgets" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtGui"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NO_DEBUG;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NO_DEBUG;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>Deploying Qt runtime for qtclipsmoke.</Message>
+      <Command>setlocal
+D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\bin\windeployqt.exe --no-compiler-runtime --no-translations --no-angle --no-opengl-sw D:/QtClip/out_stage/Release/qtclipsmoke.exe
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/zlib1.dll D:/QtClip/out_stage/Release/zlib1.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libssl-3-x64.dll D:/QtClip/out_stage/Release/libssl-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libcrypto-3-x64.dll D:/QtClip/out_stage/Release/libcrypto-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_directory D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin D:/QtClip/out_stage/Release
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Concurrent.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Network.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Sql.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Widgets.lib;Shlwapi.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Gui.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Core.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/QtClip/out_stage/Release/qtclipsmoke.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/QtClip/out_stage/Release/qtclipsmoke.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\QtClip\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtConcurrent" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtCore" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/tools/qt5/mkspecs/win32-msvc" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtNetwork" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtSql" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtWidgets" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtGui"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NO_DEBUG;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NO_DEBUG;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>Deploying Qt runtime for qtclipsmoke.</Message>
+      <Command>setlocal
+D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\bin\windeployqt.exe --no-compiler-runtime --no-translations --no-angle --no-opengl-sw 
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/zlib1.dll D:/QtClip/out_stage/MinSizeRel/zlib1.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libssl-3-x64.dll D:/QtClip/out_stage/MinSizeRel/libssl-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libcrypto-3-x64.dll D:/QtClip/out_stage/MinSizeRel/libcrypto-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_directory D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin D:/QtClip/out_stage/MinSizeRel
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Concurrent.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Network.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Sql.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Widgets.lib;Shlwapi.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Gui.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Core.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/QtClip/out_stage/MinSizeRel/qtclipsmoke.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/QtClip/out_stage/MinSizeRel/qtclipsmoke.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\QtClip\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtConcurrent" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtCore" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/tools/qt5/mkspecs/win32-msvc" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtNetwork" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtSql" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtWidgets" /external:I "D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/include/qt5/QtGui"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NO_DEBUG;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_NO_DEBUG;QT_NETWORK_LIB;QT_SQL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\QtClip\src;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtConcurrent;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtCore;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\mkspecs\win32-msvc;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtNetwork;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtSql;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtWidgets;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\include\qt5\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>Deploying Qt runtime for qtclipsmoke.</Message>
+      <Command>setlocal
+D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\tools\qt5\bin\windeployqt.exe --no-compiler-runtime --no-translations --no-angle --no-opengl-sw 
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/zlib1.dll D:/QtClip/out_stage/RelWithDebInfo/zlib1.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libssl-3-x64.dll D:/QtClip/out_stage/RelWithDebInfo/libssl-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_if_different D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin/libcrypto-3-x64.dll D:/QtClip/out_stage/RelWithDebInfo/libcrypto-3-x64.dll
+if %errorlevel% neq 0 goto :cmEnd
+D:\cmake\bin\cmake.exe -E copy_directory D:/Qtproject/thirdparty_install/vcpkg/installed/x64-windows/bin D:/QtClip/out_stage/RelWithDebInfo
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Concurrent.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Network.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Sql.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Widgets.lib;Shlwapi.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Gui.lib;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\lib\Qt5Core.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/QtClip/out_stage/RelWithDebInfo/qtclipsmoke.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/QtClip/out_stage/RelWithDebInfo/qtclipsmoke.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\QtClip\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/QtClip/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+D:\cmake\bin\cmake.exe -SD:/QtClip -BD:/QtClip/out_stage --check-stamp-file D:/QtClip/out_stage/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeCXXCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeRCCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeSystem.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5Config.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ModuleLocation.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgIconPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QODBCDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QSQLiteDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompilerABI.cpp;D:\cmake\share\cmake-3.28\Modules\CMakeCXXInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCompilerIdDetection.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompileFeatures.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerABI.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerId.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeFindBinUtils.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeGenericSystem.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeInitializeConfigs.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeLanguageInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseArguments.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitIncludeInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitLinkInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseLibraryArchitecture.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeRCCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeRCInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCompilerCommon.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ADSP-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMCC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\AppleClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Borland-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompilerInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Comeau-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Compaq-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Cray-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CrayClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Embarcadero-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Fujitsu-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\FujitsuClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GHS-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GNU-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\HP-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IAR-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMCPP-CXX-DetermineVersionInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Intel-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IntelLLVM-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\LCC-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVHPC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVIDIA-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OpenWatcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OrangeC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PGI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PathScale-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SCO-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SunPro-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\TI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Tasking-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\VisualAge-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Watcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XL-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XLClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\zOS-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CompilerId\VS-10.vcxproj.in;D:\cmake\share\cmake-3.28\Modules\Internal\FeatureTesting.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Determine-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Initialize.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\QtClip\out_stage\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/QtClip/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+D:\cmake\bin\cmake.exe -SD:/QtClip -BD:/QtClip/out_stage --check-stamp-file D:/QtClip/out_stage/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeCXXCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeRCCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeSystem.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5Config.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ModuleLocation.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgIconPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QODBCDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QSQLiteDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompilerABI.cpp;D:\cmake\share\cmake-3.28\Modules\CMakeCXXInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCompilerIdDetection.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompileFeatures.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerABI.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerId.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeFindBinUtils.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeGenericSystem.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeInitializeConfigs.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeLanguageInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseArguments.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitIncludeInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitLinkInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseLibraryArchitecture.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeRCCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeRCInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCompilerCommon.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ADSP-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMCC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\AppleClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Borland-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompilerInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Comeau-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Compaq-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Cray-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CrayClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Embarcadero-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Fujitsu-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\FujitsuClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GHS-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GNU-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\HP-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IAR-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMCPP-CXX-DetermineVersionInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Intel-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IntelLLVM-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\LCC-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVHPC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVIDIA-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OpenWatcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OrangeC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PGI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PathScale-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SCO-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SunPro-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\TI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Tasking-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\VisualAge-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Watcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XL-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XLClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\zOS-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CompilerId\VS-10.vcxproj.in;D:\cmake\share\cmake-3.28\Modules\Internal\FeatureTesting.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Determine-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Initialize.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\QtClip\out_stage\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/QtClip/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+D:\cmake\bin\cmake.exe -SD:/QtClip -BD:/QtClip/out_stage --check-stamp-file D:/QtClip/out_stage/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeCXXCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeRCCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeSystem.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5Config.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ModuleLocation.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgIconPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QODBCDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QSQLiteDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompilerABI.cpp;D:\cmake\share\cmake-3.28\Modules\CMakeCXXInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCompilerIdDetection.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompileFeatures.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerABI.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerId.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeFindBinUtils.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeGenericSystem.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeInitializeConfigs.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeLanguageInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseArguments.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitIncludeInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitLinkInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseLibraryArchitecture.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeRCCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeRCInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCompilerCommon.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ADSP-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMCC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\AppleClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Borland-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompilerInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Comeau-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Compaq-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Cray-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CrayClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Embarcadero-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Fujitsu-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\FujitsuClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GHS-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GNU-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\HP-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IAR-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMCPP-CXX-DetermineVersionInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Intel-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IntelLLVM-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\LCC-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVHPC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVIDIA-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OpenWatcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OrangeC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PGI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PathScale-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SCO-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SunPro-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\TI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Tasking-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\VisualAge-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Watcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XL-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XLClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\zOS-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CompilerId\VS-10.vcxproj.in;D:\cmake\share\cmake-3.28\Modules\Internal\FeatureTesting.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Determine-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Initialize.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\QtClip\out_stage\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/QtClip/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+D:\cmake\bin\cmake.exe -SD:/QtClip -BD:/QtClip/out_stage --check-stamp-file D:/QtClip/out_stage/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeCXXCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeRCCompiler.cmake;D:\QtClip\out_stage\CMakeFiles\3.28.1\CMakeSystem.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5Config.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5\Qt5ModuleLocation.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Concurrent\Qt5ConcurrentConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Core\Qt5CoreMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgIconPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QSvgPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5SqlConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QODBCDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Sql\Qt5Sql_QSQLiteDriverPlugin.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;D:\Qtproject\thirdparty_install\vcpkg\installed\x64-windows\share\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeCXXCompilerABI.cpp;D:\cmake\share\cmake-3.28\Modules\CMakeCXXInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeCompilerIdDetection.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompileFeatures.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerABI.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineCompilerId.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeDetermineRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeFindBinUtils.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeGenericSystem.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeInitializeConfigs.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeLanguageInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseArguments.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitIncludeInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseImplicitLinkInfo.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeParseLibraryArchitecture.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeRCCompiler.cmake.in;D:\cmake\share\cmake-3.28\Modules\CMakeRCInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCXXCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestCompilerCommon.cmake;D:\cmake\share\cmake-3.28\Modules\CMakeTestRCCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ADSP-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMCC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\ARMClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\AppleClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Borland-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Clang-DetermineCompilerInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Comeau-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Compaq-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Cray-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\CrayClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Embarcadero-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Fujitsu-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\FujitsuClang-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GHS-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\GNU-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\HP-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IAR-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMCPP-CXX-DetermineVersionInternal.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IBMClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Intel-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\IntelLLVM-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\LCC-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVHPC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\NVIDIA-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OpenWatcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\OrangeC-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PGI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\PathScale-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SCO-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\SunPro-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\TI-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Tasking-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\VisualAge-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\Watcom-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XL-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\XLClang-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\Compiler\zOS-CXX-DetermineCompiler.cmake;D:\cmake\share\cmake-3.28\Modules\CompilerId\VS-10.vcxproj.in;D:\cmake\share\cmake-3.28\Modules\Internal\FeatureTesting.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Determine-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-Initialize.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows-MSVC.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\Windows.cmake;D:\cmake\share\cmake-3.28\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\QtClip\out_stage\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D:\QtClip\src\app\main.cpp" />
+    <ClCompile Include="D:\QtClip\src\core\database\qcdatabasemanager.cpp" />
+    <ClCompile Include="D:\QtClip\src\core\database\qcdatabaseschema.cpp" />
+    <ClCompile Include="D:\QtClip\src\core\database\qcdbenumcodec.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qcstudysession.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qcsnippet.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qcattachment.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qctag.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qcairecord.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qcappsetting.cpp" />
+    <ClCompile Include="D:\QtClip\src\domain\entities\qcexportrecord.cpp" />
+    <ClCompile Include="D:\QtClip\src\repository\sqlite\qcsessionrepositorysqlite.cpp" />
+    <ClCompile Include="D:\QtClip\src\repository\sqlite\qcsnippetrepositorysqlite.cpp" />
+    <ClCompile Include="D:\QtClip\src\repository\sqlite\qcairecordrepositorysqlite.cpp" />
+    <ClCompile Include="D:\QtClip\src\repository\sqlite\qcsettingsrepositorysqlite.cpp" />
+    <ClCompile Include="D:\QtClip\src\repository\sqlite\qctagrepositorysqlite.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcaiprovider.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcopenaicompatibleprovider.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcmockaiprovider.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcaiprocessservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcaiservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcexportdataservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcmdexportrenderer.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcmdexportservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcscreencaptureservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcsessionservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcsettingsservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qcsnippetservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\services\qctagservice.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\mainwindow\qcmainwindow.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\dialogs\qcaisettingsdialog.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\dialogs\qccreateimagesnippetdialog.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\dialogs\qccreatesessiondialog.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\dialogs\qccreatetextsnippetdialog.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\dialogs\qcquickcapturedialog.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\dialogs\qcsnippettagdialog.cpp" />
+    <ClCompile Include="D:\QtClip\src\ui\widgets\qcscreenshotoverlay.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\QtClip\out_stage\ZERO_CHECK.vcxproj">
+      <Project>{8BCB6505-E8BD-379B-BB12-7B915EED3171}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
