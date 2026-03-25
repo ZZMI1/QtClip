@@ -1,4 +1,4 @@
-﻿// File: qccreatesessiondialog.cpp
+// File: qccreatesessiondialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal dialog used to create a study session in the QtClip demo UI.
@@ -21,13 +21,13 @@ QCCreateSessionDialog::QCCreateSessionDialog(QWidget *pParent)
     , m_pCourseNameLineEdit(new QLineEdit(this))
     , m_pDescriptionTextEdit(new QPlainTextEdit(this))
 {
-    setWindowTitle(QCUiText(QString::fromUtf8("?? Session"), QString::fromUtf8("New Session")));
+    setWindowTitle(QCUiText(QString::fromUtf8("新建 Session"), QString::fromUtf8("New Session")));
     m_pDescriptionTextEdit->setMinimumHeight(90);
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Course")), m_pCourseNameLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Description")), m_pDescriptionTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("课程"), QString::fromUtf8("Course")), m_pCourseNameLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("描述"), QString::fromUtf8("Description")), m_pDescriptionTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);

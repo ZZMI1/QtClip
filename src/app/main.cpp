@@ -1,4 +1,4 @@
-﻿// File: main.cpp
+// File: main.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Provides the minimal Qt Widgets application entry used by the QtClip demo application.
@@ -55,6 +55,7 @@
 #include "../ui/dialogs/qcsnippettagdialog.h"
 #include "../ui/mainwindow/qcmainwindow.h"
 #include "../ui/common/qcuitheme.h"
+#include "../ui/common/qcuilocalization.h"
 
 namespace
 {
@@ -92,11 +93,9 @@ QString ResolveAppDataPath()
     if (strDataDirectory.isEmpty())
         strDataDirectory = QDir::tempPath();
 
-    QDir dataDirectory(strDataDirectory);
-    if (!dataDirectory.exists())
-        dataDirectory.mkpath(QString::fromUtf8("."));
+    QDir().mkpath(strDataDirectory);
 
-    return dataDirectory.filePath(QString::fromUtf8("qtclip.sqlite"));
+    return QDir(strDataDirectory).filePath(QString::fromUtf8("qtclip.sqlite"));
 }
 
 QString BuildScopedTempPath(const QString& strPrefix, const QString& strFileName)
@@ -953,7 +952,7 @@ int RunMainWindowStateVerificationWorkflow()
     }
 
     if (pToggleArchiveSnippetAction->text() != QString::fromUtf8("Restore Snippet")
-        && pToggleArchiveSnippetAction->text() != QString::fromUtf8("????"))
+        && pToggleArchiveSnippetAction->text() != QCUiText(QString::fromUtf8("恢复 Snippet"), QString::fromUtf8("Restore Snippet")))
     {
         PrintError(QString::fromUtf8("Archived snippet action text verification failed."));
         return 619;
@@ -1072,8 +1071,7 @@ int RunMainWindowStateVerificationWorkflow()
     }
 
     QLabel *pEmptySelectionContextLabel = emptyMainWindow.findChild<QLabel *>(QString::fromUtf8("selectionContextLabel"));
-    if (nullptr == pEmptySelectionContextLabel || (!pEmptySelectionContextLabel->text().contains(QString::fromUtf8("no session selected"), Qt::CaseInsensitive)
-        && !pEmptySelectionContextLabel->text().contains(QString::fromUtf8("?????"), Qt::CaseInsensitive)))
+    if (nullptr == pEmptySelectionContextLabel || (!pEmptySelectionContextLabel->text().contains(QCUiText(QString::fromUtf8("未选择会话"), QString::fromUtf8("no session selected")), Qt::CaseInsensitive)))
     {
         PrintError(QString::fromUtf8("Empty selection context label verification failed."));
         return 6271;
@@ -2458,7 +2456,7 @@ int RunLanguageVerificationWorkflow()
         || nullptr == pChineseSearchLineEdit
         || !pChineseSearchLineEdit->placeholderText().contains(QString::fromUtf8("??"))
         || nullptr == pChineseContextLabel
-        || !pChineseContextLabel->text().contains(QString::fromUtf8("?????")))
+        || !pChineseContextLabel->text().contains(QCUiText(QString::fromUtf8("未选择会话"), QString::fromUtf8("no session selected"))))
     {
         PrintError(QString::fromUtf8("Chinese UI text verification failed."));
         return 7251;
@@ -2607,15 +2605,13 @@ int RunAiStatusVerificationWorkflow()
     while (timer.elapsed() < 5000)
     {
         QApplication::processEvents(QEventLoop::AllEvents, 50);
-        if (pAiStatusLabel->text().contains(QString::fromUtf8("completed"), Qt::CaseInsensitive)
-            || pAiStatusLabel->text().contains(QString::fromUtf8("???"), Qt::CaseInsensitive))
+        if (pAiStatusLabel->text().contains(QCUiText(QString::fromUtf8("已完成"), QString::fromUtf8("completed")), Qt::CaseInsensitive))
         {
             break;
         }
     }
 
-    if (!(pAiStatusLabel->text().contains(QString::fromUtf8("completed"), Qt::CaseInsensitive)
-          || pAiStatusLabel->text().contains(QString::fromUtf8("???"), Qt::CaseInsensitive)))
+    if (!(pAiStatusLabel->text().contains(QCUiText(QString::fromUtf8("已完成"), QString::fromUtf8("completed")), Qt::CaseInsensitive)))
     {
         PrintError(QString::fromUtf8("AI completion status verification failed."));
         return 747;
@@ -2989,7 +2985,7 @@ int RunLanguageUiVerificationWorkflow()
             && !pHistoryComboBox->itemText(0).trimmed().isEmpty();
     };
 
-    if (!verifyWindow(QString::fromUtf8("zh-CN"), QString::fromUtf8("??"), QString::fromUtf8("??"), QString::fromUtf8("?????"), QString::fromUtf8("?? Session"), QString::fromUtf8("????")))
+    if (!verifyWindow(QString::fromUtf8("zh-CN"), QString::fromUtf8("设置"), QString::fromUtf8("搜索"), QString::fromUtf8("未选择会话"), QString::fromUtf8("删除会话"), QString::fromUtf8("清除历史")))
     {
         PrintError(QString::fromUtf8("Chinese UI verification failed."));
         return 730;
@@ -4064,6 +4060,8 @@ int RunSmokeWorkflow()
 int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
+    application.setOrganizationName(QString::fromUtf8("QtClip"));
+    application.setApplicationName(QString::fromUtf8("QtClip"));
     QCApplyAppTheme(&application);
     const QStringList vecArguments = application.arguments();
 

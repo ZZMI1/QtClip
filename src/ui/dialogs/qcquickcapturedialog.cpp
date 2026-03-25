@@ -1,4 +1,4 @@
-﻿// File: qcquickcapturedialog.cpp
+// File: qcquickcapturedialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal quick capture dialog used by the first QtClip screenshot workflow.
@@ -28,7 +28,7 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pSaveButton(nullptr)
 {
-    setWindowTitle(QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Quick Capture")));
+    setWindowTitle(QCUiText(QString::fromUtf8("快速捕获"), QString::fromUtf8("Quick Capture")));
 
     m_pPreviewLabel->setMinimumSize(420, 240);
     m_pPreviewLabel->setAlignment(Qt::AlignCenter);
@@ -45,15 +45,15 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     }
     else
     {
-        m_pPreviewLabel->setText(QCUiText(QString::fromUtf8("??????"), QString::fromUtf8("Preview unavailable.")));
+        m_pPreviewLabel->setText(QCUiText(QString::fromUtf8("预览不可用。"), QString::fromUtf8("Preview unavailable.")));
     }
 
     m_pTitleLineEdit->setPlaceholderText(QFileInfo(m_strImagePath).baseName());
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Preview")), m_pPreviewLabel);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("预览"), QString::fromUtf8("Preview")), m_pPreviewLabel);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pNoteTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
     m_pSaveButton = pButtonBox->button(QDialogButtonBox::Save);

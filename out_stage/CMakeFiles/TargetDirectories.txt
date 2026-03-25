@@ -1,3 +1,0 @@
-D:/QtClip/out_stage/CMakeFiles/qtclipsmoke.dir
-D:/QtClip/out_stage/CMakeFiles/ALL_BUILD.dir
-D:/QtClip/out_stage/CMakeFiles/ZERO_CHECK.dir

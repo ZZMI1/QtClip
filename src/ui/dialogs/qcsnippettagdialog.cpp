@@ -1,4 +1,4 @@
-﻿// File: qcsnippettagdialog.cpp
+// File: qcsnippettagdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal snippet tag dialog used by the QtClip UI workflow.
@@ -33,21 +33,21 @@ QCSnippetTagDialog::QCSnippetTagDialog(QWidget *pParent)
     , m_pSelectedTagNameLineEdit(new QLineEdit(this))
     , m_pSelectedTagUsageLabel(new QLabel(this))
     , m_pNewTagLineEdit(new QLineEdit(this))
-    , m_pRenameTagButton(new QPushButton(QCUiText(QString::fromUtf8("?????"), QString::fromUtf8("Rename Selected")), this))
-    , m_pDeleteTagButton(new QPushButton(QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Delete Selected")), this))
+    , m_pRenameTagButton(new QPushButton(QCUiText(QString::fromUtf8("重命名所选"), QString::fromUtf8("Rename Selected")), this))
+    , m_pDeleteTagButton(new QPushButton(QCUiText(QString::fromUtf8("删除所选"), QString::fromUtf8("Delete Selected")), this))
     , m_pSaveButton(nullptr)
     , m_pCancelButton(nullptr)
     , m_hashRenamedTags()
     , m_vecDeletedTagIds()
 {
-    setWindowTitle(QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Manage Tags")));
+    setWindowTitle(QCUiText(QString::fromUtf8("管理标签"), QString::fromUtf8("Manage Tags")));
     resize(460, 560);
 
     m_pContextLabel->setWordWrap(true);
     m_pTagListWidget->setAlternatingRowColors(true);
-    m_pSelectedTagNameLineEdit->setPlaceholderText(QCUiText(QString::fromUtf8("?????????????"), QString::fromUtf8("Select one existing tag to rename")));
-    m_pNewTagLineEdit->setPlaceholderText(QCUiText(QString::fromUtf8("????????"), QString::fromUtf8("Create a new tag on save")));
-    m_pSelectedTagUsageLabel->setText(QCUiText(QString::fromUtf8("?? 0 ??????"), QString::fromUtf8("Used by 0 snippets.")));
+    m_pSelectedTagNameLineEdit->setPlaceholderText(QCUiText(QString::fromUtf8("选择一个现有标签进行操作"), QString::fromUtf8("Select one existing tag to rename")));
+    m_pNewTagLineEdit->setPlaceholderText(QCUiText(QString::fromUtf8("保存时创建一个新标签"), QString::fromUtf8("Create a new tag on save")));
+    m_pSelectedTagUsageLabel->setText(QCUiText(QString::fromUtf8("被 0 个 snippet 使用。"), QString::fromUtf8("Used by 0 snippets.")));
 
     QHBoxLayout *pEditButtonsLayout = new QHBoxLayout();
     pEditButtonsLayout->addWidget(m_pRenameTagButton);
@@ -56,18 +56,18 @@ QCSnippetTagDialog::QCSnippetTagDialog(QWidget *pParent)
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     m_pSaveButton = pButtonBox->button(QDialogButtonBox::Ok);
     m_pCancelButton = pButtonBox->button(QDialogButtonBox::Cancel);
-    m_pSaveButton->setText(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Save")));
+    m_pSaveButton->setText(QCUiText(QString::fromUtf8("保存"), QString::fromUtf8("Save")));
     m_pSaveButton->setDefault(true);
 
     QVBoxLayout *pLayout = new QVBoxLayout();
     pLayout->addWidget(m_pContextLabel);
-    pLayout->addWidget(new QLabel(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Tags")), this));
+    pLayout->addWidget(new QLabel(QCUiText(QString::fromUtf8("标签"), QString::fromUtf8("Tags")), this));
     pLayout->addWidget(m_pTagListWidget);
-    pLayout->addWidget(new QLabel(QCUiText(QString::fromUtf8("???????"), QString::fromUtf8("Rename Selected Tag")), this));
+    pLayout->addWidget(new QLabel(QCUiText(QString::fromUtf8("重命名所选标签"), QString::fromUtf8("Rename Selected Tag")), this));
     pLayout->addWidget(m_pSelectedTagNameLineEdit);
     pLayout->addWidget(m_pSelectedTagUsageLabel);
     pLayout->addLayout(pEditButtonsLayout);
-    pLayout->addWidget(new QLabel(QCUiText(QString::fromUtf8("???"), QString::fromUtf8("New Tag")), this));
+    pLayout->addWidget(new QLabel(QCUiText(QString::fromUtf8("新标签"), QString::fromUtf8("New Tag")), this));
     pLayout->addWidget(m_pNewTagLineEdit);
     pLayout->addWidget(pButtonBox);
     setLayout(pLayout);
@@ -78,7 +78,7 @@ QCSnippetTagDialog::QCSnippetTagDialog(QWidget *pParent)
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(pButtonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    setContextText(QCUiText(QString::fromUtf8("?????????????????????????????"), QString::fromUtf8("Checked tags stay bound. You can also create, rename, or delete tags here.")));
+    setContextText(QCUiText(QString::fromUtf8("勾选的标签将保持绑定。您也可以在此处创建、重命名或删除标签。"), QString::fromUtf8("Checked tags stay bound. You can also create, rename, or delete tags here.")));
     updateSelectionState();
 }
 
@@ -235,7 +235,7 @@ int QCSnippetTagDialog::usageCountForItem(const QListWidgetItem *pItem) const
 
 QString QCSnippetTagDialog::buildDisplayText(const QString& strTagName, int nUsageCount) const
 {
-    return QString::fromUtf8("%1 (%2)").arg(strTagName.trimmed().isEmpty() ? QCUiText(QString::fromUtf8("?????"), QString::fromUtf8("Untitled Tag")) : strTagName.trimmed()).arg(nUsageCount);
+    return QString::fromUtf8("%1 (%2)").arg(strTagName.trimmed().isEmpty() ? QCUiText(QString::fromUtf8("无标题标签"), QString::fromUtf8("Untitled Tag")) : strTagName.trimmed()).arg(nUsageCount);
 }
 
 void QCSnippetTagDialog::updateSelectionState()
@@ -245,12 +245,12 @@ void QCSnippetTagDialog::updateSelectionState()
     if (bHasCurrentItem)
     {
         m_pSelectedTagNameLineEdit->setText(tagNameForItem(pCurrentItem));
-        m_pSelectedTagUsageLabel->setText(QCUiText(QString::fromUtf8("?? %1 ??????"), QString::fromUtf8("Used by %1 snippet(s).")).arg(usageCountForItem(pCurrentItem)));
+        m_pSelectedTagUsageLabel->setText(QCUiText(QString::fromUtf8("被 %1 个 snippet 使用。"), QString::fromUtf8("Used by %1 snippet(s).")).arg(usageCountForItem(pCurrentItem)));
     }
     else
     {
         m_pSelectedTagNameLineEdit->clear();
-        m_pSelectedTagUsageLabel->setText(QCUiText(QString::fromUtf8("?? 0 ??????"), QString::fromUtf8("Used by 0 snippets.")));
+        m_pSelectedTagUsageLabel->setText(QCUiText(QString::fromUtf8("被 0 个 snippet 使用。"), QString::fromUtf8("Used by 0 snippets.")));
     }
 
     m_pSelectedTagNameLineEdit->setEnabled(bHasCurrentItem);
@@ -275,7 +275,7 @@ void QCSnippetTagDialog::renameSelectedTag()
     const QString strNewName = m_pSelectedTagNameLineEdit->text().trimmed();
     if (strNewName.isEmpty())
     {
-        QMessageBox::warning(this, QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Manage Tags")), QCUiText(QString::fromUtf8("????????"), QString::fromUtf8("Tag name cannot be empty.")));
+        QMessageBox::warning(this, QCUiText(QString::fromUtf8("管理标签"), QString::fromUtf8("Manage Tags")), QCUiText(QString::fromUtf8("标签名称不能为空。"), QString::fromUtf8("Tag name cannot be empty.")));
         return;
     }
 
@@ -287,7 +287,7 @@ void QCSnippetTagDialog::renameSelectedTag()
 
         if (tagNameForItem(pItem).compare(strNewName, Qt::CaseInsensitive) == 0)
         {
-            QMessageBox::warning(this, QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Manage Tags")), QCUiText(QString::fromUtf8("????????"), QString::fromUtf8("A tag with the same name already exists.")));
+            QMessageBox::warning(this, QCUiText(QString::fromUtf8("管理标签"), QString::fromUtf8("Manage Tags")), QCUiText(QString::fromUtf8("已存在同名标签。"), QString::fromUtf8("A tag with the same name already exists.")));
             return;
         }
     }
@@ -307,10 +307,10 @@ void QCSnippetTagDialog::deleteSelectedTag()
     const QString strTagName = tagNameForItem(pCurrentItem);
     const int nUsageCount = usageCountForItem(pCurrentItem);
     const QString strMessage = nUsageCount > 0
-        ? QCUiText(QString::fromUtf8("?????%1??\n???? %2 ???????????????????"), QString::fromUtf8("Delete tag '%1'?\nIt is currently used by %2 snippet(s) and will be removed from them.")).arg(strTagName, QString::number(nUsageCount))
-        : QCUiText(QString::fromUtf8("?????%1??"), QString::fromUtf8("Delete tag '%1'?")).arg(strTagName);
+        ? QCUiText(QString::fromUtf8("是否删除标签“%1”？\n它当前被 %2 个 snippet 使用，删除后将从这些 snippet 中移除。"), QString::fromUtf8("Delete tag '%1'?\nIt is currently used by %2 snippet(s) and will be removed from them.")).arg(strTagName, QString::number(nUsageCount))
+        : QCUiText(QString::fromUtf8("是否删除标签“%1”？"), QString::fromUtf8("Delete tag '%1'?")).arg(strTagName);
     if (QMessageBox::Yes != QMessageBox::question(this,
-                                                  QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Manage Tags")),
+                                                  QCUiText(QString::fromUtf8("管理标签"), QString::fromUtf8("Manage Tags")),
                                                   strMessage,
                                                   QMessageBox::Yes | QMessageBox::No,
                                                   QMessageBox::No))

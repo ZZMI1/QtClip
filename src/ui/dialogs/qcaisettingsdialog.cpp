@@ -1,4 +1,4 @@
-﻿// File: qcaisettingsdialog.cpp
+// File: qcaisettingsdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal AI settings dialog used by the first QtClip UI workflow.
@@ -65,7 +65,7 @@ QVector<QCAiRuntimeSettings> EnsureProfileCount(const QVector<QCAiRuntimeSetting
 QString DefaultConnectionTestHint(bool bChineseUi)
 {
     return bChineseUi
-        ? QString::fromUtf8("???????? AI ??")
+        ? QString::fromUtf8("运行连接测试以验证 AI 配置")
         : QString::fromUtf8("Run a connection test to verify the selected AI configuration.");
 }
 
@@ -152,10 +152,10 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
     , m_bLoadingState(false)
     , m_bConnectionTestRunning(false)
 {
-    setWindowTitle(QString::fromUtf8("?? / Settings"));
+    setWindowTitle(uiText(QString::fromUtf8("设置"), QString::fromUtf8("Settings")));
     resize(720, 600);
 
-    m_pAppLanguageComboBox->addItem(QString::fromUtf8("??"), QString::fromUtf8("zh-CN"));
+    m_pAppLanguageComboBox->addItem(QString::fromUtf8("中文"), QString::fromUtf8("zh-CN"));
     m_pAppLanguageComboBox->addItem(QString::fromUtf8("English"), QString::fromUtf8("en-US"));
 
     for (int i = 0; i < m_vecAiSettingsProfiles.size(); ++i)
@@ -226,7 +226,7 @@ QCAiSettingsDialog::QCAiSettingsDialog(QCAiProcessService *pAiProcessService,
 
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
-    m_pRestoreDefaultsButton = pButtonBox->addButton(QString::fromUtf8("???? / Restore Defaults"), QDialogButtonBox::ResetRole);
+    m_pRestoreDefaultsButton = pButtonBox->addButton(QString::fromUtf8("恢复默认 / Restore Defaults"), QDialogButtonBox::ResetRole);
     m_pSaveButton = pButtonBox->button(QDialogButtonBox::Save);
     m_pCancelButton = pButtonBox->button(QDialogButtonBox::Cancel);
     m_pSaveButton->setDefault(true);
@@ -414,7 +414,7 @@ void QCAiSettingsDialog::startConnectionTest()
 
     storeEditorStateToCurrentProfile();
     m_bConnectionTestRunning = true;
-    m_pConnectionTestResultLabel->setText(uiText(QString::fromUtf8("???? AI ??..."), QString::fromUtf8("Testing AI connection...")));
+    m_pConnectionTestResultLabel->setText(uiText(QString::fromUtf8("正在测试 AI 连接..."), QString::fromUtf8("Testing AI connection...")));
     updateConnectionTestState();
     m_pConnectionTestWatcher->setFuture(QtConcurrent::run(RunConnectionTest,
                                                           m_pAiProcessService,
@@ -432,9 +432,9 @@ void QCAiSettingsDialog::handleConnectionTestFinished()
     else
     {
         const QString strMessage = testResult.m_strMessage.trimmed().isEmpty()
-            ? uiText(QString::fromUtf8("AI ???????"), QString::fromUtf8("AI connection test failed."))
+            ? uiText(QString::fromUtf8("AI 连接测试失败。"), QString::fromUtf8("AI connection test failed."))
             : testResult.m_strMessage;
-        m_pConnectionTestResultLabel->setText(uiText(QString::fromUtf8("?????%1"), QString::fromUtf8("Test failed: %1")).arg(strMessage));
+        m_pConnectionTestResultLabel->setText(uiText(QString::fromUtf8("测试失败：%1"), QString::fromUtf8("Test failed: %1")).arg(strMessage));
     }
 
     updateConnectionTestState();
@@ -539,16 +539,16 @@ void QCAiSettingsDialog::updateDirtyState()
 
     updateAiProfileLabels();
     m_pSaveButton->setEnabled(bDirty && !m_bConnectionTestRunning);
-    m_pStateLabel->setText(bDirty ? uiText(QString::fromUtf8("????????"), QString::fromUtf8("Unsaved changes."))
-                                  : uiText(QString::fromUtf8("????????"), QString::fromUtf8("All changes saved.")));
+    m_pStateLabel->setText(bDirty ? uiText(QString::fromUtf8("未保存的更改。"), QString::fromUtf8("Unsaved changes."))
+                                  : uiText(QString::fromUtf8("所有更改已保存。"), QString::fromUtf8("All changes saved.")));
     updateWindowTitle();
 }
 
 void QCAiSettingsDialog::updateWindowTitle()
 {
     const bool bDirty = nullptr != m_pSaveButton && m_pSaveButton->isEnabled();
-    setWindowTitle(bDirty ? uiText(QString::fromUtf8("?? *"), QString::fromUtf8("Settings *"))
-                          : uiText(QString::fromUtf8("??"), QString::fromUtf8("Settings")));
+    setWindowTitle(bDirty ? uiText(QString::fromUtf8("设置 *"), QString::fromUtf8("Settings *"))
+                          : uiText(QString::fromUtf8("设置"), QString::fromUtf8("Settings")));
 }
 
 void QCAiSettingsDialog::updateConnectionTestState()
@@ -558,8 +558,8 @@ void QCAiSettingsDialog::updateConnectionTestState()
 
     m_pTestConnectionButton->setEnabled(bCanTest);
     m_pTestConnectionButton->setText(m_bConnectionTestRunning
-        ? uiText(QString::fromUtf8("???..."), QString::fromUtf8("Testing..."))
-        : uiText(QString::fromUtf8("?? AI ??"), QString::fromUtf8("Test AI Connection")));
+        ? uiText(QString::fromUtf8("测试中..."), QString::fromUtf8("Testing..."))
+        : uiText(QString::fromUtf8("测试 AI 连接"), QString::fromUtf8("Test AI Connection")));
     updateControlState();
     updateDirtyState();
 }
@@ -572,43 +572,43 @@ bool QCAiSettingsDialog::isChineseUi() const
 
 QString QCAiSettingsDialog::uiText(const QString& strChinese, const QString& strEnglish) const
 {
-    return isChineseUi() ? strChinese : strEnglish;
+    return isChineseUi() ? QCUiText(strChinese, strEnglish) : strEnglish;
 }
 
 void QCAiSettingsDialog::applyLocalizedTexts()
 {
-    setWindowTitle(uiText(QString::fromUtf8("??"), QString::fromUtf8("Settings")));
-    m_pUseMockCheckBox->setText(uiText(QString::fromUtf8("?? Mock Provider"), QString::fromUtf8("Use Mock Provider")));
-    m_pAutoSummarizeImageSnippetCheckBox->setText(uiText(QString::fromUtf8("???????????"), QString::fromUtf8("Auto Summarize Image Snippet After Save")));
-    m_pDefaultCopyImportedImageCheckBox->setText(uiText(QString::fromUtf8("?????????????"), QString::fromUtf8("Copy imported image to screenshot save directory by default")));
-    m_pScreenshotBrowseButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")));
-    m_pExportBrowseButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")));
-    m_pRestoreDefaultsButton->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Restore Defaults")));
+    setWindowTitle(uiText(QString::fromUtf8("设置"), QString::fromUtf8("Settings")));
+    m_pUseMockCheckBox->setText(uiText(QString::fromUtf8("使用 Mock Provider"), QString::fromUtf8("Use Mock Provider")));
+    m_pAutoSummarizeImageSnippetCheckBox->setText(uiText(QString::fromUtf8("保存后自动生成总结"), QString::fromUtf8("Auto Summarize Image Snippet After Save")));
+    m_pDefaultCopyImportedImageCheckBox->setText(uiText(QString::fromUtf8("默认将导入图片复制到库目录"), QString::fromUtf8("Copy imported image to screenshot save directory by default")));
+    m_pScreenshotBrowseButton->setText(uiText(QString::fromUtf8("浏览"), QString::fromUtf8("Browse")));
+    m_pExportBrowseButton->setText(uiText(QString::fromUtf8("浏览"), QString::fromUtf8("Browse")));
+    m_pRestoreDefaultsButton->setText(uiText(QString::fromUtf8("恢复默认"), QString::fromUtf8("Restore Defaults")));
 
-    m_pApiKeyLineEdit->setPlaceholderText(uiText(QString::fromUtf8("Mock Provider ??"), QString::fromUtf8("Optional for mock provider")));
-    m_pTestConnectionButton->setToolTip(uiText(QString::fromUtf8("??????????????????"), QString::fromUtf8("Tests the selected profile using the values currently shown in this dialog.")));
-    m_pAiProfileComboBox->setToolTip(uiText(QString::fromUtf8("?????????? provider?base URL?API key ? model?"), QString::fromUtf8("Each profile stores its own provider mode, base URL, API key, and model.")));
-    m_pScreenshotSaveDirectoryLineEdit->setToolTip(uiText(QString::fromUtf8("Capture Screen ? Capture Region ????????"), QString::fromUtf8("Used by Capture Screen and Capture Region output files.")));
-    m_pExportDirectoryLineEdit->setToolTip(uiText(QString::fromUtf8("?? Markdown ???????????"), QString::fromUtf8("Used as the default folder when choosing a Markdown export file.")));
-    m_pDefaultCopyImportedImageCheckBox->setToolTip(uiText(QString::fromUtf8("Import Image ??????????????????"), QString::fromUtf8("Uses the screenshot save directory as the default copy target for Import Image.")));
+    m_pApiKeyLineEdit->setPlaceholderText(uiText(QString::fromUtf8("Mock 模式下可选"), QString::fromUtf8("Optional for mock provider")));
+    m_pTestConnectionButton->setToolTip(uiText(QString::fromUtf8("使用当前对话框的值测试配置"), QString::fromUtf8("Tests the selected profile using the values currently shown in this dialog.")));
+    m_pAiProfileComboBox->setToolTip(uiText(QString::fromUtf8("每个槽位存储独立的 AI 配置"), QString::fromUtf8("Each profile stores its own provider mode, base URL, API key, and model.")));
+    m_pScreenshotSaveDirectoryLineEdit->setToolTip(uiText(QString::fromUtf8("全屏和区域截图的存储路径"), QString::fromUtf8("Used by Capture Screen and Capture Region output files.")));
+    m_pExportDirectoryLineEdit->setToolTip(uiText(QString::fromUtf8("默认的 Markdown 导出目录"), QString::fromUtf8("Used as the default folder when choosing a Markdown export file.")));
+    m_pDefaultCopyImportedImageCheckBox->setToolTip(uiText(QString::fromUtf8("导入图片时复制到本地库"), QString::fromUtf8("Uses the screenshot save directory as the default copy target for Import Image.")));
 
     if (QLabel *pAiHintLabel = findChild<QLabel *>(QString::fromUtf8("aiHintLabel")))
-        pAiHintLabel->setText(uiText(QString::fromUtf8("AI ???????? provider ? mock provider?????? 3 ? AI ????????????????"), QString::fromUtf8("Use the AI section to configure a real provider or the mock provider. You can keep up to three AI configurations and switch the active one here.")));
+        pAiHintLabel->setText(uiText(QString::fromUtf8("配置真实的 AI provider 或使用 Mock 模式。您可以保存最多 3 个配置。"), QString::fromUtf8("Use the AI section to configure a real provider or the mock provider. You can keep up to three AI configurations and switch the active one here.")));
     if (QLabel *pPathsHintLabel = findChild<QLabel *>(QString::fromUtf8("pathsHintLabel")))
-        pPathsHintLabel->setText(uiText(QString::fromUtf8("????????? Capture Screen ? Capture Region?Markdown ??????????????????"), QString::fromUtf8("Screenshot save directory is used by Capture Screen and Capture Region. Markdown export directory is the default folder suggested when exporting Markdown.")));
+        pPathsHintLabel->setText(uiText(QString::fromUtf8("设置截图保存目录和 Markdown 默认导出路径。"), QString::fromUtf8("Screenshot save directory is used by Capture Screen and Capture Region. Markdown export directory is the default folder suggested when exporting Markdown.")));
     if (QLabel *pImportHintLabel = findChild<QLabel *>(QString::fromUtf8("importHintLabel")))
-        pImportHintLabel->setText(uiText(QString::fromUtf8("????Import Image ??????????????????????? snippet?"), QString::fromUtf8("When enabled, Import Image starts in copy mode and copies the image into the screenshot save directory before saving the snippet.")));
+        pImportHintLabel->setText(uiText(QString::fromUtf8("启用后，导入图片将先复制到本地库文件夹中。"), QString::fromUtf8("When enabled, Import Image starts in copy mode and copies the image into the screenshot save directory before saving the snippet.")));
     if (QGroupBox *pPathsGroupBox = findChild<QGroupBox *>(QString::fromUtf8("pathsGroupBox")))
-        pPathsGroupBox->setTitle(uiText(QString::fromUtf8("??"), QString::fromUtf8("Paths")));
+        pPathsGroupBox->setTitle(uiText(QString::fromUtf8("路径"), QString::fromUtf8("Paths")));
     if (QGroupBox *pImportGroupBox = findChild<QGroupBox *>(QString::fromUtf8("importGroupBox")))
-        pImportGroupBox->setTitle(uiText(QString::fromUtf8("??"), QString::fromUtf8("Import")));
+        pImportGroupBox->setTitle(uiText(QString::fromUtf8("导入"), QString::fromUtf8("Import")));
 
     if (QFormLayout *pAiFormLayout = findChild<QFormLayout *>(QString::fromUtf8("aiFormLayout")))
     {
-        pAiFormLayout->setWidget(0, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("????"), QString::fromUtf8("App Language")), this));
-        pAiFormLayout->setWidget(1, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("????"), QString::fromUtf8("Configuration Slot")), this));
+        pAiFormLayout->setWidget(0, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("应用语言"), QString::fromUtf8("App Language")), this));
+        pAiFormLayout->setWidget(1, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("配置槽位"), QString::fromUtf8("Configuration Slot")), this));
         pAiFormLayout->setWidget(2, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("Provider"), QString::fromUtf8("Provider")), this));
-        pAiFormLayout->setWidget(3, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Auto Image Summary")), this));
+        pAiFormLayout->setWidget(3, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("自动图片总结"), QString::fromUtf8("Auto Image Summary")), this));
         pAiFormLayout->setWidget(4, QFormLayout::LabelRole, new QLabel(QString::fromUtf8("Base URL"), this));
         pAiFormLayout->setWidget(5, QFormLayout::LabelRole, new QLabel(QString::fromUtf8("API Key"), this));
         pAiFormLayout->setWidget(6, QFormLayout::LabelRole, new QLabel(QString::fromUtf8("Model"), this));
@@ -616,8 +616,8 @@ void QCAiSettingsDialog::applyLocalizedTexts()
 
     if (QFormLayout *pPathsFormLayout = findChild<QFormLayout *>(QString::fromUtf8("pathsFormLayout")))
     {
-        pPathsFormLayout->setWidget(0, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Screenshot Save Directory")), this));
-        pPathsFormLayout->setWidget(1, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("Markdown ????"), QString::fromUtf8("Markdown Export Directory")), this));
+        pPathsFormLayout->setWidget(0, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("截图保存目录"), QString::fromUtf8("Screenshot Save Directory")), this));
+        pPathsFormLayout->setWidget(1, QFormLayout::LabelRole, new QLabel(uiText(QString::fromUtf8("Markdown 导出目录"), QString::fromUtf8("Markdown Export Directory")), this));
     }
 
     updateWindowTitle();
@@ -635,5 +635,6 @@ void QCAiSettingsDialog::markCurrentStateAsSaved()
     m_bInitialDefaultCopyImportedImageToCaptureDirectory = defaultCopyImportedImageToCaptureDirectory();
     m_nInitialActiveAiProfileIndex = activeAiProfileIndex();
 }
+
 
 

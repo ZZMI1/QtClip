@@ -1,4 +1,4 @@
-﻿// File: qccreatetextsnippetdialog.cpp
+// File: qccreatetextsnippetdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal dialog used to create a text snippet in the QtClip demo UI.
@@ -21,14 +21,14 @@ QCCreateTextSnippetDialog::QCCreateTextSnippetDialog(QWidget *pParent)
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pContentTextEdit(new QPlainTextEdit(this))
 {
-    setWindowTitle(QCUiText(QString::fromUtf8("??????"), QString::fromUtf8("New Text Snippet")));
+    setWindowTitle(QCUiText(QString::fromUtf8("新建文本 Snippet"), QString::fromUtf8("New Text Snippet")));
     m_pNoteTextEdit->setMinimumHeight(90);
     m_pContentTextEdit->setMinimumHeight(120);
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Content")), m_pContentTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pNoteTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("内容"), QString::fromUtf8("Content")), m_pContentTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);

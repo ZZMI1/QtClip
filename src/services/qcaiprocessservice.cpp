@@ -27,7 +27,7 @@ bool IsChineseLanguage(const QString& strLanguage)
 QString BuildSnippetSystemPrompt(const QString& strLanguage)
 {
     if (IsChineseLanguage(strLanguage))
-        return QString::fromUtf8("??????????????????????????????????????");
+        return QString::fromUtf8("你是一个学习笔记助手。请用简洁的中文编写学习总结。重点关注学生下次需要复习的内容。");
 
     return QString::fromUtf8("You are an assistant for study notes. Write a concise study summary in plain English. Focus on what the student should review next.");
 }
@@ -35,7 +35,7 @@ QString BuildSnippetSystemPrompt(const QString& strLanguage)
 QString BuildSessionSystemPrompt(const QString& strLanguage)
 {
     if (IsChineseLanguage(strLanguage))
-        return QString::fromUtf8("??????????????????????????????????????");
+        return QString::fromUtf8("你是一个学习环节助手。请用简洁的中文编写环节总结，包含主要收获和复习重点。");
 
     return QString::fromUtf8("You are an assistant for study sessions. Write a concise session summary in plain English with main takeaways and review focus.");
 }
@@ -52,7 +52,7 @@ QString BuildConnectionTestUserPrompt()
 
 QString FirstNonEmptyLine(const QString& strText)
 {
-    const QStringList vecLines = strText.split('\n');
+    const QStringList vecLines = strText.split('\\n');
     for (int i = 0; i < vecLines.size(); ++i)
     {
         const QString strLine = vecLines.at(i).trimmed();
@@ -61,6 +61,29 @@ QString FirstNonEmptyLine(const QString& strText)
     }
 
     return QString();
+}
+
+QString NormalizeSummaryText(const QString& strText)
+{
+    QString strValue = strText.trimmed();
+    if (strValue.startsWith(QString::fromUtf8("Mock summary:"), Qt::CaseInsensitive))
+        strValue = strValue.mid(QString::fromUtf8("Mock summary:").size()).trimmed();
+    return strValue;
+}
+
+bool LooksLikePromptEcho(const QString& strText)
+{
+    const QString strValue = strText.trimmed().toLower();
+    if (strValue.isEmpty())
+        return true;
+
+    return strValue.startsWith(QString::fromUtf8("summarize "))
+        || strValue.startsWith(QString::fromUtf8("please summarize"))
+        || strValue.contains(QString::fromUtf8("return only the summary text"))
+        || strValue.contains(QString::fromUtf8("output requirement"))
+        || strValue.contains(QString::fromUtf8("snippet type:"))
+        || strValue.contains(QString::fromUtf8("session title:"))
+        || strValue.contains(QString::fromUtf8("source:"));
 }
 }
 
@@ -476,9 +499,9 @@ QString QCAiProcessService::buildSnippetPrompt(const QCSnippet& snippet) const
     if (IsChineseLanguage(strAppLanguage))
     {
         if (snippet.type() == QCSnippetType::ImageSnippetType)
-            strPrompt += QString::fromUtf8("???????????????????????????\n");
+            strPrompt += QString::fromUtf8("请总结以下截图内容，以便后续复习。请将图片作为主要的信息来源。\n");
         else
-            strPrompt += QString::fromUtf8("?????????????????\n");
+            strPrompt += QString::fromUtf8("请总结这段学习内容，以便后续复习。\n");
     }
     else if (snippet.type() == QCSnippetType::ImageSnippetType)
         strPrompt += QString::fromUtf8("Summarize the attached screenshot for later review. Use the image as the primary source of truth.\n");
@@ -495,7 +518,7 @@ QString QCAiProcessService::buildSnippetPrompt(const QCSnippet& snippet) const
     strPrompt += QString::fromUtf8("Content: %1\n").arg(snippet.contentText());
     strPrompt += QString::fromUtf8("Source: %1\n").arg(snippet.source());
     strPrompt += IsChineseLanguage(strAppLanguage)
-        ? QString::fromUtf8("????????")
+        ? QString::fromUtf8("仅返回总结正文。")
         : QString::fromUtf8("Return only the summary text.");
     return strPrompt;
 }
@@ -626,10 +649,10 @@ QString QCAiProcessService::formatProviderDiagnosticMessage(const QString& strPr
 
 bool QCAiProcessService::persistCompletedSnippetSummary(const QCAiTaskExecutionResult& executionResult)
 {
-    const QString strSummary = executionResult.m_aiResponse.m_strText.trimmed();
-    if (strSummary.isEmpty())
+    const QString strSummary = NormalizeSummaryText(executionResult.m_aiResponse.m_strText);
+    if (strSummary.isEmpty() || LooksLikePromptEcho(strSummary))
     {
-        setLastError(QString::fromUtf8("AI provider returned an empty snippet summary."));
+        setLastError(QString::fromUtf8("AI provider returned an invalid snippet summary."));
         return false;
     }
 
@@ -669,10 +692,10 @@ bool QCAiProcessService::persistCompletedSnippetSummary(const QCAiTaskExecutionR
 
 bool QCAiProcessService::persistCompletedSessionSummary(const QCAiTaskExecutionResult& executionResult)
 {
-    const QString strSummary = executionResult.m_aiResponse.m_strText.trimmed();
-    if (strSummary.isEmpty())
+    const QString strSummary = NormalizeSummaryText(executionResult.m_aiResponse.m_strText);
+    if (strSummary.isEmpty() || LooksLikePromptEcho(strSummary))
     {
-        setLastError(QString::fromUtf8("AI provider returned an empty session summary."));
+        setLastError(QString::fromUtf8("AI provider returned an invalid session summary."));
         return false;
     }
 
@@ -720,5 +743,6 @@ void QCAiProcessService::setLastError(const QString& strError) const
 {
     m_strLastError = strError;
 }
+
 
 

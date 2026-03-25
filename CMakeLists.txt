@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.16)
 
 project(QtClip LANGUAGES CXX)
 
@@ -71,7 +71,7 @@ set(QTCLIP_UI_SOURCES
     src/ui/widgets/qcscreenshotoverlay.cpp
 )
 
-add_executable(qtclipsmoke
+add_executable(qtclipsmoke WIN32
     src/app/main.cpp
     ${QTCLIP_CORE_DATABASE_SOURCES}
     ${QTCLIP_DOMAIN_ENTITY_SOURCES}

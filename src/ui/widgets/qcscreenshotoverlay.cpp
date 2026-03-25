@@ -1,4 +1,4 @@
-﻿// File: qcscreenshotoverlay.cpp
+// File: qcscreenshotoverlay.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal region selection overlay used by the first QtClip area capture workflow.
@@ -53,14 +53,14 @@ bool QCScreenshotOverlay::selectRegion(QRect *pSelectedRect)
 
     if (nullptr == pSelectedRect)
     {
-        setLastError(QCUiText(QString::fromUtf8("?????????"), QString::fromUtf8("Selection output pointer is null.")));
+        setLastError(QCUiText(QString::fromUtf8("选取输出指针为空。"), QString::fromUtf8("Selection output pointer is null.")));
         return false;
     }
 
     QScreen *pPrimaryScreen = QGuiApplication::primaryScreen();
     if (nullptr == pPrimaryScreen)
     {
-        setLastError(QCUiText(QString::fromUtf8("???????"), QString::fromUtf8("Primary screen is unavailable.")));
+        setLastError(QCUiText(QString::fromUtf8("主屏幕不可用。"), QString::fromUtf8("Primary screen is unavailable.")));
         return false;
     }
 
@@ -156,7 +156,7 @@ void QCScreenshotOverlay::paintEvent(QPaintEvent *pEvent)
         painter.drawText(rectLabel, Qt::AlignCenter, strSizeText);
     }
 
-    const QString strHint = QCUiText(QString::fromUtf8("?????????? Esc ???"), QString::fromUtf8("Drag to capture a region. Press Esc to cancel."));
+    const QString strHint = QCUiText(QString::fromUtf8("拖动以捕获区域。按 Esc 取消。"), QString::fromUtf8("Drag to capture a region. Press Esc to cancel."));
     QFontMetrics hintMetrics = painter.fontMetrics();
     const QRect rectHint(g_nOverlayPadding,
                          g_nOverlayPadding,
@@ -205,7 +205,7 @@ void QCScreenshotOverlay::mouseReleaseEvent(QMouseEvent *pEvent)
     if (rectSelected.width() < g_nMinimumSelectionSize || rectSelected.height() < g_nMinimumSelectionSize)
     {
         m_bSelectionTooSmall = true;
-        setLastError(QCUiText(QString::fromUtf8("?????????? %1 x %1 ???"), QString::fromUtf8("Selected region is too small. Please select at least %1 x %1 pixels.")).arg(g_nMinimumSelectionSize));
+        setLastError(QCUiText(QString::fromUtf8("选定的区域太小。请至少选择 %1 x %1 像素。"), QString::fromUtf8("Selected region is too small. Please select at least %1 x %1 pixels.")).arg(g_nMinimumSelectionSize));
         finishSelection(false);
         return;
     }

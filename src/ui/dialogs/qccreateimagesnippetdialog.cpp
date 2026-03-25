@@ -1,4 +1,4 @@
-﻿// File: qccreateimagesnippetdialog.cpp
+// File: qccreateimagesnippetdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal dialog used to create an image snippet in the QtClip demo UI.
@@ -32,17 +32,17 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     , m_pTitleLineEdit(new QLineEdit(this))
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pFilePathLineEdit(new QLineEdit(this))
-    , m_pCopyToDefaultCaptureDirectoryCheckBox(new QCheckBox(QCUiText(QString::fromUtf8("?????????????"), QString::fromUtf8("Copy imported image to default capture directory")), this))
+    , m_pCopyToDefaultCaptureDirectoryCheckBox(new QCheckBox(QCUiText(QString::fromUtf8("将导入的图片复制到默认捕获目录"), QString::fromUtf8("Copy imported image to default capture directory")), this))
     , m_pImportModeDescriptionLabel(new QLabel(this))
     , m_pTargetPreviewLabel(new QLabel(this))
-    , m_pBrowseButton(new QPushButton(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")), this))
+    , m_pBrowseButton(new QPushButton(QCUiText(QString::fromUtf8("浏览"), QString::fromUtf8("Browse")), this))
 {
-    setWindowTitle(QCUiText(QString::fromUtf8("??????"), QString::fromUtf8("New Image Snippet")));
+    setWindowTitle(QCUiText(QString::fromUtf8("新建图片 Snippet"), QString::fromUtf8("New Image Snippet")));
     m_pNoteTextEdit->setMinimumHeight(90);
     m_pCopyToDefaultCaptureDirectoryCheckBox->setChecked(bDefaultCopyToCaptureDirectory);
     m_pImportModeDescriptionLabel->setWordWrap(true);
     m_pTargetPreviewLabel->setWordWrap(true);
-    m_pCopyToDefaultCaptureDirectoryCheckBox->setToolTip(QCUiText(QString::fromUtf8("???????????????????????????????"), QString::fromUtf8("Unchecked: use the original image file. Checked: copy the image to the default capture directory first.")));
+    m_pCopyToDefaultCaptureDirectoryCheckBox->setToolTip(QCUiText(QString::fromUtf8("未勾选：使用原始图像文件。已勾选：先将图像复制到默认捕获目录。"), QString::fromUtf8("Unchecked: use the original image file. Checked: copy the image to the default capture directory first.")));
     connect(m_pBrowseButton, &QPushButton::clicked, this, [this]() { chooseImageFile(); });
     connect(m_pCopyToDefaultCaptureDirectoryCheckBox, &QCheckBox::toggled, this, [this]() {
         updateImportModeDescription();
@@ -55,9 +55,9 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     pFileLayout->addWidget(m_pFilePathLineEdit);
     pFileLayout->addWidget(m_pBrowseButton);
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Image")), pFileLayout);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pNoteTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("图片"), QString::fromUtf8("Image")), pFileLayout);
     pFormLayout->addRow(QString(), m_pCopyToDefaultCaptureDirectoryCheckBox);
     pFormLayout->addRow(QString(), m_pImportModeDescriptionLabel);
     pFormLayout->addRow(QString(), m_pTargetPreviewLabel);
@@ -99,7 +99,7 @@ void QCCreateImageSnippetDialog::chooseImageFile()
     if (!strBrowseDirectory.isEmpty() && QFileInfo(strBrowseDirectory).isFile())
         strBrowseDirectory = QFileInfo(strBrowseDirectory).absolutePath();
     const QString strFilePath = QFileDialog::getOpenFileName(this,
-                                                             QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Select Image")),
+                                                             QCUiText(QString::fromUtf8("选择图片"), QString::fromUtf8("Select Image")),
                                                              strBrowseDirectory,
                                                              QString::fromUtf8("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
     if (!strFilePath.isEmpty())
@@ -109,11 +109,11 @@ void QCCreateImageSnippetDialog::updateImportModeDescription()
 {
     if (m_pCopyToDefaultCaptureDirectoryCheckBox->isChecked())
     {
-        m_pImportModeDescriptionLabel->setText(QCUiText(QString::fromUtf8("?????????????????????????"), QString::fromUtf8("Checked: copy the image to the default capture directory, then use the copied file.")));
+        m_pImportModeDescriptionLabel->setText(QCUiText(QString::fromUtf8("已勾选：将图像复制到默认捕获目录，然后使用副本文件。"), QString::fromUtf8("Checked: copy the image to the default capture directory, then use the copied file.")));
     }
     else
     {
-        m_pImportModeDescriptionLabel->setText(QCUiText(QString::fromUtf8("?????????????????????"), QString::fromUtf8("Unchecked: use the original image file directly. The file is not moved or copied.")));
+        m_pImportModeDescriptionLabel->setText(QCUiText(QString::fromUtf8("未勾选：直接使用原始图像文件，不进行移动或复制。"), QString::fromUtf8("Unchecked: use the original image file directly. The file is not moved or copied.")));
     }
 }
 void QCCreateImageSnippetDialog::updateTargetPreview()
