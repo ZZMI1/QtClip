@@ -1,4 +1,4 @@
-﻿
+
 // File: qcmainwindow.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
@@ -330,7 +330,6 @@ void QCMainWindow::dropEvent(QDropEvent *pEvent)
 
     qint64 nLastSnippetId = 0;
     if (importImageFilesToCurrentSession(vecImagePaths,
-                                         QString::fromUtf8("drag-drop"),
                                          true,
                                          &nLastSnippetId))
     {
@@ -375,7 +374,7 @@ QString QCMainWindow::uiText(const QString& strChinese, const QString& strEnglis
 void QCMainWindow::applyLocalizedTexts()
 {
     updateMenuTexts();
-    setWindowTitle(uiText(QString::fromUtf8("QtClip"), QString::fromUtf8("QtClip")));
+    setWindowTitle(uiText(QString::fromUtf8("QtClip - Learning Material Organizer"), QString::fromUtf8("QtClip - Learning Material Organizer")));
     if (nullptr != m_pSessionPanelTitleLabel)
         m_pSessionPanelTitleLabel->setText(uiText(QString::fromUtf8("Session 列表"), QString::fromUtf8("Sessions")));
     if (nullptr != m_pSnippetPanelTitleLabel)
@@ -466,18 +465,18 @@ void QCMainWindow::updateMenuTexts()
 
     const QList<QAction *> vecMenuActions = menuBar()->actions();
     if (vecMenuActions.size() > 0 && nullptr != vecMenuActions.at(0))
-        vecMenuActions.at(0)->setText(uiText(QString::fromUtf8("文件"), QString::fromUtf8("File")));
+        vecMenuActions.at(0)->setText(uiText(QString::fromUtf8("课程"), QString::fromUtf8("Course")));
     if (vecMenuActions.size() > 1 && nullptr != vecMenuActions.at(1))
-        vecMenuActions.at(1)->setText(uiText(QString::fromUtf8("编辑"), QString::fromUtf8("Edit")));
+        vecMenuActions.at(1)->setText(uiText(QString::fromUtf8("采集"), QString::fromUtf8("Capture")));
     if (vecMenuActions.size() > 2 && nullptr != vecMenuActions.at(2))
         vecMenuActions.at(2)->setText(QString::fromUtf8("AI"));
     if (vecMenuActions.size() > 3 && nullptr != vecMenuActions.at(3))
-        vecMenuActions.at(3)->setText(uiText(QString::fromUtf8("视图"), QString::fromUtf8("View")));
+        vecMenuActions.at(3)->setText(uiText(QString::fromUtf8("工具"), QString::fromUtf8("Tools")));
 }
 
 void QCMainWindow::setupUi()
 {
-    setWindowTitle(QString::fromUtf8("QtClip"));
+    setWindowTitle(uiText(QString::fromUtf8("QtClip - Learning Material Organizer"), QString::fromUtf8("QtClip - Learning Material Organizer")));
     resize(1360, 820);
 
     m_pSessionListWidget = new QListWidget(this);
@@ -610,7 +609,7 @@ void QCMainWindow::setupUi()
     pAnswerHeaderLayout->addStretch(1);
     pAnswerHeaderLayout->addWidget(pRetryInPlaceButton);
     pWorkspaceLayout->addWidget(pAnswerHeaderWidget);
-    m_pSnippetSummaryTextEdit->setPlaceholderText(QCoreApplication::translate("QCMainWindow", "Edit or refine summary here"));
+    m_pSnippetSummaryTextEdit->setPlaceholderText(QCoreApplication::translate("QCMainWindow", "Write and refine AI summary here"));
     pWorkspaceLayout->addWidget(m_pSnippetSummaryTextEdit, 4);
 
     m_pDetailPanelTitleLabel->setVisible(false);
@@ -658,7 +657,7 @@ void QCMainWindow::setupUi()
             flushSnippetDraftToStorage(false);
     });
 
-    statusBar()->showMessage(QCoreApplication::translate("QCMainWindow", "Ready."));
+    statusBar()->showMessage(uiText(QString::fromUtf8("Ready: 1-New Course 2-Paste Image 3-Run Summary 4-Export"), QString::fromUtf8("Ready: 1-New Course 2-Paste Image 3-Run Summary 4-Export")));
     clearSnippetDetails();
     m_pSnippetSummaryTextEdit->setPlainText(QCoreApplication::translate("QCMainWindow", "No summary available."));
     loadTagFilterOptions();
@@ -719,8 +718,8 @@ void QCMainWindow::setupActions()
     m_pImportImageAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+I")));
     m_pDuplicateSnippetAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+D")));
     m_pMoveSnippetAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Alt+V")));
-    m_pManageTagsAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+T")));
-    m_pTagLibraryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+T")));
+    m_pManageTagsAction->setShortcut(QKeySequence());
+    m_pTagLibraryAction->setShortcut(QKeySequence());
     m_pSummarizeSnippetAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+M")));
     m_pRetrySnippetSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+Y")));
     m_pViewSnippetSummaryAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+L")));
@@ -847,47 +846,28 @@ void QCMainWindow::setupActions()
     m_pFocusSearchAction->setObjectName(QString::fromUtf8("focusSearchAction"));
     m_pPasteImageAction->setObjectName(QString::fromUtf8("pasteImageAction"));
 
-    QMenu *pSessionMenu = menuBar()->addMenu(uiText(QString::fromUtf8("文件"), QString::fromUtf8("File")));
+    QMenu *pSessionMenu = menuBar()->addMenu(uiText(QString::fromUtf8("Course"), QString::fromUtf8("Course")));
     pSessionMenu->addAction(m_pNewSessionAction);
     pSessionMenu->addAction(m_pEditSessionAction);
     pSessionMenu->addAction(m_pFinishSessionAction);
     pSessionMenu->addAction(m_pReopenSessionAction);
-    pSessionMenu->addSeparator();
-    pSessionMenu->addAction(m_pSummarizeSessionAction);
-    pSessionMenu->addAction(m_pExportMarkdownAction);
-    pSessionMenu->addSeparator();
     pSessionMenu->addAction(m_pDeleteSessionAction);
 
-    QMenu *pSnippetMenu = menuBar()->addMenu(uiText(QString::fromUtf8("编辑"), QString::fromUtf8("Edit")));
-    pSnippetMenu->addAction(m_pNewTextSnippetAction);
-    pSnippetMenu->addAction(m_pCaptureScreenAction);
-    pSnippetMenu->addAction(m_pCaptureRegionAction);
-    pSnippetMenu->addAction(m_pImportImageAction);
-    pSnippetMenu->addAction(m_pPasteImageAction);
-    pSnippetMenu->addSeparator();
-    pSnippetMenu->addAction(m_pEditSnippetAction);
-    pSnippetMenu->addAction(m_pDuplicateSnippetAction);
-    pSnippetMenu->addAction(m_pMoveSnippetAction);
-    pSnippetMenu->addAction(m_pManageTagsAction);
-    pSnippetMenu->addAction(m_pClearSnippetTagsAction);
-    pSnippetMenu->addAction(m_pToggleArchiveSnippetAction);
-    pSnippetMenu->addAction(m_pDeleteSnippetAction);
+    QMenu *pCaptureMenu = menuBar()->addMenu(uiText(QString::fromUtf8("Capture"), QString::fromUtf8("Capture")));
+    pCaptureMenu->addAction(m_pPasteImageAction);
+    pCaptureMenu->addAction(m_pImportImageAction);
+    pCaptureMenu->addAction(m_pCaptureScreenAction);
+    pCaptureMenu->addAction(m_pCaptureRegionAction);
 
     QMenu *pAiMenu = menuBar()->addMenu(QString::fromUtf8("AI"));
     pAiMenu->addAction(m_pSummarizeSnippetAction);
     pAiMenu->addAction(m_pRetrySnippetSummaryAction);
-    pAiMenu->addAction(m_pViewSnippetSummaryAction);
     pAiMenu->addAction(m_pCopySnippetSummaryAction);
-    pAiMenu->addSeparator();
-    pAiMenu->addAction(m_pSummarizeSessionAction);
-    pAiMenu->addAction(m_pRetrySessionSummaryAction);
-    pAiMenu->addAction(m_pViewSessionSummaryAction);
-    pAiMenu->addAction(m_pCopySessionSummaryAction);
     pAiMenu->addSeparator();
     pAiMenu->addAction(m_pAiSettingsAction);
 
-    QMenu *pToolsMenu = menuBar()->addMenu(uiText(QString::fromUtf8("视图"), QString::fromUtf8("View")));
-    pToolsMenu->addAction(m_pTagLibraryAction);
+    QMenu *pToolsMenu = menuBar()->addMenu(uiText(QString::fromUtf8("Tools"), QString::fromUtf8("Tools")));
+    pToolsMenu->addAction(m_pExportMarkdownAction);
     pToolsMenu->addAction(m_pRefreshAction);
     pToolsMenu->addAction(m_pFocusSearchAction);
 
@@ -1479,32 +1459,17 @@ QString QCMainWindow::buildSelectionContextText() const
     QCStudySession session;
     const bool bHasSession = currentSession(&session);
     const QVector<qint64> vecSnippetIds = selectedSnippetIds();
-    const int nSelectedSnippetCount = vecSnippetIds.size();
 
     if (!bHasSession)
-        return uiText(QString::fromUtf8("当前上下文：未选择 Session。"), QString::fromUtf8("Current context: no session selected."));
+        return uiText(QString::fromUtf8("Step 1/4: Select or create a course on the left."), QString::fromUtf8("Step 1/4: Select or create a course on the left."));
 
-    const QString strSessionTitle = session.title().trimmed().isEmpty()
-        ? uiText(QString::fromUtf8("未命名 Session"), QString::fromUtf8("Untitled Session"))
-        : session.title().trimmed();
-    const QString strSessionStatus = SessionStatusText(session.status());
+    if (vecSnippetIds.isEmpty())
+        return uiText(QString::fromUtf8("Step 2/4: Paste or import screenshots."), QString::fromUtf8("Step 2/4: Paste or import screenshots."));
 
-    if (nSelectedSnippetCount <= 0)
-    {
-        return uiText(QString::fromUtf8("当前上下文：Session '%1' [%2]。可执行 Session 操作、导出和 Session AI。"), QString::fromUtf8("Current context: session '%1' [%2]. Session actions, export, and session AI are available."))
-            .arg(strSessionTitle, strSessionStatus);
-    }
+    if (currentSnippetSummaryText().trimmed().isEmpty())
+        return uiText(QString::fromUtf8("Step 3/4: Run AI summary, then edit AI Summary below."), QString::fromUtf8("Step 3/4: Run AI summary, then edit AI Summary below."));
 
-    if (1 == nSelectedSnippetCount)
-    {
-        return uiText(QString::fromUtf8("当前上下文：在 '%1' [%2] 中选中 1 条 snippet。可执行单项操作和 Session 操作。"), QString::fromUtf8("Current context: 1 selected snippet in '%1' [%2]. Single-item actions and session actions are available."))
-            .arg(strSessionTitle, strSessionStatus);
-    }
-
-    return uiText(QString::fromUtf8("当前上下文：在 '%2' [%3] 中选中 %1 条 snippet。可执行批量整理；编辑和总结仍是单条操作。"), QString::fromUtf8("Current context: %1 selected snippets in '%2' [%3]. Batch organize actions are available; edit and summarize stay single-snippet actions."))
-        .arg(nSelectedSnippetCount)
-        .arg(strSessionTitle)
-        .arg(strSessionStatus);
+    return uiText(QString::fromUtf8("Step 4/4: Export Markdown."), QString::fromUtf8("Step 4/4: Export Markdown."));
 }
 
 void QCMainWindow::flushSnippetDraftToStorage(bool bShowError)
@@ -3270,7 +3235,7 @@ void QCMainWindow::onCreateTextSnippet()
     snippet.setSessionId(nSessionId);
     snippet.setCaptureType(QCCaptureType::ManualCaptureType);
     snippet.setTitle(dialog.title());
-    snippet.setNote(dialog.note());
+    snippet.setNote(QString());
     snippet.setContentText(dialog.content());
     snippet.setNoteKind(QCNoteKind::ConceptNoteKind);
     snippet.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
@@ -3316,7 +3281,7 @@ void QCMainWindow::onEditSnippet()
             return;
 
         snippet.setTitle(dialog.title());
-        snippet.setNote(dialog.note());
+        snippet.setNote(QString());
         snippet.setContentText(dialog.content());
     }
     else if (snippet.type() == QCSnippetType::ImageSnippetType)
@@ -3336,7 +3301,7 @@ void QCMainWindow::onEditSnippet()
             return;
 
         snippet.setTitle(dialog.title());
-        snippet.setNote(dialog.note());
+        snippet.setNote(QString());
     }
     else
     {
@@ -3393,7 +3358,7 @@ void QCMainWindow::onCaptureScreen()
     snippet.setType(QCSnippetType::ImageSnippetType);
     snippet.setCaptureType(QCCaptureType::ScreenCaptureType);
     snippet.setTitle(dialog.title());
-    snippet.setNote(dialog.note());
+    snippet.setNote(QString());
     snippet.setNoteKind(QCNoteKind::ReviewNoteKind);
     snippet.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
     snippet.setSource(QString::fromUtf8("screen"));
@@ -3465,7 +3430,7 @@ void QCMainWindow::onCaptureRegion()
     snippet.setType(QCSnippetType::ImageSnippetType);
     snippet.setCaptureType(QCCaptureType::ScreenCaptureType);
     snippet.setTitle(dialog.title());
-    snippet.setNote(dialog.note());
+    snippet.setNote(QString());
     snippet.setNoteKind(QCNoteKind::ReviewNoteKind);
     snippet.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
     snippet.setSource(QString::fromUtf8("region"));
@@ -3538,7 +3503,7 @@ void QCMainWindow::onImportImageSnippet()
     snippet.setType(QCSnippetType::ImageSnippetType);
     snippet.setCaptureType(QCCaptureType::ImportCaptureType);
     snippet.setTitle(dialog.title());
-    snippet.setNote(dialog.note());
+    snippet.setNote(QString());
     snippet.setNoteKind(QCNoteKind::ReviewNoteKind);
     snippet.setNoteLevel(QCNoteLevel::ReviewNoteLevel);
     snippet.setSource(QString::fromUtf8("file"));
@@ -3564,7 +3529,6 @@ void QCMainWindow::onImportImageSnippet()
 bool QCMainWindow::createImageSnippetFromFilePath(qint64 nSessionId,
                                                   const QString& strFilePath,
                                                   const QString& strTitle,
-                                                  const QString& strNote,
                                                   qint64 *pnSnippetId)
 {
     if (nullptr != pnSnippetId)
@@ -3588,7 +3552,7 @@ bool QCMainWindow::createImageSnippetFromFilePath(qint64 nSessionId,
     snippet.setType(QCSnippetType::ImageSnippetType);
     snippet.setCaptureType(QCCaptureType::ImportCaptureType);
     snippet.setTitle(strTitle.trimmed());
-    snippet.setNote(strNote.trimmed());
+    snippet.setNote(QString());
     snippet.setNoteKind(QCNoteKind::ReviewNoteKind);
     snippet.setNoteLevel(QCNoteLevel::ReviewNoteLevel);
     snippet.setSource(QString::fromUtf8("clipboard"));
@@ -3645,7 +3609,6 @@ QStringList QCMainWindow::extractLocalImageFilePaths(const QMimeData *pMimeData)
 }
 
 bool QCMainWindow::importImageFilesToCurrentSession(const QStringList& vecFilePaths,
-                                                    const QString& strSourceLabel,
                                                     bool bTriggerWorkspaceSummary,
                                                     qint64 *pnLastSnippetId)
 {
@@ -3681,10 +3644,9 @@ bool QCMainWindow::importImageFilesToCurrentSession(const QStringList& vecFilePa
         const QString strTitle = fileInfo.completeBaseName().trimmed().isEmpty()
             ? uiText(QString::fromUtf8("图片 %1"), QString::fromUtf8("Image %1")).arg(i + 1)
             : fileInfo.completeBaseName().trimmed();
-        const QString strNote = uiText(QString::fromUtf8("来源: %1"), QString::fromUtf8("Source: %1")).arg(strSourceLabel.trimmed().isEmpty() ? QString::fromUtf8("import") : strSourceLabel.trimmed());
 
         qint64 nSnippetId = 0;
-        if (!createImageSnippetFromFilePath(nSessionId, strImagePath, strTitle, strNote, &nSnippetId))
+        if (!createImageSnippetFromFilePath(nSessionId, strImagePath, strTitle, &nSnippetId))
             continue;
 
         ++nSucceededCount;
@@ -3743,7 +3705,6 @@ void QCMainWindow::onPasteImageFromClipboard()
 
     qint64 nLastSnippetId = 0;
     importImageFilesToCurrentSession(vecImagePaths,
-                                     QString::fromUtf8("clipboard"),
                                      true,
                                      &nLastSnippetId);
 }
@@ -4029,157 +3990,64 @@ void QCMainWindow::onExportMarkdown()
     const qint64 nSessionId = currentSessionId();
     if (nSessionId <= 0)
     {
-        QMessageBox::information(this, uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")), uiText(QString::fromUtf8("请先选择一个 Session。"), QString::fromUtf8("Select a session first.")));
+        QMessageBox::information(this,
+                                 uiText(QString::fromUtf8("Export Markdown"), QString::fromUtf8("Export Markdown")),
+                                 uiText(QString::fromUtf8("Select a course first."), QString::fromUtf8("Select a course first.")));
         return;
     }
 
-    QStringList vecScopeLabels;
-    QStringList vecScopeKeys;
-    vecScopeLabels.append(uiText(QString::fromUtf8("当前 Session"), QString::fromUtf8("Current Session")));
-    vecScopeKeys.append(QString::fromUtf8("session"));
-
-    const QVector<qint64> vecSelectedSnippetIds = selectedSnippetIds();
-    if (!vecSelectedSnippetIds.isEmpty())
+    if (nullptr == m_pMdExportService)
     {
-        vecScopeLabels.append(uiText(QString::fromUtf8("选中片段 (%1)"), QString::fromUtf8("Selected Snippets (%1)")).arg(vecSelectedSnippetIds.size()));
-        vecScopeKeys.append(QString::fromUtf8("selected"));
-    }
-
-    QVector<qint64> vecVisibleSnippetIds;
-    if (nullptr != m_pSnippetListWidget)
-    {
-        for (int i = 0; i < m_pSnippetListWidget->count(); ++i)
-        {
-            QListWidgetItem *pItem = m_pSnippetListWidget->item(i);
-            if (nullptr != pItem)
-                vecVisibleSnippetIds.append(pItem->data(Qt::UserRole).toLongLong());
-        }
-    }
-    if (!vecVisibleSnippetIds.isEmpty())
-    {
-        vecScopeLabels.append(uiText(QString::fromUtf8("当前可见片段 (%1)"), QString::fromUtf8("Visible Snippets (%1)")).arg(vecVisibleSnippetIds.size()));
-        vecScopeKeys.append(QString::fromUtf8("visible"));
-    }
-
-    bool bAccepted = false;
-    const QString strScopeLabel = QInputDialog::getItem(this,
-                                                        uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")),
-                                                        uiText(QString::fromUtf8("导出范围"), QString::fromUtf8("Export Scope")),
-                                                        vecScopeLabels,
-                                                        0,
-                                                        false,
-                                                        &bAccepted);
-    if (!bAccepted || strScopeLabel.trimmed().isEmpty())
+        QMessageBox::warning(this,
+                             uiText(QString::fromUtf8("Export Markdown"), QString::fromUtf8("Export Markdown")),
+                             uiText(QString::fromUtf8("Export service is unavailable."), QString::fromUtf8("Export service is unavailable.")));
         return;
+    }
 
-    const int nScopeIndex = vecScopeLabels.indexOf(strScopeLabel);
-    const QString strScopeKey = (nScopeIndex >= 0 && nScopeIndex < vecScopeKeys.size()) ? vecScopeKeys.at(nScopeIndex) : QString::fromUtf8("session");
-    const QVector<qint64> vecExportSnippetIds = strScopeKey == QString::fromUtf8("selected")
-        ? vecSelectedSnippetIds
-        : (strScopeKey == QString::fromUtf8("visible") ? vecVisibleSnippetIds : QVector<qint64>());
+    QCMdExportPreview exportPreview;
+    if (!m_pMdExportService->buildExportPreview(nSessionId, &exportPreview))
+    {
+        QMessageBox::warning(this,
+                             uiText(QString::fromUtf8("Export Markdown"), QString::fromUtf8("Export Markdown")),
+                             uiText(QString::fromUtf8("Unable to prepare export:\n%1"), QString::fromUtf8("Unable to prepare export:\n%1")).arg(m_pMdExportService->lastError()));
+        return;
+    }
 
     QString strExportDirectory;
     if (nullptr != m_pSettingsService)
         m_pSettingsService->getExportDirectory(&strExportDirectory);
 
-    QString strSuggestedFileName = QString::fromUtf8("qtclip_export.md");
-    QCMdExportPreview exportPreview;
-    const bool bPreviewReady = (nullptr != m_pMdExportService)
-        && (vecExportSnippetIds.isEmpty()
-            ? m_pMdExportService->buildExportPreview(nSessionId, &exportPreview)
-            : m_pMdExportService->buildExportPreviewForSnippets(nSessionId, vecExportSnippetIds, &exportPreview));
-    if (!bPreviewReady)
-    {
-        QMessageBox::warning(this,
-                             uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")),
-                             uiText(QString::fromUtf8("无法构建导出预览：\n%1"), QString::fromUtf8("Unable to build export preview:\n%1")).arg(m_pMdExportService != nullptr ? m_pMdExportService->lastError() : uiText(QString::fromUtf8("导出服务不可用。"), QString::fromUtf8("Export service is unavailable."))));
-        return;
-    }
-
     QString strBaseName = exportPreview.m_strSessionTitle.trimmed();
     if (strBaseName.isEmpty())
         strBaseName = QString::fromUtf8("qtclip_export");
-    if (strScopeKey == QString::fromUtf8("selected"))
-        strBaseName += QString::fromUtf8("_selected");
-    else if (strScopeKey == QString::fromUtf8("visible"))
-        strBaseName += QString::fromUtf8("_visible");
     strBaseName.replace(QRegularExpression(QString::fromUtf8("[^A-Za-z0-9_-]+")), QString::fromUtf8("_"));
     strBaseName.replace(QRegularExpression(QString::fromUtf8("_+")), QString::fromUtf8("_"));
-    strBaseName = strBaseName.trimmed();
     if (strBaseName.isEmpty())
         strBaseName = QString::fromUtf8("qtclip_export");
-    strSuggestedFileName = strBaseName + QString::fromUtf8(".md");
 
-    const QString strPreviewText = uiText(
-        QString::fromUtf8("范围: %1\nSession: %2\n课程: %3\nSnippet 数量: %4\n图片 Snippet: %5\n已归档 Snippet: %6\n收藏 Snippet: %7\n已总结 Snippet: %8\nSession 总结: %9\n\n是否继续选择导出文件路径？"),
-        QString::fromUtf8("Scope: %1\nSession: %2\nCourse: %3\nSnippets: %4\nImage snippets: %5\nArchived snippets: %6\nFavorite snippets: %7\nSummarized snippets: %8\nSession summary: %9\n\nContinue to choose an export file path?"))
-        .arg(strScopeLabel)
-        .arg(exportPreview.m_strSessionTitle.trimmed().isEmpty() ? uiText(QString::fromUtf8("无标题 Session"), QString::fromUtf8("Untitled Session")) : exportPreview.m_strSessionTitle.trimmed())
-        .arg(exportPreview.m_strCourseName.trimmed().isEmpty() ? uiText(QString::fromUtf8("无"), QString::fromUtf8("N/A")) : exportPreview.m_strCourseName.trimmed())
-        .arg(exportPreview.m_nSnippetCount)
-        .arg(exportPreview.m_nImageSnippetCount)
-        .arg(exportPreview.m_nArchivedSnippetCount)
-        .arg(exportPreview.m_nFavoriteSnippetCount)
-        .arg(exportPreview.m_nSummarizedSnippetCount)
-        .arg(exportPreview.m_bHasSessionSummary ? uiText(QString::fromUtf8("有"), QString::fromUtf8("Available")) : uiText(QString::fromUtf8("无"), QString::fromUtf8("Not available")));
-    if (QMessageBox::Yes != QMessageBox::question(this,
-                                                  uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")),
-                                                  strPreviewText,
-                                                  QMessageBox::Yes | QMessageBox::Cancel,
-                                                  QMessageBox::Yes))
+    QString strOutputFilePath = strExportDirectory.trimmed().isEmpty()
+        ? QString()
+        : QDir(strExportDirectory).filePath(strBaseName + QString::fromUtf8(".md"));
+
+    if (strOutputFilePath.trimmed().isEmpty())
     {
-        return;
+        strOutputFilePath = QFileDialog::getSaveFileName(this,
+                                                         uiText(QString::fromUtf8("Export Markdown"), QString::fromUtf8("Export Markdown")),
+                                                         strBaseName + QString::fromUtf8(".md"),
+                                                         QString::fromUtf8("Markdown (*.md)"));
+        if (strOutputFilePath.isEmpty())
+            return;
     }
 
-    const QString strSuggestedOutputPath = strExportDirectory.trimmed().isEmpty()
-        ? strSuggestedFileName
-        : QDir(strExportDirectory).filePath(strSuggestedFileName);
-
-    const QString strOutputFilePath = QFileDialog::getSaveFileName(this,
-                                                                   uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")),
-                                                                   strSuggestedOutputPath,
-                                                                   QString::fromUtf8("Markdown (*.md)"));
-    if (strOutputFilePath.isEmpty())
-        return;
-
-    const bool bExportSuccess = vecExportSnippetIds.isEmpty()
-        ? m_pMdExportService->exportSessionToFile(nSessionId, strOutputFilePath)
-        : m_pMdExportService->exportSnippetsToFile(nSessionId, vecExportSnippetIds, strOutputFilePath);
-    if (!bExportSuccess)
+    if (!m_pMdExportService->exportSessionToFile(nSessionId, strOutputFilePath))
     {
         QMessageBox::warning(this,
-                             uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")),
-                             uiText(QString::fromUtf8("导出失败：\n%1"), QString::fromUtf8("Export failed:\n%1")).arg(m_pMdExportService->lastError()));
+                             uiText(QString::fromUtf8("Export Markdown"), QString::fromUtf8("Export Markdown")),
+                             uiText(QString::fromUtf8("Export failed:\n%1"), QString::fromUtf8("Export failed:\n%1")).arg(m_pMdExportService->lastError()));
         return;
     }
 
-    statusBar()->showMessage(uiText(QString::fromUtf8("Markdown 已导出至 %1"), QString::fromUtf8("Markdown exported to %1")).arg(strOutputFilePath), 5000);
-    QMessageBox messageBox(QMessageBox::Information,
-                           uiText(QString::fromUtf8("导出 Markdown"), QString::fromUtf8("Export Markdown")),
-                           uiText(QString::fromUtf8("导出完成：\n%1\n\n您接下来想做什么？"), QString::fromUtf8("Export completed:\n%1\n\nWhat do you want to do next?")).arg(strOutputFilePath),
-                           QMessageBox::NoButton,
-                           this);
-    QPushButton *pOpenFileButton = messageBox.addButton(uiText(QString::fromUtf8("打开文件"), QString::fromUtf8("Open File")), QMessageBox::AcceptRole);
-    QPushButton *pOpenFolderButton = messageBox.addButton(uiText(QString::fromUtf8("打开文件夹"), QString::fromUtf8("Open Folder")), QMessageBox::ActionRole);
-    QPushButton *pCopyPathButton = messageBox.addButton(uiText(QString::fromUtf8("复制路径"), QString::fromUtf8("Copy Path")), QMessageBox::ActionRole);
-    messageBox.addButton(uiText(QString::fromUtf8("关闭"), QString::fromUtf8("Close")), QMessageBox::RejectRole);
-    messageBox.exec();
-
-    if (messageBox.clickedButton() == pOpenFileButton)
-    {
-        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(strOutputFilePath)))
-            statusBar()->showMessage(uiText(QString::fromUtf8("无法打开导出的文件。"), QString::fromUtf8("Unable to open the exported file.")), 4000);
-    }
-    else if (messageBox.clickedButton() == pOpenFolderButton)
-    {
-        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(strOutputFilePath).absolutePath())))
-            statusBar()->showMessage(uiText(QString::fromUtf8("无法打开导出文件夹。"), QString::fromUtf8("Unable to open the export folder.")), 4000);
-    }
-    else if (messageBox.clickedButton() == pCopyPathButton)
-    {
-        QGuiApplication::clipboard()->setText(QDir::toNativeSeparators(strOutputFilePath));
-        statusBar()->showMessage(uiText(QString::fromUtf8("导出路径已复制。"), QString::fromUtf8("Export path copied.")), 3000);
-    }
+    statusBar()->showMessage(uiText(QString::fromUtf8("Exported: %1"), QString::fromUtf8("Exported: %1")).arg(strOutputFilePath), 5000);
 }
 
 void QCMainWindow::onFocusSearch()
@@ -4197,6 +4065,16 @@ void QCMainWindow::onRefresh()
     loadSessions();
     statusBar()->showMessage(uiText(QString::fromUtf8("已刷新。"), QString::fromUtf8("Refreshed.")), 3000);
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

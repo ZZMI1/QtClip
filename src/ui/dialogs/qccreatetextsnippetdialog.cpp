@@ -22,12 +22,10 @@ QCCreateTextSnippetDialog::QCCreateTextSnippetDialog(QWidget *pParent)
     , m_pContentTextEdit(new QPlainTextEdit(this))
 {
     setWindowTitle(QCUiText(QString::fromUtf8("新建文本 Snippet"), QString::fromUtf8("New Text Snippet")));
-    m_pNoteTextEdit->setMinimumHeight(90);
     m_pContentTextEdit->setMinimumHeight(120);
 
     QFormLayout *pFormLayout = new QFormLayout();
     pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pNoteTextEdit);
     pFormLayout->addRow(QCUiText(QString::fromUtf8("内容"), QString::fromUtf8("Content")), m_pContentTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -53,7 +51,7 @@ QString QCCreateTextSnippetDialog::title() const
 
 QString QCCreateTextSnippetDialog::note() const
 {
-    return m_pNoteTextEdit->toPlainText().trimmed();
+    return QString();
 }
 
 QString QCCreateTextSnippetDialog::content() const
@@ -68,12 +66,10 @@ void QCCreateTextSnippetDialog::setTitle(const QString& strTitle)
 
 void QCCreateTextSnippetDialog::setNote(const QString& strNote)
 {
-    m_pNoteTextEdit->setPlainText(strNote.trimmed());
+    Q_UNUSED(strNote);
 }
 
 void QCCreateTextSnippetDialog::setContent(const QString& strContent)
 {
     m_pContentTextEdit->setPlainText(strContent.trimmed());
 }
-
-

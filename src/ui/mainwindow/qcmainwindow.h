@@ -1,4 +1,4 @@
-﻿#ifndef QTCLIP_QCMAINWINDOW_H_
+#ifndef QTCLIP_QCMAINWINDOW_H_
 #define QTCLIP_QCMAINWINDOW_H_
 
 // File: qcmainwindow.h
@@ -124,10 +124,9 @@ private:
     bool isAutoSummarizeImageSnippetEnabled() const;
     bool startSnippetSummary(qint64 nSnippetId, bool bAutomatic);
     void handleSavedImageSnippet(qint64 nSessionId, qint64 nSnippetId, const QString& strSavedMessage);
-    bool createImageSnippetFromFilePath(qint64 nSessionId, const QString& strFilePath, const QString& strTitle, const QString& strNote, qint64 *pnSnippetId);
+    bool createImageSnippetFromFilePath(qint64 nSessionId, const QString& strFilePath, const QString& strTitle, qint64 *pnSnippetId);
     QStringList extractLocalImageFilePaths(const QMimeData *pMimeData) const;
     bool importImageFilesToCurrentSession(const QStringList& vecFilePaths,
-                                          const QString& strSourceLabel,
                                           bool bTriggerWorkspaceSummary,
                                           qint64 *pnLastSnippetId);
     void refreshSnippetTagsDisplay(qint64 nSnippetId);
@@ -282,6 +281,8 @@ private:
 };
 
 #endif // QTCLIP_QCMAINWINDOW_H_
+
+
 
 
 

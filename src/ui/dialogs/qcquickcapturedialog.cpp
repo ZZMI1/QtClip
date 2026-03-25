@@ -18,6 +18,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
+
 #include "../common/qcuilocalization.h"
 
 QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget *pParent)
@@ -33,7 +34,6 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     m_pPreviewLabel->setMinimumSize(420, 240);
     m_pPreviewLabel->setAlignment(Qt::AlignCenter);
     m_pPreviewLabel->setFrameShape(QFrame::StyledPanel);
-    m_pNoteTextEdit->setMinimumHeight(100);
 
     QPixmap pixmapPreview(m_strImagePath);
     if (!pixmapPreview.isNull())
@@ -53,7 +53,6 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     QFormLayout *pFormLayout = new QFormLayout();
     pFormLayout->addRow(QCUiText(QString::fromUtf8("预览"), QString::fromUtf8("Preview")), m_pPreviewLabel);
     pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pNoteTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
     m_pSaveButton = pButtonBox->button(QDialogButtonBox::Save);
@@ -86,7 +85,7 @@ QString QCQuickCaptureDialog::title() const
 
 QString QCQuickCaptureDialog::note() const
 {
-    return m_pNoteTextEdit->toPlainText().trimmed();
+    return QString();
 }
 
 QString QCQuickCaptureDialog::imagePath() const
@@ -101,7 +100,5 @@ void QCQuickCaptureDialog::setTitle(const QString& strTitle)
 
 void QCQuickCaptureDialog::setNote(const QString& strNote)
 {
-    m_pNoteTextEdit->setPlainText(strNote.trimmed());
+    Q_UNUSED(strNote);
 }
-
-

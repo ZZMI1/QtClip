@@ -4,9 +4,11 @@
 // Description: Implements the minimal dialog used to create an image snippet in the QtClip demo UI.
 // Email: 1633467942@qq.com
 // Copyright (c) 2026 QtClip. All rights reserved.
+
 #include "qccreateimagesnippetdialog.h"
-#include <QCheckBox>
+
 #include <QApplication>
+#include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFileDialog>
@@ -18,8 +20,10 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
+
 #include "../common/qcuilocalization.h"
 #include "../../services/qcscreencaptureservice.h"
+
 QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitialDirectory,
                                                        bool bDefaultCopyToCaptureDirectory,
                                                        const QString& strPreviewDirectory,
@@ -38,11 +42,11 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     , m_pBrowseButton(new QPushButton(QCUiText(QString::fromUtf8("浏览"), QString::fromUtf8("Browse")), this))
 {
     setWindowTitle(QCUiText(QString::fromUtf8("新建图片 Snippet"), QString::fromUtf8("New Image Snippet")));
-    m_pNoteTextEdit->setMinimumHeight(90);
     m_pCopyToDefaultCaptureDirectoryCheckBox->setChecked(bDefaultCopyToCaptureDirectory);
     m_pImportModeDescriptionLabel->setWordWrap(true);
     m_pTargetPreviewLabel->setWordWrap(true);
     m_pCopyToDefaultCaptureDirectoryCheckBox->setToolTip(QCUiText(QString::fromUtf8("未勾选：使用原始图像文件。已勾选：先将图像复制到默认捕获目录。"), QString::fromUtf8("Unchecked: use the original image file. Checked: copy the image to the default capture directory first.")));
+
     connect(m_pBrowseButton, &QPushButton::clicked, this, [this]() { chooseImageFile(); });
     connect(m_pCopyToDefaultCaptureDirectoryCheckBox, &QCheckBox::toggled, this, [this]() {
         updateImportModeDescription();
@@ -51,46 +55,56 @@ QCCreateImageSnippetDialog::QCCreateImageSnippetDialog(const QString& strInitial
     connect(m_pFilePathLineEdit, &QLineEdit::textChanged, this, [this]() {
         updateTargetPreview();
     });
+
     QHBoxLayout *pFileLayout = new QHBoxLayout();
     pFileLayout->addWidget(m_pFilePathLineEdit);
     pFileLayout->addWidget(m_pBrowseButton);
+
     QFormLayout *pFormLayout = new QFormLayout();
     pFormLayout->addRow(QCUiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(QCUiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pNoteTextEdit);
     pFormLayout->addRow(QCUiText(QString::fromUtf8("图片"), QString::fromUtf8("Image")), pFileLayout);
     pFormLayout->addRow(QString(), m_pCopyToDefaultCaptureDirectoryCheckBox);
     pFormLayout->addRow(QString(), m_pImportModeDescriptionLabel);
     pFormLayout->addRow(QString(), m_pTargetPreviewLabel);
+
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(pButtonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
     QVBoxLayout *pMainLayout = new QVBoxLayout();
     pMainLayout->addLayout(pFormLayout);
     pMainLayout->addWidget(pButtonBox);
     setLayout(pMainLayout);
+
     updateImportModeDescription();
     updateTargetPreview();
     resize(600, 340);
 }
+
 QCCreateImageSnippetDialog::~QCCreateImageSnippetDialog()
 {
 }
+
 QString QCCreateImageSnippetDialog::title() const
 {
     return m_pTitleLineEdit->text().trimmed();
 }
+
 QString QCCreateImageSnippetDialog::note() const
 {
-    return m_pNoteTextEdit->toPlainText().trimmed();
+    return QString();
 }
+
 QString QCCreateImageSnippetDialog::filePath() const
 {
     return m_pFilePathLineEdit->text().trimmed();
 }
+
 bool QCCreateImageSnippetDialog::shouldCopyImportedImageToDefaultCaptureDirectory() const
 {
     return m_pCopyToDefaultCaptureDirectoryCheckBox->isChecked();
 }
+
 void QCCreateImageSnippetDialog::chooseImageFile()
 {
     QString strBrowseDirectory = m_pFilePathLineEdit->text().trimmed();
@@ -98,6 +112,7 @@ void QCCreateImageSnippetDialog::chooseImageFile()
         strBrowseDirectory = m_strInitialDirectory.trimmed();
     if (!strBrowseDirectory.isEmpty() && QFileInfo(strBrowseDirectory).isFile())
         strBrowseDirectory = QFileInfo(strBrowseDirectory).absolutePath();
+
     const QString strFilePath = QFileDialog::getOpenFileName(this,
                                                              QCUiText(QString::fromUtf8("选择图片"), QString::fromUtf8("Select Image")),
                                                              strBrowseDirectory,
@@ -105,6 +120,7 @@ void QCCreateImageSnippetDialog::chooseImageFile()
     if (!strFilePath.isEmpty())
         m_pFilePathLineEdit->setText(strFilePath);
 }
+
 void QCCreateImageSnippetDialog::updateImportModeDescription()
 {
     if (m_pCopyToDefaultCaptureDirectoryCheckBox->isChecked())
@@ -116,6 +132,7 @@ void QCCreateImageSnippetDialog::updateImportModeDescription()
         m_pImportModeDescriptionLabel->setText(QCUiText(QString::fromUtf8("未勾选：直接使用原始图像文件，不进行移动或复制。"), QString::fromUtf8("Unchecked: use the original image file directly. The file is not moved or copied.")));
     }
 }
+
 void QCCreateImageSnippetDialog::updateTargetPreview()
 {
     if (!m_pCopyToDefaultCaptureDirectoryCheckBox->isChecked())
@@ -123,6 +140,7 @@ void QCCreateImageSnippetDialog::updateTargetPreview()
         m_pTargetPreviewLabel->setVisible(false);
         return;
     }
+
     m_pTargetPreviewLabel->setVisible(true);
     const QString strSelectedFilePath = filePath();
     if (strSelectedFilePath.isEmpty())
@@ -131,6 +149,7 @@ void QCCreateImageSnippetDialog::updateTargetPreview()
             .arg(m_strPreviewDirectory));
         return;
     }
+
     QString strPreviewPath;
     if (nullptr != m_pScreenCaptureService
         && m_pScreenCaptureService->previewImportedImageCopyPath(strSelectedFilePath, &strPreviewPath)
@@ -140,10 +159,9 @@ void QCCreateImageSnippetDialog::updateTargetPreview()
             .arg(QFileInfo(strPreviewPath).absolutePath(), strPreviewPath));
         return;
     }
+
     const QFileInfo selectedFileInfo(strSelectedFilePath);
     strPreviewPath = QDir(m_strPreviewDirectory).filePath(selectedFileInfo.fileName());
     m_pTargetPreviewLabel->setText(QString::fromUtf8("Copy target directory: %1\nCopy target path: %2")
         .arg(m_strPreviewDirectory, strPreviewPath));
 }
-
-

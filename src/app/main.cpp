@@ -2311,13 +2311,13 @@ int RunExportVerificationWorkflow()
     }
 
     const QString strMarkdown = QString::fromUtf8(outputFile.readAll());
-    if (!strMarkdown.contains(QString::fromUtf8("## Session Details"))
-        || !strMarkdown.contains(QString::fromUtf8("## Overview"))
-        || !strMarkdown.contains(QString::fromUtf8("## Snippet Timeline"))
-        || !strMarkdown.contains(QString::fromUtf8("Export Verify Text"))
-        || !strMarkdown.contains(QString::fromUtf8("Export Verify Image")))
+    if (!strMarkdown.contains(QString::fromUtf8("# ") + session.title())
+        || !strMarkdown.contains(QString::fromWCharArray(L"## AI\u603b\u7ed3"))
+        || !strMarkdown.contains(QString::fromUtf8("Session export summary."))
+        || strMarkdown.contains(QString::fromUtf8("## Session Details"))
+        || strMarkdown.contains(QString::fromUtf8("## Snippet Timeline")))
     {
-        PrintError(QString::fromUtf8("Export markdown structure verification failed."));
+        PrintError(QString::fromUtf8("Export markdown minimal-structure verification failed."));
         return 7200;
     }
 
@@ -3888,13 +3888,12 @@ int RunSmokeWorkflow()
     }
 
     const QString strMarkdownText = QString::fromUtf8(byteArrayMarkdown);
-    if (!strMarkdownText.contains(QString::fromUtf8("## Session Details"))
-        || !strMarkdownText.contains(QString::fromUtf8("## Overview"))
-        || !strMarkdownText.contains(QString::fromUtf8("## Snippet Timeline"))
-        || !strMarkdownText.contains(QString::fromUtf8("#### Summary"))
-        || !strMarkdownText.contains(QString::fromUtf8("#### Attachment")))
+    if (!strMarkdownText.contains(QString::fromUtf8("# ") + session.title())
+        || !strMarkdownText.contains(QString::fromWCharArray(L"## AI\u603b\u7ed3"))
+        || strMarkdownText.contains(QString::fromUtf8("## Session Details"))
+        || strMarkdownText.contains(QString::fromUtf8("## Snippet Timeline")))
     {
-        PrintError(QString::fromUtf8("Markdown export structure verification failed."));
+        PrintError(QString::fromUtf8("Markdown export minimal-structure verification failed."));
         return 24;
     }
 
