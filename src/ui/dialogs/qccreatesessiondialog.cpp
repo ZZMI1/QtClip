@@ -1,4 +1,4 @@
-// File: qccreatesessiondialog.cpp
+﻿// File: qccreatesessiondialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal dialog used to create a study session in the QtClip demo UI.
@@ -13,20 +13,7 @@
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
-
-namespace
-{
-bool IsChineseUi()
-{
-    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
-}
-
-QString UiText(const QString& strChinese, const QString& strEnglish)
-{
-    return IsChineseUi() ? strChinese : strEnglish;
-}
-}
-
+#include "../common/qcuilocalization.h"
 
 QCCreateSessionDialog::QCCreateSessionDialog(QWidget *pParent)
     : QDialog(pParent)
@@ -34,13 +21,13 @@ QCCreateSessionDialog::QCCreateSessionDialog(QWidget *pParent)
     , m_pCourseNameLineEdit(new QLineEdit(this))
     , m_pDescriptionTextEdit(new QPlainTextEdit(this))
 {
-    setWindowTitle(UiText(QString::fromUtf8("?? Session"), QString::fromUtf8("New Session")));
+    setWindowTitle(QCUiText(QString::fromUtf8("?? Session"), QString::fromUtf8("New Session")));
     m_pDescriptionTextEdit->setMinimumHeight(90);
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Course")), m_pCourseNameLineEdit);
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Description")), m_pDescriptionTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Course")), m_pCourseNameLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Description")), m_pDescriptionTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -87,3 +74,5 @@ void QCCreateSessionDialog::setDescription(const QString& strDescription)
 {
     m_pDescriptionTextEdit->setPlainText(strDescription.trimmed());
 }
+
+

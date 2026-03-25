@@ -1,4 +1,4 @@
-// File: qcaisettingsdialog.cpp
+﻿// File: qcaisettingsdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal AI settings dialog used by the first QtClip UI workflow.
@@ -21,6 +21,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include "../common/qcuilocalization.h"
 
 namespace
 {
@@ -64,7 +65,7 @@ QVector<QCAiRuntimeSettings> EnsureProfileCount(const QVector<QCAiRuntimeSetting
 QString DefaultConnectionTestHint(bool bChineseUi)
 {
     return bChineseUi
-        ? QString::fromUtf8("?????????????? AI ???")
+        ? QString::fromUtf8("???????? AI ??")
         : QString::fromUtf8("Run a connection test to verify the selected AI configuration.");
 }
 
@@ -286,9 +287,7 @@ void QCAiSettingsDialog::setDialogState(const QVector<QCAiRuntimeSettings>& vecA
     m_bLoadingState = true;
     m_vecAiSettingsProfiles = EnsureProfileCount(vecAiSettingsProfiles, m_pAiProfileComboBox->count());
     m_nCurrentAiProfileIndex = NormalizeProfileIndex(nActiveAiProfileIndex, m_vecAiSettingsProfiles.size());
-    const QString strNormalizedAppLanguage = strAppLanguage.trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0
-        ? QString::fromUtf8("en-US")
-        : QString::fromUtf8("zh-CN");
+    const QString strNormalizedAppLanguage = QCNormalizeUiLanguage(strAppLanguage);
     const int nLanguageIndex = m_pAppLanguageComboBox->findData(strNormalizedAppLanguage);
     m_pAppLanguageComboBox->setCurrentIndex(nLanguageIndex >= 0 ? nLanguageIndex : 0);
     m_pAiProfileComboBox->setCurrentIndex(m_nCurrentAiProfileIndex);
@@ -314,7 +313,7 @@ void QCAiSettingsDialog::setDefaultState(const QVector<QCAiRuntimeSettings>& vec
 {
     m_vecDefaultAiSettingsProfiles = EnsureProfileCount(vecAiSettingsProfiles, m_pAiProfileComboBox->count());
     m_nDefaultActiveAiProfileIndex = NormalizeProfileIndex(nActiveAiProfileIndex, m_vecDefaultAiSettingsProfiles.size());
-    m_strDefaultAppLanguage = strAppLanguage.trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0 ? QString::fromUtf8("en-US") : QString::fromUtf8("zh-CN");
+    m_strDefaultAppLanguage = QCNormalizeUiLanguage(strAppLanguage);
     m_strDefaultScreenshotSaveDirectory = strScreenshotDirectory.trimmed();
     m_strDefaultExportDirectory = strExportDirectory.trimmed();
     m_bDefaultCopyImportedImageToCaptureDirectory = bDefaultCopyImportedImageToCaptureDirectory;
@@ -346,9 +345,7 @@ int QCAiSettingsDialog::activeAiProfileIndex() const
 
 QString QCAiSettingsDialog::appLanguage() const
 {
-    return m_pAppLanguageComboBox->currentData().toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0
-        ? QString::fromUtf8("en-US")
-        : QString::fromUtf8("zh-CN");
+    return QCNormalizeUiLanguage(m_pAppLanguageComboBox->currentData().toString());
 }
 
 QString QCAiSettingsDialog::screenshotSaveDirectory() const
@@ -533,7 +530,7 @@ void QCAiSettingsDialog::updateDirtyState()
         }
     }
 
-    const bool bLanguageDirty = appLanguage() != (m_strInitialAppLanguage.trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0 ? QString::fromUtf8("en-US") : QString::fromUtf8("zh-CN"));
+    const bool bLanguageDirty = appLanguage() != QCNormalizeUiLanguage(m_strInitialAppLanguage);
     const bool bDirty = bLanguageDirty
         || bAiSettingsDirty
         || !IsSamePath(screenshotSaveDirectory(), m_strInitialScreenshotSaveDirectory)
@@ -570,7 +567,7 @@ void QCAiSettingsDialog::updateConnectionTestState()
 
 bool QCAiSettingsDialog::isChineseUi() const
 {
-    return appLanguage().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
+    return QCIsChineseUiLanguage(appLanguage());
 }
 
 QString QCAiSettingsDialog::uiText(const QString& strChinese, const QString& strEnglish) const
@@ -583,12 +580,12 @@ void QCAiSettingsDialog::applyLocalizedTexts()
     setWindowTitle(uiText(QString::fromUtf8("??"), QString::fromUtf8("Settings")));
     m_pUseMockCheckBox->setText(uiText(QString::fromUtf8("?? Mock Provider"), QString::fromUtf8("Use Mock Provider")));
     m_pAutoSummarizeImageSnippetCheckBox->setText(uiText(QString::fromUtf8("???????????"), QString::fromUtf8("Auto Summarize Image Snippet After Save")));
-    m_pDefaultCopyImportedImageCheckBox->setText(uiText(QString::fromUtf8("??????????????"), QString::fromUtf8("Copy imported image to screenshot save directory by default")));
+    m_pDefaultCopyImportedImageCheckBox->setText(uiText(QString::fromUtf8("?????????????"), QString::fromUtf8("Copy imported image to screenshot save directory by default")));
     m_pScreenshotBrowseButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")));
     m_pExportBrowseButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Browse")));
     m_pRestoreDefaultsButton->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Restore Defaults")));
 
-    m_pApiKeyLineEdit->setPlaceholderText(uiText(QString::fromUtf8("Mock Provider ???"), QString::fromUtf8("Optional for mock provider")));
+    m_pApiKeyLineEdit->setPlaceholderText(uiText(QString::fromUtf8("Mock Provider ??"), QString::fromUtf8("Optional for mock provider")));
     m_pTestConnectionButton->setToolTip(uiText(QString::fromUtf8("??????????????????"), QString::fromUtf8("Tests the selected profile using the values currently shown in this dialog.")));
     m_pAiProfileComboBox->setToolTip(uiText(QString::fromUtf8("?????????? provider?base URL?API key ? model?"), QString::fromUtf8("Each profile stores its own provider mode, base URL, API key, and model.")));
     m_pScreenshotSaveDirectoryLineEdit->setToolTip(uiText(QString::fromUtf8("Capture Screen ? Capture Region ????????"), QString::fromUtf8("Used by Capture Screen and Capture Region output files.")));
@@ -638,3 +635,5 @@ void QCAiSettingsDialog::markCurrentStateAsSaved()
     m_bInitialDefaultCopyImportedImageToCaptureDirectory = defaultCopyImportedImageToCaptureDirectory();
     m_nInitialActiveAiProfileIndex = activeAiProfileIndex();
 }
+
+

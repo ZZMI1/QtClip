@@ -1,4 +1,4 @@
-// File: qcquickcapturedialog.cpp
+﻿// File: qcquickcapturedialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal quick capture dialog used by the first QtClip screenshot workflow.
@@ -18,20 +18,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
-
-namespace
-{
-bool IsChineseUi()
-{
-    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
-}
-
-QString UiText(const QString& strChinese, const QString& strEnglish)
-{
-    return IsChineseUi() ? strChinese : strEnglish;
-}
-}
-
+#include "../common/qcuilocalization.h"
 
 QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget *pParent)
     : QDialog(pParent)
@@ -41,7 +28,7 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pSaveButton(nullptr)
 {
-    setWindowTitle(UiText(QString::fromUtf8("????"), QString::fromUtf8("Quick Capture")));
+    setWindowTitle(QCUiText(QString::fromUtf8("????"), QString::fromUtf8("Quick Capture")));
 
     m_pPreviewLabel->setMinimumSize(420, 240);
     m_pPreviewLabel->setAlignment(Qt::AlignCenter);
@@ -58,15 +45,15 @@ QCQuickCaptureDialog::QCQuickCaptureDialog(const QString& strImagePath, QWidget 
     }
     else
     {
-        m_pPreviewLabel->setText(UiText(QString::fromUtf8("??????"), QString::fromUtf8("Preview unavailable.")));
+        m_pPreviewLabel->setText(QCUiText(QString::fromUtf8("??????"), QString::fromUtf8("Preview unavailable.")));
     }
 
     m_pTitleLineEdit->setPlaceholderText(QFileInfo(m_strImagePath).baseName());
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Preview")), m_pPreviewLabel);
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Preview")), m_pPreviewLabel);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
     m_pSaveButton = pButtonBox->button(QDialogButtonBox::Save);
@@ -116,3 +103,5 @@ void QCQuickCaptureDialog::setNote(const QString& strNote)
 {
     m_pNoteTextEdit->setPlainText(strNote.trimmed());
 }
+
+

@@ -1,4 +1,4 @@
-// File: qccreatetextsnippetdialog.cpp
+﻿// File: qccreatetextsnippetdialog.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal dialog used to create a text snippet in the QtClip demo UI.
@@ -13,20 +13,7 @@
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
-
-namespace
-{
-bool IsChineseUi()
-{
-    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
-}
-
-QString UiText(const QString& strChinese, const QString& strEnglish)
-{
-    return IsChineseUi() ? strChinese : strEnglish;
-}
-}
-
+#include "../common/qcuilocalization.h"
 
 QCCreateTextSnippetDialog::QCCreateTextSnippetDialog(QWidget *pParent)
     : QDialog(pParent)
@@ -34,14 +21,14 @@ QCCreateTextSnippetDialog::QCCreateTextSnippetDialog(QWidget *pParent)
     , m_pNoteTextEdit(new QPlainTextEdit(this))
     , m_pContentTextEdit(new QPlainTextEdit(this))
 {
-    setWindowTitle(UiText(QString::fromUtf8("??????"), QString::fromUtf8("New Text Snippet")));
+    setWindowTitle(QCUiText(QString::fromUtf8("??????"), QString::fromUtf8("New Text Snippet")));
     m_pNoteTextEdit->setMinimumHeight(90);
     m_pContentTextEdit->setMinimumHeight(120);
 
     QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
-    pFormLayout->addRow(UiText(QString::fromUtf8("??"), QString::fromUtf8("Content")), m_pContentTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pTitleLineEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pNoteTextEdit);
+    pFormLayout->addRow(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Content")), m_pContentTextEdit);
 
     QDialogButtonBox *pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(pButtonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -88,3 +75,5 @@ void QCCreateTextSnippetDialog::setContent(const QString& strContent)
 {
     m_pContentTextEdit->setPlainText(strContent.trimmed());
 }
+
+

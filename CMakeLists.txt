@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+﻿cmake_minimum_required(VERSION 3.16)
 
 project(QtClip LANGUAGES CXX)
 
@@ -59,6 +59,8 @@ set(QTCLIP_SERVICE_SOURCES
 )
 
 set(QTCLIP_UI_SOURCES
+    src/ui/common/qcuilocalization.cpp
+    src/ui/common/qcuitheme.cpp
     src/ui/mainwindow/qcmainwindow.cpp
     src/ui/dialogs/qcaisettingsdialog.cpp
     src/ui/dialogs/qccreateimagesnippetdialog.cpp
@@ -118,6 +120,10 @@ if (EXISTS "${QTCLIP_WINDEPLOYQT_EXECUTABLE}")
         COMMENT "Deploying Qt runtime for qtclipsmoke."
     )
 endif()
+
+
+
+
 
 
 

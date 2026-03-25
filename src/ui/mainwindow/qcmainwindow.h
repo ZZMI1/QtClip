@@ -1,4 +1,4 @@
-#ifndef QTCLIP_QCMAINWINDOW_H_
+﻿#ifndef QTCLIP_QCMAINWINDOW_H_
 #define QTCLIP_QCMAINWINDOW_H_
 
 // File: qcmainwindow.h
@@ -27,6 +27,10 @@ class QListWidget;
 class QPlainTextEdit;
 class QListWidgetItem;
 class QPushButton;
+class QMimeData;
+class QDragEnterEvent;
+class QDragMoveEvent;
+class QDropEvent;
 class QCSnippetTagDialog;
 class QCStudySession;
 class QCSnippet;
@@ -50,6 +54,11 @@ public:
                  QCScreenCaptureService *pScreenCaptureService,
                  QWidget *pParent = nullptr);
     virtual ~QCMainWindow() override;
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *pEvent) override;
+    void dragMoveEvent(QDragMoveEvent *pEvent) override;
+    void dropEvent(QDropEvent *pEvent) override;
 
 private:
     QCMainWindow(const QCMainWindow& other);
@@ -105,6 +114,12 @@ private:
     bool isAutoSummarizeImageSnippetEnabled() const;
     bool startSnippetSummary(qint64 nSnippetId, bool bAutomatic);
     void handleSavedImageSnippet(qint64 nSessionId, qint64 nSnippetId, const QString& strSavedMessage);
+    bool createImageSnippetFromFilePath(qint64 nSessionId, const QString& strFilePath, const QString& strTitle, const QString& strNote, qint64 *pnSnippetId);
+    QStringList extractLocalImageFilePaths(const QMimeData *pMimeData) const;
+    bool importImageFilesToCurrentSession(const QStringList& vecFilePaths,
+                                          const QString& strSourceLabel,
+                                          bool bTriggerWorkspaceSummary,
+                                          qint64 *pnLastSnippetId);
     void refreshSnippetTagsDisplay(qint64 nSnippetId);
     void updateSnippetStateControls(const QCSnippet& snippet);
     void restoreDefaultFilters();
@@ -132,6 +147,8 @@ private:
     void onCaptureScreen();
     void onCaptureRegion();
     void onImportImageSnippet();
+    void onPasteImageFromClipboard();
+    void onRunWorkspaceSummary();
     void onDuplicateSnippet();
     void onMoveSnippet();
     void onManageTags();
@@ -195,6 +212,7 @@ private:
     QAction *m_pEditCurrentAction;
     QAction *m_pDeleteCurrentAction;
     QAction *m_pFocusSearchAction;
+    QAction *m_pPasteImageAction;
 
     QListWidget *m_pSessionListWidget;
     QListWidget *m_pSnippetListWidget;
@@ -203,6 +221,11 @@ private:
     QPushButton *m_pClearSearchButton;
     QPushButton *m_pClearSearchHistoryButton;
     QPushButton *m_pResetFiltersButton;
+    QPushButton *m_pSidebarNewSessionButton;
+    QPushButton *m_pSidebarSettingsButton;
+    QPushButton *m_pPasteImageButton;
+    QPushButton *m_pRunSummaryButton;
+    QPushButton *m_pTopExportButton;
     QCheckBox *m_pQuickFavoriteCheckBox;
     QCheckBox *m_pQuickReviewCheckBox;
     QCheckBox *m_pFavoriteOnlyCheckBox;
@@ -210,6 +233,9 @@ private:
     QComboBox *m_pSnippetTypeFilterComboBox;
     QCheckBox *m_pShowArchivedCheckBox;
     QComboBox *m_pTagFilterComboBox;
+    QLabel *m_pSessionPanelTitleLabel;
+    QLabel *m_pSnippetPanelTitleLabel;
+    QLabel *m_pDetailPanelTitleLabel;
     QLabel *m_pSelectionContextLabel;
     QLabel *m_pViewSummaryLabel;
     QLabel *m_pAiStatusLabel;
@@ -239,5 +265,12 @@ private:
 };
 
 #endif // QTCLIP_QCMAINWINDOW_H_
+
+
+
+
+
+
+
 
 

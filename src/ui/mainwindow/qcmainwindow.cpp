@@ -1,4 +1,4 @@
-
+﻿
 // File: qcmainwindow.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
@@ -20,17 +20,22 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QEventLoop>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QInputDialog>
+#include <QImage>
 #include <QLabel>
 #include <QKeySequence>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMimeData>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QMessageBox>
@@ -42,6 +47,7 @@
 #include <QSplitter>
 #include <QSignalBlocker>
 #include <QStatusBar>
+#include <QStandardPaths>
 #include <QUrl>
 #include <QTimer>
 #include <QTextCursor>
@@ -57,6 +63,7 @@
 #include "../dialogs/qcquickcapturedialog.h"
 #include "../dialogs/qcsnippettagdialog.h"
 #include "../widgets/qcscreenshotoverlay.h"
+#include "../common/qcuilocalization.h"
 #include "../../services/qcaiservice.h"
 #include "../../services/qcmdexportservice.h"
 #include "../../services/qcsessionservice.h"
@@ -66,25 +73,18 @@
 
 namespace
 {
-QString UiTextGlobal(const QString& strChinese, const QString& strEnglish)
-{
-    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0
-        ? strEnglish
-        : strChinese;
-}
-
 QString SessionStatusText(QCSessionStatus sessionStatus)
 {
     return sessionStatus == QCSessionStatus::FinishedSessionStatus
-        ? UiTextGlobal(QString::fromUtf8("???"), QString::fromUtf8("Finished"))
-        : UiTextGlobal(QString::fromUtf8("???"), QString::fromUtf8("Active"));
+        ? QCUiText(QString::fromUtf8("???"), QString::fromUtf8("Finished"))
+        : QCUiText(QString::fromUtf8("???"), QString::fromUtf8("Active"));
 }
 
 QString SessionItemText(const QCStudySession& session)
 {
     const QString strStatus = SessionStatusText(session.status());
     const QString strTitle = QString::fromUtf8("[%1] %2").arg(strStatus, session.title().trimmed().isEmpty()
-        ? UiTextGlobal(QString::fromUtf8("??? Session"), QString::fromUtf8("Untitled Session"))
+        ? QCUiText(QString::fromUtf8("??? Session"), QString::fromUtf8("Untitled Session"))
         : session.title().trimmed());
 
     if (session.courseName().trimmed().isEmpty())
@@ -104,16 +104,16 @@ QString SnippetItemText(const QCSnippet& snippet)
         ? snippet.capturedAt().toLocalTime().toString(QString::fromUtf8("MM-dd hh:mm"))
         : QString::fromUtf8("--:--");
     const QString strTitle = snippet.title().trimmed().isEmpty()
-        ? UiTextGlobal(QString::fromUtf8("?????"), QString::fromUtf8("Untitled Snippet"))
+        ? QCUiText(QString::fromUtf8("?????"), QString::fromUtf8("Untitled Snippet"))
         : snippet.title();
 
     QStringList vecStateTokens;
     if (snippet.isFavorite())
-        vecStateTokens.append(UiTextGlobal(QString::fromUtf8("??"), QString::fromUtf8("Fav")));
+        vecStateTokens.append(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Fav")));
     if (IsSnippetMarkedForReview(snippet))
-        vecStateTokens.append(UiTextGlobal(QString::fromUtf8("??"), QString::fromUtf8("Review")));
+        vecStateTokens.append(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Review")));
     if (snippet.isArchived())
-        vecStateTokens.append(UiTextGlobal(QString::fromUtf8("??"), QString::fromUtf8("Archived")));
+        vecStateTokens.append(QCUiText(QString::fromUtf8("??"), QString::fromUtf8("Archived")));
 
     const QString strStatePrefix = vecStateTokens.isEmpty()
         ? QString()
@@ -184,6 +184,7 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     , m_pEditCurrentAction(nullptr)
     , m_pDeleteCurrentAction(nullptr)
     , m_pFocusSearchAction(nullptr)
+    , m_pPasteImageAction(nullptr)
     , m_pDeleteSnippetAction(nullptr)
     , m_pToggleArchiveSnippetAction(nullptr)
     , m_pDeleteSessionAction(nullptr)
@@ -194,6 +195,11 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     , m_pClearSearchButton(nullptr)
     , m_pClearSearchHistoryButton(nullptr)
     , m_pResetFiltersButton(nullptr)
+    , m_pSidebarNewSessionButton(nullptr)
+    , m_pSidebarSettingsButton(nullptr)
+    , m_pPasteImageButton(nullptr)
+    , m_pRunSummaryButton(nullptr)
+    , m_pTopExportButton(nullptr)
     , m_pQuickFavoriteCheckBox(nullptr)
     , m_pQuickReviewCheckBox(nullptr)
     , m_pFavoriteOnlyCheckBox(nullptr)
@@ -201,6 +207,9 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     , m_pSnippetTypeFilterComboBox(nullptr)
     , m_pShowArchivedCheckBox(nullptr)
     , m_pTagFilterComboBox(nullptr)
+    , m_pSessionPanelTitleLabel(nullptr)
+    , m_pSnippetPanelTitleLabel(nullptr)
+    , m_pDetailPanelTitleLabel(nullptr)
     , m_pSelectionContextLabel(nullptr)
     , m_pViewSummaryLabel(nullptr)
     , m_pAiStatusLabel(nullptr)
@@ -230,6 +239,7 @@ QCMainWindow::QCMainWindow(QCSessionService *pSessionService,
     loadAppLanguage();
     qApp->setProperty("qtclip.uiLanguage", m_strAppLanguage);
     setupUi();
+    setAcceptDrops(true);
     setupActions();
 
     connect(m_pSnippetSummaryWatcher, &QFutureWatcher<QCAiTaskExecutionResult>::finished, this, [this]() {
@@ -246,37 +256,105 @@ QCMainWindow::~QCMainWindow()
 {
 }
 
+
+void QCMainWindow::dragEnterEvent(QDragEnterEvent *pEvent)
+{
+    if (nullptr == pEvent)
+        return;
+
+    const QStringList vecImagePaths = extractLocalImageFilePaths(pEvent->mimeData());
+    if (vecImagePaths.isEmpty())
+    {
+        pEvent->ignore();
+        return;
+    }
+
+    pEvent->acceptProposedAction();
+}
+
+void QCMainWindow::dragMoveEvent(QDragMoveEvent *pEvent)
+{
+    if (nullptr == pEvent)
+        return;
+
+    const QStringList vecImagePaths = extractLocalImageFilePaths(pEvent->mimeData());
+    if (vecImagePaths.isEmpty())
+    {
+        pEvent->ignore();
+        return;
+    }
+
+    pEvent->acceptProposedAction();
+}
+
+void QCMainWindow::dropEvent(QDropEvent *pEvent)
+{
+    if (nullptr == pEvent)
+        return;
+
+    const QStringList vecImagePaths = extractLocalImageFilePaths(pEvent->mimeData());
+    if (vecImagePaths.isEmpty())
+    {
+        pEvent->ignore();
+        return;
+    }
+
+    qint64 nLastSnippetId = 0;
+    if (importImageFilesToCurrentSession(vecImagePaths,
+                                         QString::fromUtf8("drag-drop"),
+                                         true,
+                                         &nLastSnippetId))
+    {
+        pEvent->acceptProposedAction();
+        return;
+    }
+
+    pEvent->ignore();
+}
 void QCMainWindow::loadAppLanguage()
 {
     m_strAppLanguage = QString::fromUtf8("zh-CN");
     if (nullptr != m_pSettingsService)
         m_pSettingsService->getAppLanguage(&m_strAppLanguage);
-    if (m_strAppLanguage.trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) == 0)
-        m_strAppLanguage = QString::fromUtf8("en-US");
-    else
-        m_strAppLanguage = QString::fromUtf8("zh-CN");
+    m_strAppLanguage = QCNormalizeUiLanguage(m_strAppLanguage);
 }
 
 bool QCMainWindow::isChineseUi() const
 {
-    return m_strAppLanguage.trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
+    return QCIsChineseUiLanguage(m_strAppLanguage);
 }
 
 QString QCMainWindow::uiText(const QString& strChinese, const QString& strEnglish) const
 {
-    return isChineseUi() ? strChinese : strEnglish;
+    return QCIsChineseUiLanguage(m_strAppLanguage) ? strChinese : strEnglish;
 }
 
 void QCMainWindow::applyLocalizedTexts()
 {
     updateMenuTexts();
     setWindowTitle(uiText(QString::fromUtf8("QtClip"), QString::fromUtf8("QtClip")));
+    if (nullptr != m_pSessionPanelTitleLabel)
+        m_pSessionPanelTitleLabel->setText(uiText(QString::fromUtf8("Session 列表"), QString::fromUtf8("Sessions")));
+    if (nullptr != m_pSnippetPanelTitleLabel)
+        m_pSnippetPanelTitleLabel->setText(uiText(QString::fromUtf8("Snippet 列表"), QString::fromUtf8("Snippets")));
+    if (nullptr != m_pDetailPanelTitleLabel)
+        m_pDetailPanelTitleLabel->setText(uiText(QString::fromUtf8("详情"), QString::fromUtf8("Details")));
     if (nullptr != m_pSnippetSearchLineEdit)
         m_pSnippetSearchLineEdit->setPlaceholderText(uiText(QString::fromUtf8("?????????????"), QString::fromUtf8("Search title, content, summary, note")));
     if (nullptr != m_pClearSearchButton)
         m_pClearSearchButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Clear")));
     if (nullptr != m_pResetFiltersButton)
         m_pResetFiltersButton->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Reset")));
+    if (nullptr != m_pSidebarNewSessionButton)
+        m_pSidebarNewSessionButton->setText(uiText(QString::fromUtf8("新建"), QString::fromUtf8("New")));
+    if (nullptr != m_pSidebarSettingsButton)
+        m_pSidebarSettingsButton->setText(uiText(QString::fromUtf8("设置"), QString::fromUtf8("Settings")));
+    if (nullptr != m_pPasteImageButton)
+        m_pPasteImageButton->setText(uiText(QString::fromUtf8("粘贴图片"), QString::fromUtf8("Paste Image")));
+    if (nullptr != m_pRunSummaryButton)
+        m_pRunSummaryButton->setText(QString::fromUtf8("▶ ") + uiText(QString::fromUtf8("运行总结"), QString::fromUtf8("Run Summary")));
+    if (nullptr != m_pTopExportButton)
+        m_pTopExportButton->setText(uiText(QString::fromUtf8("导出"), QString::fromUtf8("Export")));
     if (nullptr != m_pClearSearchHistoryButton)
         m_pClearSearchHistoryButton->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("History")));
     if (nullptr != m_pSearchHistoryComboBox && m_pSearchHistoryComboBox->count() > 0)
@@ -313,6 +391,7 @@ void QCMainWindow::applyLocalizedTexts()
     if (nullptr != m_pCaptureScreenAction) m_pCaptureScreenAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Screen")));
     if (nullptr != m_pCaptureRegionAction) m_pCaptureRegionAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Capture Region")));
     if (nullptr != m_pImportImageAction) m_pImportImageAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Import Image")));
+    if (nullptr != m_pPasteImageAction) m_pPasteImageAction->setText(uiText(QString::fromUtf8("粘贴图片"), QString::fromUtf8("Paste Image")));
     if (nullptr != m_pTagLibraryAction) m_pTagLibraryAction->setText(uiText(QString::fromUtf8("???"), QString::fromUtf8("Tag Library")));
     if (nullptr != m_pSummarizeSnippetAction) m_pSummarizeSnippetAction->setText(uiText(QString::fromUtf8("????"), QString::fromUtf8("Summarize Snippet")));
     if (nullptr != m_pRetrySnippetSummaryAction) m_pRetrySnippetSummaryAction->setText(uiText(QString::fromUtf8("???? AI"), QString::fromUtf8("Retry Snippet AI")));
@@ -339,18 +418,24 @@ void QCMainWindow::updateMenuTexts()
 
     const QList<QAction *> vecMenuActions = menuBar()->actions();
     if (vecMenuActions.size() > 0 && nullptr != vecMenuActions.at(0))
-        vecMenuActions.at(0)->setText(uiText(QString::fromUtf8("Session"), QString::fromUtf8("Session")));
+        vecMenuActions.at(0)->setText(uiText(QString::fromUtf8("文件"), QString::fromUtf8("File")));
     if (vecMenuActions.size() > 1 && nullptr != vecMenuActions.at(1))
-        vecMenuActions.at(1)->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Snippet")));
+        vecMenuActions.at(1)->setText(uiText(QString::fromUtf8("编辑"), QString::fromUtf8("Edit")));
     if (vecMenuActions.size() > 2 && nullptr != vecMenuActions.at(2))
         vecMenuActions.at(2)->setText(QString::fromUtf8("AI"));
     if (vecMenuActions.size() > 3 && nullptr != vecMenuActions.at(3))
-        vecMenuActions.at(3)->setText(uiText(QString::fromUtf8("??"), QString::fromUtf8("Tools")));
+        vecMenuActions.at(3)->setText(uiText(QString::fromUtf8("视图"), QString::fromUtf8("View")));
 }
 
 void QCMainWindow::setupUi()
 {
     setWindowTitle(uiText(QString::fromUtf8("QtClip"), QString::fromUtf8("QtClip")));
+    if (nullptr != m_pSessionPanelTitleLabel)
+        m_pSessionPanelTitleLabel->setText(uiText(QString::fromUtf8("Session 列表"), QString::fromUtf8("Sessions")));
+    if (nullptr != m_pSnippetPanelTitleLabel)
+        m_pSnippetPanelTitleLabel->setText(uiText(QString::fromUtf8("Snippet 列表"), QString::fromUtf8("Snippets")));
+    if (nullptr != m_pDetailPanelTitleLabel)
+        m_pDetailPanelTitleLabel->setText(uiText(QString::fromUtf8("详情"), QString::fromUtf8("Details")));
     resize(1280, 760);
 
     m_pSessionListWidget = new QListWidget(this);
@@ -360,6 +445,11 @@ void QCMainWindow::setupUi()
     m_pClearSearchButton = new QPushButton(QString::fromUtf8("Clear"), this);
     m_pClearSearchHistoryButton = new QPushButton(QString::fromUtf8("History"), this);
     m_pResetFiltersButton = new QPushButton(QString::fromUtf8("Reset"), this);
+    m_pSidebarNewSessionButton = new QPushButton(uiText(QString::fromUtf8("新建"), QString::fromUtf8("New")), this);
+    m_pSidebarSettingsButton = new QPushButton(uiText(QString::fromUtf8("设置"), QString::fromUtf8("Settings")), this);
+    m_pPasteImageButton = new QPushButton(uiText(QString::fromUtf8("粘贴图片"), QString::fromUtf8("Paste Image")), this);
+    m_pRunSummaryButton = new QPushButton(QString::fromUtf8("▶ ") + uiText(QString::fromUtf8("运行总结"), QString::fromUtf8("Run Summary")), this);
+    m_pTopExportButton = new QPushButton(uiText(QString::fromUtf8("导出"), QString::fromUtf8("Export")), this);
     m_pQuickFavoriteCheckBox = new QCheckBox(QString::fromUtf8("Selected Favorite"), this);
     m_pQuickReviewCheckBox = new QCheckBox(QString::fromUtf8("Selected Review"), this);
     m_pFavoriteOnlyCheckBox = new QCheckBox(QString::fromUtf8("Favorites Only"), this);
@@ -417,6 +507,7 @@ void QCMainWindow::setupUi()
 
     QWidget *pDetailWidget = new QWidget(this);
     QFormLayout *pDetailLayout = new QFormLayout();
+    pDetailLayout->setSpacing(8);
     QWidget *pStateWidget = new QWidget(this);
     QHBoxLayout *pStateLayout = new QHBoxLayout();
     pStateLayout->addWidget(m_pSnippetFavoriteCheckBox);
@@ -424,21 +515,47 @@ void QCMainWindow::setupUi()
     pStateLayout->addStretch(1);
     pStateLayout->setContentsMargins(0, 0, 0, 0);
     pStateWidget->setLayout(pStateLayout);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("Session ??"), QString::fromUtf8("Session Summary")), m_pSessionSummaryTextEdit);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Title")), m_pSnippetTitleValueLabel);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Tags")), m_pSnippetTagsValueLabel);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("State")), pStateWidget);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Note")), m_pSnippetNoteTextEdit);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Content")), m_pSnippetContentTextEdit);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("????"), QString::fromUtf8("Snippet Summary")), m_pSnippetSummaryTextEdit);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("????"), QString::fromUtf8("Image Path")), m_pImagePathValueLabel);
-    pDetailLayout->addRow(uiText(QString::fromUtf8("??"), QString::fromUtf8("Preview")), m_pImagePreviewLabel);
-    pDetailWidget->setLayout(pDetailLayout);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("Session 摘要"), QString::fromUtf8("Session Summary")), m_pSessionSummaryTextEdit);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("标题"), QString::fromUtf8("Title")), m_pSnippetTitleValueLabel);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("标签"), QString::fromUtf8("Tags")), m_pSnippetTagsValueLabel);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("状态"), QString::fromUtf8("State")), pStateWidget);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("备注"), QString::fromUtf8("Note")), m_pSnippetNoteTextEdit);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("内容"), QString::fromUtf8("Content")), m_pSnippetContentTextEdit);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("Snippet 总结"), QString::fromUtf8("Snippet Summary")), m_pSnippetSummaryTextEdit);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("图片路径"), QString::fromUtf8("Image Path")), m_pImagePathValueLabel);
+    pDetailLayout->addRow(uiText(QString::fromUtf8("预览"), QString::fromUtf8("Preview")), m_pImagePreviewLabel);
+
+    QVBoxLayout *pDetailPanelLayout = new QVBoxLayout();
+    m_pDetailPanelTitleLabel = new QLabel(pDetailWidget);
+    m_pDetailPanelTitleLabel->setObjectName(QString::fromUtf8("detailPanelTitleLabel"));
+    pDetailPanelLayout->addWidget(m_pDetailPanelTitleLabel);
+    pDetailPanelLayout->addLayout(pDetailLayout, 1);
+    pDetailPanelLayout->setSpacing(8);
+    pDetailPanelLayout->setContentsMargins(12, 12, 12, 12);
+    pDetailWidget->setLayout(pDetailPanelLayout);
 
     QWidget *pSnippetPanelWidget = new QWidget(this);
     QVBoxLayout *pSnippetPanelLayout = new QVBoxLayout();
-    QHBoxLayout *pFilterLayout = new QHBoxLayout();
-    QHBoxLayout *pQuickStateLayout = new QHBoxLayout();
+    m_pSnippetPanelTitleLabel = new QLabel(pSnippetPanelWidget);
+    m_pSnippetPanelTitleLabel->setObjectName(QString::fromUtf8("snippetPanelTitleLabel"));
+    pSnippetPanelLayout->addWidget(m_pSnippetPanelTitleLabel);
+
+    QWidget *pCommandBarWidget = new QWidget(pSnippetPanelWidget);
+    pCommandBarWidget->setObjectName(QString::fromUtf8("snippetCommandBarWidget"));
+    QHBoxLayout *pCommandBarLayout = new QHBoxLayout(pCommandBarWidget);
+    pCommandBarLayout->setContentsMargins(0, 0, 0, 0);
+    pCommandBarLayout->setSpacing(8);
+    pCommandBarLayout->addWidget(m_pPasteImageButton);
+    pCommandBarLayout->addWidget(m_pRunSummaryButton);
+    pCommandBarLayout->addWidget(m_pTopExportButton);
+    pCommandBarLayout->addStretch(1);
+    pSnippetPanelLayout->addWidget(pCommandBarWidget);
+
+    QWidget *pFilterBarWidget = new QWidget(pSnippetPanelWidget);
+    pFilterBarWidget->setObjectName(QString::fromUtf8("snippetFilterBarWidget"));
+    QHBoxLayout *pFilterLayout = new QHBoxLayout(pFilterBarWidget);
+    pFilterLayout->setContentsMargins(0, 0, 0, 0);
+    pFilterLayout->setSpacing(6);
     pFilterLayout->addWidget(m_pSnippetSearchLineEdit, 1);
     pFilterLayout->addWidget(m_pSearchHistoryComboBox);
     pFilterLayout->addWidget(m_pClearSearchButton);
@@ -446,33 +563,59 @@ void QCMainWindow::setupUi()
     pFilterLayout->addWidget(m_pResetFiltersButton);
     pFilterLayout->addWidget(m_pFavoriteOnlyCheckBox);
     pFilterLayout->addWidget(m_pReviewOnlyCheckBox);
-    pFilterLayout->addWidget(new QLabel(uiText(QString::fromUtf8("??"), QString::fromUtf8("Type")), this));
+    pFilterLayout->addWidget(new QLabel(uiText(QString::fromUtf8("类型"), QString::fromUtf8("Type")), this));
     pFilterLayout->addWidget(m_pSnippetTypeFilterComboBox);
     pFilterLayout->addWidget(m_pShowArchivedCheckBox);
-    pFilterLayout->addWidget(new QLabel(uiText(QString::fromUtf8("??"), QString::fromUtf8("Tag")), this));
+    pFilterLayout->addWidget(new QLabel(uiText(QString::fromUtf8("标签"), QString::fromUtf8("Tag")), this));
     pFilterLayout->addWidget(m_pTagFilterComboBox);
-    pQuickStateLayout->addWidget(new QLabel(uiText(QString::fromUtf8("??"), QString::fromUtf8("Selected")), this));
+    pSnippetPanelLayout->addWidget(pFilterBarWidget);
+
+    QWidget *pQuickStateBarWidget = new QWidget(pSnippetPanelWidget);
+    pQuickStateBarWidget->setObjectName(QString::fromUtf8("snippetQuickStateBarWidget"));
+    QHBoxLayout *pQuickStateLayout = new QHBoxLayout(pQuickStateBarWidget);
+    pQuickStateLayout->setContentsMargins(0, 0, 0, 0);
+    pQuickStateLayout->setSpacing(6);
+    pQuickStateLayout->addWidget(new QLabel(uiText(QString::fromUtf8("选中"), QString::fromUtf8("Selected")), this));
     pQuickStateLayout->addWidget(m_pQuickFavoriteCheckBox);
     pQuickStateLayout->addWidget(m_pQuickReviewCheckBox);
     pQuickStateLayout->addStretch(1);
-    pSnippetPanelLayout->addLayout(pFilterLayout);
+
     pSnippetPanelLayout->addWidget(m_pSelectionContextLabel);
     pSnippetPanelLayout->addWidget(m_pViewSummaryLabel);
     pSnippetPanelLayout->addWidget(m_pAiStatusLabel);
-    pSnippetPanelLayout->addLayout(pQuickStateLayout);
+    pSnippetPanelLayout->addWidget(pQuickStateBarWidget);
     pSnippetPanelLayout->addWidget(m_pSnippetListWidget, 1);
-    pSnippetPanelLayout->setContentsMargins(0, 0, 0, 0);
+    pSnippetPanelLayout->setSpacing(8);
+    pSnippetPanelLayout->setContentsMargins(12, 12, 12, 12);
     pSnippetPanelWidget->setLayout(pSnippetPanelLayout);
 
+    QWidget *pSessionPanelWidget = new QWidget(this);
+    QVBoxLayout *pSessionPanelLayout = new QVBoxLayout();
+    m_pSessionPanelTitleLabel = new QLabel(pSessionPanelWidget);
+    m_pSessionPanelTitleLabel->setObjectName(QString::fromUtf8("sessionPanelTitleLabel"));
+    pSessionPanelLayout->addWidget(m_pSessionPanelTitleLabel);
+    pSessionPanelLayout->addWidget(m_pSidebarNewSessionButton);
+    pSessionPanelLayout->addWidget(m_pSessionListWidget, 1);
+    pSessionPanelLayout->addWidget(m_pSidebarSettingsButton);
+    pSessionPanelLayout->setSpacing(8);
+    pSessionPanelLayout->setContentsMargins(12, 12, 12, 12);
+    pSessionPanelWidget->setLayout(pSessionPanelLayout);
+
     QSplitter *pMainSplitter = new QSplitter(this);
-    pMainSplitter->addWidget(m_pSessionListWidget);
+    pMainSplitter->setObjectName(QString::fromUtf8("mainSplitter"));
+    pMainSplitter->setHandleWidth(1);
+    pMainSplitter->addWidget(pSessionPanelWidget);
     pMainSplitter->addWidget(pSnippetPanelWidget);
     pMainSplitter->addWidget(pDetailWidget);
     pMainSplitter->setStretchFactor(0, 0);
     pMainSplitter->setStretchFactor(1, 1);
     pMainSplitter->setStretchFactor(2, 2);
-    pMainSplitter->setSizes(QList<int>() << 240 << 460 << 520);
+    pMainSplitter->setSizes(QList<int>() << 250 << 500 << 530);
     setCentralWidget(pMainSplitter);
+
+    pSessionPanelWidget->setObjectName(QString::fromUtf8("sessionPanelWidget"));
+    pSnippetPanelWidget->setObjectName(QString::fromUtf8("snippetPanelWidget"));
+    pDetailWidget->setObjectName(QString::fromUtf8("detailPanelWidget"));
 
     connect(m_pSessionListWidget, &QListWidget::itemSelectionChanged, this, [this]() { onSessionSelectionChanged(); });
     connect(m_pSnippetListWidget, &QListWidget::itemSelectionChanged, this, [this]() { onSnippetSelectionChanged(); });
@@ -481,6 +624,11 @@ void QCMainWindow::setupUi()
     connect(m_pClearSearchButton, &QPushButton::clicked, this, [this]() { onClearSearch(); });
     connect(m_pClearSearchHistoryButton, &QPushButton::clicked, this, [this]() { onClearSearchHistory(); });
     connect(m_pResetFiltersButton, &QPushButton::clicked, this, [this]() { onResetFilters(); });
+    connect(m_pSidebarNewSessionButton, &QPushButton::clicked, this, [this]() { onCreateSession(); });
+    connect(m_pSidebarSettingsButton, &QPushButton::clicked, this, [this]() { onAiSettings(); });
+    connect(m_pPasteImageButton, &QPushButton::clicked, this, [this]() { onPasteImageFromClipboard(); });
+    connect(m_pRunSummaryButton, &QPushButton::clicked, this, [this]() { onRunWorkspaceSummary(); });
+    connect(m_pTopExportButton, &QPushButton::clicked, this, [this]() { onExportMarkdown(); });
     connect(m_pFavoriteOnlyCheckBox, &QCheckBox::toggled, this, [this](bool) { onSnippetFilterChanged(); });
     connect(m_pReviewOnlyCheckBox, &QCheckBox::toggled, this, [this](bool) { onSnippetFilterChanged(); });
     connect(m_pSnippetTypeFilterComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) { onSnippetFilterChanged(); });
@@ -497,6 +645,11 @@ void QCMainWindow::setupUi()
     m_pClearSearchButton->setObjectName(QString::fromUtf8("clearSearchButton"));
     m_pClearSearchHistoryButton->setObjectName(QString::fromUtf8("clearSearchHistoryButton"));
     m_pResetFiltersButton->setObjectName(QString::fromUtf8("resetFiltersButton"));
+    m_pSidebarNewSessionButton->setObjectName(QString::fromUtf8("sidebarNewSessionButton"));
+    m_pSidebarSettingsButton->setObjectName(QString::fromUtf8("sidebarSettingsButton"));
+    m_pPasteImageButton->setObjectName(QString::fromUtf8("pasteImageButton"));
+    m_pRunSummaryButton->setObjectName(QString::fromUtf8("runSummaryButton"));
+    m_pTopExportButton->setObjectName(QString::fromUtf8("topExportButton"));
     m_pQuickFavoriteCheckBox->setObjectName(QString::fromUtf8("quickFavoriteCheckBox"));
     m_pQuickReviewCheckBox->setObjectName(QString::fromUtf8("quickReviewCheckBox"));
     m_pFavoriteOnlyCheckBox->setObjectName(QString::fromUtf8("favoriteOnlyCheckBox"));
@@ -525,7 +678,10 @@ void QCMainWindow::setupUi()
 void QCMainWindow::setupActions()
 {
     QToolBar *pToolBar = addToolBar(QString::fromUtf8("Main"));
+    pToolBar->setObjectName(QString::fromUtf8("mainToolBar"));
     pToolBar->setMovable(false);
+    pToolBar->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    pToolBar->setVisible(false);
 
     m_pNewSessionAction = pToolBar->addAction(QString::fromUtf8("New Session"));
     m_pEditSessionAction = pToolBar->addAction(QString::fromUtf8("Edit Session"));
@@ -558,7 +714,8 @@ void QCMainWindow::setupActions()
 
     m_pEditCurrentAction = new QAction(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Edit Current")), this);
     m_pDeleteCurrentAction = new QAction(uiText(QString::fromUtf8("??????"), QString::fromUtf8("Delete Current")), this);
-    m_pFocusSearchAction = new QAction(uiText(QString::fromUtf8("????"), QString::fromUtf8("Focus Search")), this);
+    m_pFocusSearchAction = new QAction(uiText(QString::fromUtf8("聚焦搜索"), QString::fromUtf8("Focus Search")), this);
+    m_pPasteImageAction = new QAction(uiText(QString::fromUtf8("粘贴图片"), QString::fromUtf8("Paste Image")), this);
 
     const Qt::ShortcutContext shortcutContext = Qt::WidgetWithChildrenShortcut;
     m_pNewSessionAction->setShortcut(QKeySequence(QString::fromUtf8("Ctrl+Shift+N")));
@@ -586,6 +743,7 @@ void QCMainWindow::setupActions()
     m_pEditCurrentAction->setShortcut(QKeySequence(Qt::Key_F2));
     m_pDeleteCurrentAction->setShortcut(QKeySequence::Delete);
     m_pFocusSearchAction->setShortcuts(QList<QKeySequence>() << QKeySequence::Find << QKeySequence(QString::fromUtf8("/")));
+    m_pPasteImageAction->setShortcut(QKeySequence::Paste);
 
     const QList<QAction *> vecActions = QList<QAction *>()
         << m_pNewSessionAction
@@ -618,7 +776,8 @@ void QCMainWindow::setupActions()
         << m_pRefreshAction
         << m_pEditCurrentAction
         << m_pDeleteCurrentAction
-        << m_pFocusSearchAction;
+        << m_pFocusSearchAction
+        << m_pPasteImageAction;
     for (int i = 0; i < vecActions.size(); ++i)
     {
         QAction *pAction = vecActions.at(i);
@@ -661,6 +820,7 @@ void QCMainWindow::setupActions()
     connect(m_pEditCurrentAction, &QAction::triggered, this, [this]() { onEditCurrentItem(); });
     connect(m_pDeleteCurrentAction, &QAction::triggered, this, [this]() { onDeleteCurrentItem(); });
     connect(m_pFocusSearchAction, &QAction::triggered, this, [this]() { onFocusSearch(); });
+    connect(m_pPasteImageAction, &QAction::triggered, this, [this]() { onPasteImageFromClipboard(); });
 
     m_pNewSessionAction->setObjectName(QString::fromUtf8("newSessionAction"));
     m_pEditSessionAction->setObjectName(QString::fromUtf8("editSessionAction"));
@@ -693,8 +853,9 @@ void QCMainWindow::setupActions()
     m_pEditCurrentAction->setObjectName(QString::fromUtf8("editCurrentAction"));
     m_pDeleteCurrentAction->setObjectName(QString::fromUtf8("deleteCurrentAction"));
     m_pFocusSearchAction->setObjectName(QString::fromUtf8("focusSearchAction"));
+    m_pPasteImageAction->setObjectName(QString::fromUtf8("pasteImageAction"));
 
-    QMenu *pSessionMenu = menuBar()->addMenu(uiText(QString::fromUtf8("Session"), QString::fromUtf8("Session")));
+    QMenu *pSessionMenu = menuBar()->addMenu(uiText(QString::fromUtf8("文件"), QString::fromUtf8("File")));
     pSessionMenu->addAction(m_pNewSessionAction);
     pSessionMenu->addAction(m_pEditSessionAction);
     pSessionMenu->addAction(m_pFinishSessionAction);
@@ -705,11 +866,12 @@ void QCMainWindow::setupActions()
     pSessionMenu->addSeparator();
     pSessionMenu->addAction(m_pDeleteSessionAction);
 
-    QMenu *pSnippetMenu = menuBar()->addMenu(uiText(QString::fromUtf8("??"), QString::fromUtf8("Snippet")));
+    QMenu *pSnippetMenu = menuBar()->addMenu(uiText(QString::fromUtf8("编辑"), QString::fromUtf8("Edit")));
     pSnippetMenu->addAction(m_pNewTextSnippetAction);
     pSnippetMenu->addAction(m_pCaptureScreenAction);
     pSnippetMenu->addAction(m_pCaptureRegionAction);
     pSnippetMenu->addAction(m_pImportImageAction);
+    pSnippetMenu->addAction(m_pPasteImageAction);
     pSnippetMenu->addSeparator();
     pSnippetMenu->addAction(m_pEditSnippetAction);
     pSnippetMenu->addAction(m_pDuplicateSnippetAction);
@@ -732,7 +894,7 @@ void QCMainWindow::setupActions()
     pAiMenu->addSeparator();
     pAiMenu->addAction(m_pAiSettingsAction);
 
-    QMenu *pToolsMenu = menuBar()->addMenu(uiText(QString::fromUtf8("??"), QString::fromUtf8("Tools")));
+    QMenu *pToolsMenu = menuBar()->addMenu(uiText(QString::fromUtf8("视图"), QString::fromUtf8("View")));
     pToolsMenu->addAction(m_pTagLibraryAction);
     pToolsMenu->addAction(m_pRefreshAction);
     pToolsMenu->addAction(m_pFocusSearchAction);
@@ -784,7 +946,8 @@ void QCMainWindow::loadSessions()
     for (int i = 0; i < vecSessions.size(); ++i)
     {
         const QCStudySession& session = vecSessions.at(i);
-        QListWidgetItem *pItem = new QListWidgetItem(SessionItemText(session), m_pSessionListWidget);
+        const QString strIndexedSessionText = QString::fromUtf8("%1. %2").arg(i + 1).arg(SessionItemText(session));
+        QListWidgetItem *pItem = new QListWidgetItem(strIndexedSessionText, m_pSessionListWidget);
         pItem->setData(Qt::UserRole, session.id());
         pItem->setToolTip(session.description());
     }
@@ -1259,6 +1422,18 @@ void QCMainWindow::updateActionState()
         m_pCopySessionSummaryAction->setEnabled(bHasSession && bHasSessionSummaryText);
     if (nullptr != m_pExportMarkdownAction)
         m_pExportMarkdownAction->setEnabled(bHasSession && !bAnyAiTaskRunning);
+    if (nullptr != m_pTopExportButton)
+        m_pTopExportButton->setEnabled(bHasSession && !bAnyAiTaskRunning);
+    if (nullptr != m_pRunSummaryButton)
+        m_pRunSummaryButton->setEnabled(bHasSession && !bAnyAiTaskRunning);
+    if (nullptr != m_pPasteImageButton)
+        m_pPasteImageButton->setEnabled(bHasSession && !bAnyAiTaskRunning);
+    if (nullptr != m_pSidebarNewSessionButton)
+        m_pSidebarNewSessionButton->setEnabled(!bAnyAiTaskRunning);
+    if (nullptr != m_pSidebarSettingsButton)
+        m_pSidebarSettingsButton->setEnabled(!bAnyAiTaskRunning);
+    if (nullptr != m_pPasteImageAction)
+        m_pPasteImageAction->setEnabled(bHasSession && !bAnyAiTaskRunning);
     if (nullptr != m_pEditCurrentAction)
     {
         m_pEditCurrentAction->setEnabled(bCanEditSnippet || (nSelectedSnippetCount == 0 && bCanEditSession));
@@ -2024,7 +2199,7 @@ void QCMainWindow::onDuplicateSnippet()
     const qint64 nTargetSessionId = currentSessionId();
     if (nTargetSessionId <= 0)
     {
-        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("???????"), QString::fromUtf8("Current session is invalid.")));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("?? Session ???"), QString::fromUtf8("Current session is invalid.")));
         return;
     }
 
@@ -2074,7 +2249,7 @@ void QCMainWindow::onDuplicateSnippet()
 
     if (vecNewSnippetIds.isEmpty())
     {
-        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("?????????"), QString::fromUtf8("No snippets were duplicated.")));
+        QMessageBox::warning(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Duplicate Snippet")), uiText(QString::fromUtf8("???????????"), QString::fromUtf8("No snippets were duplicated.")));
         return;
     }
 
@@ -2148,7 +2323,7 @@ void QCMainWindow::onMoveSnippet()
 
     if (vecSessionIds.isEmpty())
     {
-        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), uiText(QString::fromUtf8("????????????"), QString::fromUtf8("No other session is available.")));
+        QMessageBox::information(this, uiText(QString::fromUtf8("????"), QString::fromUtf8("Move Snippet")), uiText(QString::fromUtf8("????????? Session?"), QString::fromUtf8("No other session is available.")));
         return;
     }
 
@@ -3117,6 +3292,202 @@ void QCMainWindow::onImportImageSnippet()
     }
 }
 
+bool QCMainWindow::createImageSnippetFromFilePath(qint64 nSessionId,
+                                                  const QString& strFilePath,
+                                                  const QString& strTitle,
+                                                  const QString& strNote,
+                                                  qint64 *pnSnippetId)
+{
+    if (nullptr != pnSnippetId)
+        *pnSnippetId = 0;
+
+    if (nSessionId <= 0)
+    {
+        QMessageBox::information(this, uiText(QString::fromUtf8("导入图片"), QString::fromUtf8("Import Image")), uiText(QString::fromUtf8("请先选择一个 Session。"), QString::fromUtf8("Select a session first.")));
+        return false;
+    }
+
+    const QString strNormalizedFilePath = strFilePath.trimmed();
+    if (strNormalizedFilePath.isEmpty())
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("导入图片"), QString::fromUtf8("Import Image")), uiText(QString::fromUtf8("图片路径为空。"), QString::fromUtf8("Image path is empty.")));
+        return false;
+    }
+
+    QCSnippet snippet;
+    snippet.setSessionId(nSessionId);
+    snippet.setType(QCSnippetType::ImageSnippetType);
+    snippet.setCaptureType(QCCaptureType::ImportCaptureType);
+    snippet.setTitle(strTitle.trimmed());
+    snippet.setNote(strNote.trimmed());
+    snippet.setNoteKind(QCNoteKind::ReviewNoteKind);
+    snippet.setNoteLevel(QCNoteLevel::ReviewNoteLevel);
+    snippet.setSource(QString::fromUtf8("clipboard"));
+
+    QCAttachment primaryAttachment;
+    primaryAttachment.setFilePath(strNormalizedFilePath);
+    primaryAttachment.setFileName(QFileInfo(strNormalizedFilePath).fileName());
+    primaryAttachment.setMimeType(QString::fromUtf8("image/png"));
+
+    if (!m_pSnippetService->createImageSnippetWithPrimaryAttachment(&snippet, &primaryAttachment))
+    {
+        QMessageBox::warning(this, uiText(QString::fromUtf8("导入图片"), QString::fromUtf8("Import Image")), m_pSnippetService->lastError());
+        return false;
+    }
+
+    if (nullptr != pnSnippetId)
+        *pnSnippetId = snippet.id();
+
+    return true;
+}
+
+
+QStringList QCMainWindow::extractLocalImageFilePaths(const QMimeData *pMimeData) const
+{
+    QStringList vecImagePaths;
+    if (nullptr == pMimeData)
+        return vecImagePaths;
+
+    const QList<QUrl> vecUrls = pMimeData->urls();
+    for (int i = 0; i < vecUrls.size(); ++i)
+    {
+        const QUrl& url = vecUrls.at(i);
+        if (!url.isLocalFile())
+            continue;
+
+        const QString strLocalPath = url.toLocalFile().trimmed();
+        if (strLocalPath.isEmpty())
+            continue;
+
+        const QString strSuffix = QFileInfo(strLocalPath).suffix().toLower();
+        if (strSuffix == QString::fromUtf8("png")
+            || strSuffix == QString::fromUtf8("jpg")
+            || strSuffix == QString::fromUtf8("jpeg")
+            || strSuffix == QString::fromUtf8("bmp")
+            || strSuffix == QString::fromUtf8("webp")
+            || strSuffix == QString::fromUtf8("gif"))
+        {
+            if (!vecImagePaths.contains(strLocalPath, Qt::CaseInsensitive))
+                vecImagePaths.append(strLocalPath);
+        }
+    }
+
+    return vecImagePaths;
+}
+
+bool QCMainWindow::importImageFilesToCurrentSession(const QStringList& vecFilePaths,
+                                                    const QString& strSourceLabel,
+                                                    bool bTriggerWorkspaceSummary,
+                                                    qint64 *pnLastSnippetId)
+{
+    if (nullptr != pnLastSnippetId)
+        *pnLastSnippetId = 0;
+
+    const qint64 nSessionId = currentSessionId();
+    if (nSessionId <= 0)
+    {
+        QMessageBox::information(this,
+                                 uiText(QString::fromUtf8("导入图片"), QString::fromUtf8("Import Image")),
+                                 uiText(QString::fromUtf8("请先在左侧选择 Session。"), QString::fromUtf8("Select a session first from the left panel.")));
+        return false;
+    }
+
+    if (vecFilePaths.isEmpty())
+    {
+        QMessageBox::information(this,
+                                 uiText(QString::fromUtf8("导入图片"), QString::fromUtf8("Import Image")),
+                                 uiText(QString::fromUtf8("没有可导入的图片。"), QString::fromUtf8("No image files to import.")));
+        return false;
+    }
+
+    int nSucceededCount = 0;
+    qint64 nLastSnippetId = 0;
+    for (int i = 0; i < vecFilePaths.size(); ++i)
+    {
+        const QString strImagePath = vecFilePaths.at(i).trimmed();
+        if (strImagePath.isEmpty())
+            continue;
+
+        const QFileInfo fileInfo(strImagePath);
+        const QString strTitle = fileInfo.completeBaseName().trimmed().isEmpty()
+            ? uiText(QString::fromUtf8("图片 %1"), QString::fromUtf8("Image %1")).arg(i + 1)
+            : fileInfo.completeBaseName().trimmed();
+        const QString strNote = uiText(QString::fromUtf8("来源: %1"), QString::fromUtf8("Source: %1")).arg(strSourceLabel.trimmed().isEmpty() ? QString::fromUtf8("import") : strSourceLabel.trimmed());
+
+        qint64 nSnippetId = 0;
+        if (!createImageSnippetFromFilePath(nSessionId, strImagePath, strTitle, strNote, &nSnippetId))
+            continue;
+
+        ++nSucceededCount;
+        nLastSnippetId = nSnippetId;
+    }
+
+    if (nSucceededCount <= 0)
+        return false;
+
+    if (nullptr != pnLastSnippetId)
+        *pnLastSnippetId = nLastSnippetId;
+
+    loadSnippets(nSessionId);
+    if (nLastSnippetId > 0)
+        selectSnippetById(nLastSnippetId);
+
+    const QString strMessage = uiText(QString::fromUtf8("已导入 %1 张图片。"), QString::fromUtf8("Imported %1 image(s)."))
+        .arg(nSucceededCount);
+    statusBar()->showMessage(strMessage, 5000);
+
+    if (bTriggerWorkspaceSummary)
+        onRunWorkspaceSummary();
+
+    return true;
+}
+void QCMainWindow::onPasteImageFromClipboard()
+{
+    const QClipboard *pClipboard = QGuiApplication::clipboard();
+    const QMimeData *pMimeData = (nullptr != pClipboard) ? pClipboard->mimeData() : nullptr;
+
+    QStringList vecImagePaths = extractLocalImageFilePaths(pMimeData);
+
+    if ((nullptr != pMimeData) && pMimeData->hasImage())
+    {
+        const QImage image = qvariant_cast<QImage>(pMimeData->imageData());
+        if (!image.isNull())
+        {
+            QString strSaveDirectory;
+            if (nullptr != m_pSettingsService)
+                m_pSettingsService->getScreenshotSaveDirectory(&strSaveDirectory);
+            if (strSaveDirectory.trimmed().isEmpty())
+                strSaveDirectory = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+            if (strSaveDirectory.trimmed().isEmpty())
+                strSaveDirectory = QDir::tempPath();
+
+            QDir saveDirectory(strSaveDirectory);
+            if (saveDirectory.exists() || saveDirectory.mkpath(QString::fromUtf8(".")))
+            {
+                const QString strFileName = QString::fromUtf8("paste_%1.png").arg(QDateTime::currentDateTime().toString(QString::fromUtf8("yyyyMMdd_hhmmss_zzz")));
+                const QString strImagePath = saveDirectory.filePath(strFileName);
+                if (image.save(strImagePath, "PNG") && !vecImagePaths.contains(strImagePath, Qt::CaseInsensitive))
+                    vecImagePaths.append(strImagePath);
+            }
+        }
+    }
+
+    qint64 nLastSnippetId = 0;
+    importImageFilesToCurrentSession(vecImagePaths,
+                                     QString::fromUtf8("clipboard"),
+                                     true,
+                                     &nLastSnippetId);
+}
+void QCMainWindow::onRunWorkspaceSummary()
+{
+    if (m_bSessionSummaryRunning || m_bSnippetSummaryRunning)
+    {
+        statusBar()->showMessage(uiText(QString::fromUtf8("AI 任务正在运行，请稍后。"), QString::fromUtf8("AI task is running. Please wait.")), 3000);
+        return;
+    }
+
+    onSummarizeSession();
+}
 void QCMainWindow::onDeleteCurrentItem()
 {
     if (nullptr != m_pDeleteSnippetAction && m_pDeleteSnippetAction->isEnabled() && !selectedSnippetIds().isEmpty() && currentSnippetId() > 0)
@@ -3349,7 +3720,7 @@ void QCMainWindow::onAiSettings()
         return;
     }
 
-    m_strAppLanguage = dialog.appLanguage();
+    m_strAppLanguage = QCNormalizeUiLanguage(dialog.appLanguage());
     qApp->setProperty("qtclip.uiLanguage", m_strAppLanguage);
     applyLocalizedTexts();
     loadSessions();
@@ -3549,6 +3920,33 @@ void QCMainWindow::onRefresh()
     loadSessions();
     statusBar()->showMessage(uiText(QString::fromUtf8("????"), QString::fromUtf8("Refreshed.")), 3000);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

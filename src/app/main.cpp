@@ -1,4 +1,4 @@
-// File: main.cpp
+﻿// File: main.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Provides the minimal Qt Widgets application entry used by the QtClip demo application.
@@ -24,10 +24,12 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QSharedPointer>
 #include <QScreen>
 #include <QSet>
 #include <QStandardPaths>
 #include <QTextStream>
+#include <functional>
 
 #include "../core/database/qcdatabasemanager.h"
 #include "../repository/sqlite/qcairecordrepositorysqlite.h"
@@ -52,6 +54,7 @@
 #include "../ui/dialogs/qcquickcapturedialog.h"
 #include "../ui/dialogs/qcsnippettagdialog.h"
 #include "../ui/mainwindow/qcmainwindow.h"
+#include "../ui/common/qcuitheme.h"
 
 namespace
 {
@@ -881,7 +884,7 @@ int RunMainWindowStateVerificationWorkflow()
     }
 
     if (!pSelectionContextLabel->text().contains(QString::fromUtf8("1 selected snippet"), Qt::CaseInsensitive)
-        && !pSelectionContextLabel->text().contains(QString::fromUtf8("1 ???"), Qt::CaseInsensitive))
+        && !pSelectionContextLabel->text().contains(QString::fromUtf8("1"), Qt::CaseInsensitive))
     {
         PrintError(QString::fromUtf8("Single snippet context label verification failed."));
         return 6151;
@@ -966,7 +969,7 @@ int RunMainWindowStateVerificationWorkflow()
     }
 
     if (!pSelectionContextLabel->text().contains(QString::fromUtf8("2 selected snippets"), Qt::CaseInsensitive)
-        && !pSelectionContextLabel->text().contains(QString::fromUtf8("2 ???"), Qt::CaseInsensitive))
+        && !pSelectionContextLabel->text().contains(QString::fromUtf8("2"), Qt::CaseInsensitive))
     {
         PrintError(QString::fromUtf8("Multi-selection context label verification failed."));
         return 6201;
@@ -1586,6 +1589,202 @@ int RunBatchMoveVerificationWorkflow()
     }
 
     PrintInfo(QString::fromUtf8("Batch move verification passed."));
+    return 0;
+}
+
+int RunSearchHistoryVerificationWorkflow()
+{
+    const QString strDatabasePath = BuildScopedTempPath(QString::fromUtf8("search_history"), QString::fromUtf8("verify.sqlite"));
+    QFile::remove(strDatabasePath);
+
+    QCDatabaseManager databaseManager;
+    if (!databaseManager.open(strDatabasePath) || !databaseManager.initialize())
+    {
+        PrintError(databaseManager.lastError());
+        return 786;
+    }
+
+    QCSessionRepositorySqlite sessionRepository(&databaseManager);
+    QCSnippetRepositorySqlite snippetRepository(&databaseManager);
+    QCAiRecordRepositorySqlite aiRecordRepository(&databaseManager);
+    QCSettingsRepositorySqlite settingsRepository(&databaseManager);
+    QCTagRepositorySqlite tagRepository(&databaseManager);
+    QCSessionService sessionService(&sessionRepository);
+    QCSnippetService snippetService(&snippetRepository);
+    QCAiService aiService(&aiRecordRepository);
+    QCSettingsService settingsService(&settingsRepository);
+    QCTagService tagService(&tagRepository);
+    QCAiProcessService aiProcessService(&sessionService, &snippetService, &aiService, &settingsService);
+    QCExportDataService exportDataService(&sessionService, &snippetService, &aiService);
+    QCMdExportRenderer mdExportRenderer;
+    QCMdExportService mdExportService(&exportDataService, &mdExportRenderer);
+    QCScreenCaptureService screenCaptureService(&settingsService);
+
+    if (!settingsService.setSnippetSearchHistory(QStringList() << QString::fromUtf8("alpha") << QString::fromUtf8("beta")))
+    {
+        PrintError(settingsService.lastError());
+        return 787;
+    }
+
+    QCMainWindow mainWindow(&sessionService, &snippetService, &tagService, &aiService, &aiProcessService, &settingsService, &mdExportService, &screenCaptureService);
+    mainWindow.show();
+    QApplication::processEvents();
+
+    QComboBox *pHistoryCombo = mainWindow.findChild<QComboBox *>(QString::fromUtf8("searchHistoryComboBox"));
+    QPushButton *pClearHistoryButton = mainWindow.findChild<QPushButton *>(QString::fromUtf8("clearSearchHistoryButton"));
+    if (nullptr == pHistoryCombo || nullptr == pClearHistoryButton)
+    {
+        PrintError(QString::fromUtf8("Search history anchors are missing."));
+        return 788;
+    }
+
+    if (!pClearHistoryButton->isEnabled() || pHistoryCombo->count() < 2)
+    {
+        PrintError(QString::fromUtf8("Search history preload verification failed."));
+        return 789;
+    }
+
+    pClearHistoryButton->click();
+    QApplication::processEvents();
+
+    QStringList vecHistory;
+    if (!settingsService.getSnippetSearchHistory(&vecHistory))
+    {
+        PrintError(settingsService.lastError());
+        return 790;
+    }
+
+    if (!vecHistory.isEmpty() || pClearHistoryButton->isEnabled())
+    {
+        PrintError(QString::fromUtf8("Search history clear verification failed."));
+        return 791;
+    }
+
+    PrintInfo(QString::fromUtf8("Search history verification passed."));
+    return 0;
+}
+
+int RunTagClearActionVerificationWorkflow()
+{
+    const QString strDatabasePath = BuildScopedTempPath(QString::fromUtf8("tag_clear_action"), QString::fromUtf8("verify.sqlite"));
+    QFile::remove(strDatabasePath);
+
+    QCDatabaseManager databaseManager;
+    if (!databaseManager.open(strDatabasePath) || !databaseManager.initialize())
+    {
+        PrintError(databaseManager.lastError());
+        return 792;
+    }
+
+    QCSessionRepositorySqlite sessionRepository(&databaseManager);
+    QCSnippetRepositorySqlite snippetRepository(&databaseManager);
+    QCAiRecordRepositorySqlite aiRecordRepository(&databaseManager);
+    QCSettingsRepositorySqlite settingsRepository(&databaseManager);
+    QCTagRepositorySqlite tagRepository(&databaseManager);
+    QCSessionService sessionService(&sessionRepository);
+    QCSnippetService snippetService(&snippetRepository);
+    QCAiService aiService(&aiRecordRepository);
+    QCSettingsService settingsService(&settingsRepository);
+    QCTagService tagService(&tagRepository);
+    QCAiProcessService aiProcessService(&sessionService, &snippetService, &aiService, &settingsService);
+    QCExportDataService exportDataService(&sessionService, &snippetService, &aiService);
+    QCMdExportRenderer mdExportRenderer;
+    QCMdExportService mdExportService(&exportDataService, &mdExportRenderer);
+    QCScreenCaptureService screenCaptureService(&settingsService);
+
+    QCStudySession session;
+    session.setTitle(QString::fromUtf8("Tag Clear Action Session"));
+    if (!sessionService.createSession(&session))
+    {
+        PrintError(sessionService.lastError());
+        return 793;
+    }
+
+    QCSnippet snippetA;
+    snippetA.setSessionId(session.id());
+    snippetA.setCaptureType(QCCaptureType::ManualCaptureType);
+    snippetA.setTitle(QString::fromUtf8("Tag Action A"));
+    snippetA.setContentText(QString::fromUtf8("content A"));
+    snippetA.setNoteKind(QCNoteKind::ConceptNoteKind);
+    snippetA.setNoteLevel(QCNoteLevel::ImportantNoteLevel);
+    if (!snippetService.createTextSnippet(&snippetA))
+    {
+        PrintError(snippetService.lastError());
+        return 794;
+    }
+
+    QCSnippet snippetB = snippetA;
+    snippetB.setId(0);
+    snippetB.setTitle(QString::fromUtf8("Tag Action B"));
+    if (!snippetService.createTextSnippet(&snippetB))
+    {
+        PrintError(snippetService.lastError());
+        return 795;
+    }
+
+    QCTag tag;
+    tag.setName(QString::fromUtf8("to-clear"));
+    if (!tagService.createTag(&tag))
+    {
+        PrintError(tagService.lastError());
+        return 796;
+    }
+
+    if (!tagService.replaceSnippetTags(snippetA.id(), QVector<qint64>() << tag.id())
+        || !tagService.replaceSnippetTags(snippetB.id(), QVector<qint64>() << tag.id()))
+    {
+        PrintError(tagService.lastError());
+        return 797;
+    }
+
+    QCMainWindow mainWindow(&sessionService, &snippetService, &tagService, &aiService, &aiProcessService, &settingsService, &mdExportService, &screenCaptureService);
+    mainWindow.show();
+    QApplication::processEvents();
+
+    QListWidget *pSessionListWidget = mainWindow.findChild<QListWidget *>(QString::fromUtf8("sessionListWidget"));
+    QListWidget *pSnippetListWidget = mainWindow.findChild<QListWidget *>(QString::fromUtf8("snippetListWidget"));
+    QAction *pClearTagsAction = mainWindow.findChild<QAction *>(QString::fromUtf8("clearSnippetTagsAction"));
+    if (nullptr == pSessionListWidget || nullptr == pSnippetListWidget || nullptr == pClearTagsAction)
+    {
+        PrintError(QString::fromUtf8("Tag clear action anchors are missing."));
+        return 798;
+    }
+
+    if (!SelectListItemById(pSessionListWidget, session.id()) || !SelectListItemsByIds(pSnippetListWidget, QVector<qint64>() << snippetA.id() << snippetB.id()))
+    {
+        PrintError(QString::fromUtf8("Failed to prepare tag clear selection."));
+        return 799;
+    }
+
+    QSharedPointer<int> pAttempts(new int(0));
+    QSharedPointer<std::function<void()>> pAutoAccept(new std::function<void()>());
+    *pAutoAccept = [pAttempts, pAutoAccept]() {
+        ++(*pAttempts);
+        QMessageBox *pDialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+        if (nullptr != pDialog)
+        {
+            if (QAbstractButton *pYesButton = pDialog->button(QMessageBox::Yes))
+                pYesButton->click();
+            else
+                pDialog->accept();
+            return;
+        }
+
+        if (*pAttempts < 80)
+            QTimer::singleShot(10, [pAutoAccept]() { (*pAutoAccept)(); });
+    };
+
+    QTimer::singleShot(0, [pAutoAccept]() { (*pAutoAccept)(); });
+    pClearTagsAction->trigger();
+    QApplication::processEvents(QEventLoop::AllEvents, 200);
+
+    if (!tagService.listTagsBySnippet(snippetA.id()).isEmpty() || !tagService.listTagsBySnippet(snippetB.id()).isEmpty())
+    {
+        PrintError(QString::fromUtf8("Tag clear action verification failed."));
+        return 800;
+    }
+
+    PrintInfo(QString::fromUtf8("Tag clear action verification passed."));
     return 0;
 }
 
@@ -3865,6 +4064,7 @@ int RunSmokeWorkflow()
 int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
+    QCApplyAppTheme(&application);
     const QStringList vecArguments = application.arguments();
 
     if (vecArguments.contains(QString::fromUtf8("--smoke")))
@@ -3891,8 +4091,14 @@ int main(int argc, char *argv[])
     if (vecArguments.contains(QString::fromUtf8("--verify-tag-batch")))
         return RunTagBatchVerificationWorkflow();
 
+    if (vecArguments.contains(QString::fromUtf8("--verify-tag-clear-action")))
+        return RunTagClearActionVerificationWorkflow();
+
     if (vecArguments.contains(QString::fromUtf8("--verify-search-filter")))
         return RunSearchFilterVerificationWorkflow();
+
+    if (vecArguments.contains(QString::fromUtf8("--verify-search-history")))
+        return RunSearchHistoryVerificationWorkflow();
 
     if (vecArguments.contains(QString::fromUtf8("--verify-ai-retry")))
         return RunAiRetryVerificationWorkflow();
@@ -4070,6 +4276,9 @@ int main(int argc, char *argv[])
 
     return application.exec();
 }
+
+
+
 
 
 

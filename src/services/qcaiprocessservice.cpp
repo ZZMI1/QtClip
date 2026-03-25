@@ -1,4 +1,4 @@
-// File: qcaiprocessservice.cpp
+﻿// File: qcaiprocessservice.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal AI process service used by the first QtClip AI workflow.
@@ -419,7 +419,8 @@ bool QCAiProcessService::buildSessionExecutionContext(const QCStudySession& sess
     pExecutionContext->m_aiTaskType = QCAiTaskType::SessionSummaryTask;
     pExecutionContext->m_aiSettings = aiSettings;
     pExecutionContext->m_aiRequest.m_strSystemPrompt = BuildSessionSystemPrompt(strAppLanguage);
-    pExecutionContext->m_aiRequest.m_strUserPrompt = buildSessionPrompt(session, vecSnippets);
+    const QString strPreviousSummary = findLatestCompletedSessionSummary(session.id());
+    pExecutionContext->m_aiRequest.m_strUserPrompt = buildSessionPrompt(session, vecSnippets, strPreviousSummary);
     pExecutionContext->m_aiRequest.m_strLocalImageFilePath.clear();
     pExecutionContext->m_aiRequest.m_strModelName = aiSettings.m_strModel;
     pExecutionContext->m_aiRequest.m_nTimeoutMs = 60000;
@@ -500,7 +501,8 @@ QString QCAiProcessService::buildSnippetPrompt(const QCSnippet& snippet) const
 }
 
 QString QCAiProcessService::buildSessionPrompt(const QCStudySession& session,
-                                               const QVector<QCSnippet>& vecSnippets) const
+                                               const QVector<QCSnippet>& vecSnippets,
+                                               const QString& strPreviousSummary) const
 {
     QString strAppLanguage = QString::fromUtf8("zh-CN");
     if (nullptr != m_pSettingsService)
@@ -508,24 +510,71 @@ QString QCAiProcessService::buildSessionPrompt(const QCStudySession& session,
 
     QString strPrompt;
     strPrompt += IsChineseLanguage(strAppLanguage)
-        ? QString::fromUtf8("????????????????????????\n")
-        : QString::fromUtf8("Summarize this study session. Focus on key takeaways and review priorities.\n");
+        ? QString::fromUtf8("请基于当前 Session 的全部学习内容，生成新的完整总结。\n")
+        : QString::fromUtf8("Generate a refreshed full summary for this session based on all current learning items.\n");
+    strPrompt += IsChineseLanguage(strAppLanguage)
+        ? QString::fromUtf8("如果提供了上一次总结，请把它当作上下文并在其基础上迭代，不要丢失已确认结论。\n")
+        : QString::fromUtf8("If a previous summary is provided, treat it as context and iterate on top of it without losing validated conclusions.\n");
     strPrompt += QString::fromUtf8("Session Title: %1\n").arg(session.title());
     strPrompt += QString::fromUtf8("Course: %1\n").arg(session.courseName());
     strPrompt += QString::fromUtf8("Description: %1\n\n").arg(session.description());
-    strPrompt += QString::fromUtf8("Snippets:\n");
 
-    for (int i = 0; i < vecSnippets.size(); ++i)
+    if (!strPreviousSummary.trimmed().isEmpty())
     {
-        const QCSnippet& snippet = vecSnippets.at(i);
-        strPrompt += QString::fromUtf8("- Title: %1 | Note: %2 | Content: %3 | Summary: %4\n")
-            .arg(snippet.title(), snippet.note(), snippet.contentText(), snippet.summary());
+        strPrompt += IsChineseLanguage(strAppLanguage)
+            ? QString::fromUtf8("上一次总结：\n")
+            : QString::fromUtf8("Previous summary:\n");
+        strPrompt += strPreviousSummary.trimmed() + QString::fromUtf8("\n\n");
     }
 
     strPrompt += IsChineseLanguage(strAppLanguage)
-        ? QString::fromUtf8("??????????")
-        : QString::fromUtf8("Return only the session summary text.");
+        ? QString::fromUtf8("当前 Snippets（尤其是图片类）:\n")
+        : QString::fromUtf8("Current snippets (especially image items):\n");
+    for (int i = 0; i < vecSnippets.size(); ++i)
+    {
+        const QCSnippet& snippet = vecSnippets.at(i);
+        strPrompt += QString::fromUtf8("- Type: %1 | Title: %2 | Note: %3 | Content: %4 | Summary: %5\n")
+            .arg(snippet.type() == QCSnippetType::ImageSnippetType ? QString::fromUtf8("image") : QString::fromUtf8("text"),
+                 snippet.title(),
+                 snippet.note(),
+                 snippet.contentText(),
+                 snippet.summary());
+    }
+
+    strPrompt += IsChineseLanguage(strAppLanguage)
+        ? QString::fromUtf8("输出要求：返回新的完整 Session 总结，仅输出总结正文。")
+        : QString::fromUtf8("Output requirement: return the refreshed complete session summary text only.");
     return strPrompt;
+}
+
+QString QCAiProcessService::findLatestCompletedSessionSummary(qint64 nSessionId) const
+{
+    if (nSessionId <= 0 || nullptr == m_pAiService)
+        return QString();
+
+    const QVector<QCAiRecord> vecAiRecords = m_pAiService->listAiRecordsBySession(nSessionId);
+    if (!m_pAiService->lastError().trimmed().isEmpty())
+        return QString();
+
+    QDateTime dateTimeLatest;
+    QString strLatestSummary;
+    for (int i = 0; i < vecAiRecords.size(); ++i)
+    {
+        const QCAiRecord& aiRecord = vecAiRecords.at(i);
+        if (aiRecord.taskType() != QCAiTaskType::SessionSummaryTask)
+            continue;
+        if (aiRecord.status().trimmed().compare(QString::fromUtf8("completed"), Qt::CaseInsensitive) != 0)
+            continue;
+        if (aiRecord.responseText().trimmed().isEmpty())
+            continue;
+        if (!dateTimeLatest.isValid() || aiRecord.createdAt() > dateTimeLatest)
+        {
+            dateTimeLatest = aiRecord.createdAt();
+            strLatestSummary = aiRecord.responseText().trimmed();
+        }
+    }
+
+    return strLatestSummary;
 }
 
 QString QCAiProcessService::buildProviderMode(const QCAiRuntimeSettings& aiSettings) const
@@ -671,3 +720,5 @@ void QCAiProcessService::setLastError(const QString& strError) const
 {
     m_strLastError = strError;
 }
+
+

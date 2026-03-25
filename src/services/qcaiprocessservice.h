@@ -1,4 +1,4 @@
-#ifndef QTCLIP_QCAIPROCESSSERVICE_H_
+﻿#ifndef QTCLIP_QCAIPROCESSSERVICE_H_
 #define QTCLIP_QCAIPROCESSSERVICE_H_
 
 // File: qcaiprocessservice.h
@@ -89,7 +89,8 @@ private:
                                       QCAiTaskExecutionContext *pExecutionContext) const;
     bool createProvider(const QCAiRuntimeSettings& aiSettings, IQCAiProvider **ppAiProvider) const;
     QString buildSnippetPrompt(const QCSnippet& snippet) const;
-    QString buildSessionPrompt(const QCStudySession& session, const QVector<QCSnippet>& vecSnippets) const;
+    QString buildSessionPrompt(const QCStudySession& session, const QVector<QCSnippet>& vecSnippets, const QString& strPreviousSummary) const;
+    QString findLatestCompletedSessionSummary(qint64 nSessionId) const;
     QString buildProviderMode(const QCAiRuntimeSettings& aiSettings) const;
     QString resolveProviderEndpoint(const QCAiRuntimeSettings& aiSettings) const;
     QString formatProviderDiagnosticMessage(const QString& strProviderMode,
@@ -112,3 +113,5 @@ private:
 };
 
 #endif // QTCLIP_QCAIPROCESSSERVICE_H_
+
+

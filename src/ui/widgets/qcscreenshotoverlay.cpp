@@ -1,4 +1,4 @@
-// File: qcscreenshotoverlay.cpp
+﻿// File: qcscreenshotoverlay.cpp
 // Author: ZZMI1
 // Created: 2026-03-23
 // Description: Implements the minimal region selection overlay used by the first QtClip area capture workflow.
@@ -8,7 +8,6 @@
 #include "qcscreenshotoverlay.h"
 
 #include <QApplication>
-#include <QApplication>
 #include <QEventLoop>
 #include <QGuiApplication>
 #include <QKeyEvent>
@@ -17,21 +16,12 @@
 #include <QPaintEvent>
 #include <QPen>
 #include <QScreen>
+#include "../common/qcuilocalization.h"
 
 namespace
 {
 const int g_nMinimumSelectionSize = 16;
 const int g_nOverlayPadding = 12;
-
-bool IsChineseUi()
-{
-    return qApp->property("qtclip.uiLanguage").toString().trimmed().compare(QString::fromUtf8("en-US"), Qt::CaseInsensitive) != 0;
-}
-
-QString UiText(const QString& strChinese, const QString& strEnglish)
-{
-    return IsChineseUi() ? strChinese : strEnglish;
-}
 }
 
 QCScreenshotOverlay::QCScreenshotOverlay(QWidget *pParent)
@@ -63,14 +53,14 @@ bool QCScreenshotOverlay::selectRegion(QRect *pSelectedRect)
 
     if (nullptr == pSelectedRect)
     {
-        setLastError(UiText(QString::fromUtf8("?????????"), QString::fromUtf8("Selection output pointer is null.")));
+        setLastError(QCUiText(QString::fromUtf8("?????????"), QString::fromUtf8("Selection output pointer is null.")));
         return false;
     }
 
     QScreen *pPrimaryScreen = QGuiApplication::primaryScreen();
     if (nullptr == pPrimaryScreen)
     {
-        setLastError(UiText(QString::fromUtf8("???????"), QString::fromUtf8("Primary screen is unavailable.")));
+        setLastError(QCUiText(QString::fromUtf8("???????"), QString::fromUtf8("Primary screen is unavailable.")));
         return false;
     }
 
@@ -166,7 +156,7 @@ void QCScreenshotOverlay::paintEvent(QPaintEvent *pEvent)
         painter.drawText(rectLabel, Qt::AlignCenter, strSizeText);
     }
 
-    const QString strHint = UiText(QString::fromUtf8("?????????? Esc ???"), QString::fromUtf8("Drag to capture a region. Press Esc to cancel."));
+    const QString strHint = QCUiText(QString::fromUtf8("?????????? Esc ???"), QString::fromUtf8("Drag to capture a region. Press Esc to cancel."));
     QFontMetrics hintMetrics = painter.fontMetrics();
     const QRect rectHint(g_nOverlayPadding,
                          g_nOverlayPadding,
@@ -215,7 +205,7 @@ void QCScreenshotOverlay::mouseReleaseEvent(QMouseEvent *pEvent)
     if (rectSelected.width() < g_nMinimumSelectionSize || rectSelected.height() < g_nMinimumSelectionSize)
     {
         m_bSelectionTooSmall = true;
-        setLastError(UiText(QString::fromUtf8("?????????? %1 x %1 ???"), QString::fromUtf8("Selected region is too small. Please select at least %1 x %1 pixels.")).arg(g_nMinimumSelectionSize));
+        setLastError(QCUiText(QString::fromUtf8("?????????? %1 x %1 ???"), QString::fromUtf8("Selected region is too small. Please select at least %1 x %1 pixels.")).arg(g_nMinimumSelectionSize));
         finishSelection(false);
         return;
     }
@@ -275,3 +265,8 @@ void QCScreenshotOverlay::setLastError(const QString& strError) const
 {
     m_strLastError = strError;
 }
+
+
+
+
+
