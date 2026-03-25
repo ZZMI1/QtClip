@@ -29,6 +29,8 @@
 #include <QSet>
 #include <QStandardPaths>
 #include <QTextStream>
+#include <QTranslator>
+#include <QLocale>
 #include <functional>
 
 #include "../core/database/qcdatabasemanager.h"
@@ -96,6 +98,38 @@ QString ResolveAppDataPath()
     QDir().mkpath(strDataDirectory);
 
     return QDir(strDataDirectory).filePath(QString::fromUtf8("qtclip.sqlite"));
+}
+
+bool InstallAppTranslator(QApplication *pApplication,
+                          QCSettingsService *pSettingsService,
+                          QTranslator *pTranslator)
+{
+    if (nullptr == pApplication || nullptr == pTranslator)
+        return false;
+
+    QString strAppLanguage = QString::fromUtf8("zh-CN");
+    if (nullptr != pSettingsService)
+        pSettingsService->getAppLanguage(&strAppLanguage);
+    strAppLanguage = QCNormalizeUiLanguage(strAppLanguage);
+
+    if (strAppLanguage.startsWith(QString::fromUtf8("en"), Qt::CaseInsensitive))
+        return false;
+
+    const QString strBaseName = QString::fromUtf8("qtclip_%1").arg(QLocale(strAppLanguage).name());
+    const QStringList vecSearchDirectories = QStringList()
+        << QDir(QCoreApplication::applicationDirPath()).filePath(QString::fromUtf8("i18n"))
+        << QCoreApplication::applicationDirPath();
+
+    for (int i = 0; i < vecSearchDirectories.size(); ++i)
+    {
+        if (pTranslator->load(strBaseName, vecSearchDirectories.at(i)))
+        {
+            pApplication->installTranslator(pTranslator);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 QString BuildScopedTempPath(const QString& strPrefix, const QString& strFileName)
@@ -4154,6 +4188,9 @@ int main(int argc, char *argv[])
     QCMdExportRenderer mdExportRenderer;
     QCMdExportService mdExportService(&exportDataService, &mdExportRenderer);
     QCScreenCaptureService screenCaptureService(&settingsService);
+
+    QTranslator appTranslator;
+    InstallAppTranslator(&application, &settingsService, &appTranslator);
 
     if (vecArguments.contains(QString::fromUtf8("--test-ai-config")))
     {

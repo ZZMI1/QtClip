@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QSet>
 #include <QTextStream>
+#include <QStringList>
 
 #include "qcexportdataservice.h"
 #include "qcmdexportrenderer.h"
@@ -98,6 +99,63 @@ bool FilterExportContextBySnippetIds(const QCExportContext& exportContext,
 
     *pFilteredContext = filteredContext;
     return true;
+}
+
+QString FindSnippetSummaryForExport(const QCExportSnippetContext& snippetContext)
+{
+    if (!snippetContext.m_snippet.summary().trimmed().isEmpty())
+        return snippetContext.m_snippet.summary().trimmed();
+
+    for (int i = 0; i < snippetContext.m_vecAiRecords.size(); ++i)
+    {
+        const QCAiRecord& aiRecord = snippetContext.m_vecAiRecords.at(i);
+        if (aiRecord.taskType() == QCAiTaskType::SnippetSummaryTask && !aiRecord.responseText().trimmed().isEmpty())
+            return aiRecord.responseText().trimmed();
+    }
+
+    return QString();
+}
+
+QString FindSessionSummaryForExport(const QCExportContext& exportContext)
+{
+    for (int i = 0; i < exportContext.m_vecSessionAiRecords.size(); ++i)
+    {
+        const QCAiRecord& aiRecord = exportContext.m_vecSessionAiRecords.at(i);
+        if (aiRecord.taskType() == QCAiTaskType::SessionSummaryTask && !aiRecord.responseText().trimmed().isEmpty())
+            return aiRecord.responseText().trimmed();
+    }
+
+    return QString();
+}
+
+QString BuildMinimalMarkdown(const QCExportContext& exportContext)
+{
+    const QString strSessionTitle = exportContext.m_session.title().trimmed().isEmpty()
+        ? QString::fromUtf8("Untitled Session")
+        : exportContext.m_session.title().trimmed();
+
+    QString strAiSummary = FindSessionSummaryForExport(exportContext);
+    if (strAiSummary.isEmpty())
+    {
+        QStringList vecSummaries;
+        for (int i = 0; i < exportContext.m_vecSnippetContexts.size(); ++i)
+        {
+            const QString strSnippetSummary = FindSnippetSummaryForExport(exportContext.m_vecSnippetContexts.at(i));
+            if (!strSnippetSummary.isEmpty())
+                vecSummaries.append(strSnippetSummary);
+        }
+        strAiSummary = vecSummaries.join(QString::fromUtf8("\n\n"));
+    }
+
+    if (strAiSummary.isEmpty())
+        strAiSummary = QString::fromWCharArray(L"\u6682\u65e0 AI\u603b\u7ed3");
+
+    QString strMarkdown;
+    QTextStream stream(&strMarkdown);
+    stream << "# " << strSessionTitle << "\n\n";
+    stream << "## " << QString::fromWCharArray(L"AI\u603b\u7ed3") << "\n\n";
+    stream << strAiSummary << "\n";
+    return strMarkdown;
 }
 
 bool WriteMarkdownToFile(const QString& strMarkdown, const QString& strOutputFilePath, QString *pstrError)
@@ -190,7 +248,7 @@ bool QCMdExportService::exportSessionToFile(qint64 nSessionId, const QString& st
 {
     clearError();
 
-    if (nullptr == m_pExportDataService || nullptr == m_pMdExportRenderer)
+    if (nullptr == m_pExportDataService)
     {
         setLastError(QString::fromUtf8("Markdown export service dependencies are not ready."));
         return false;
@@ -215,12 +273,7 @@ bool QCMdExportService::exportSessionToFile(qint64 nSessionId, const QString& st
         return false;
     }
 
-    QString strMarkdown;
-    if (!m_pMdExportRenderer->renderMarkdown(exportContext, &strMarkdown))
-    {
-        setLastError(m_pMdExportRenderer->lastError());
-        return false;
-    }
+    const QString strMarkdown = BuildMinimalMarkdown(exportContext);
 
     QString strError;
     if (!WriteMarkdownToFile(strMarkdown, strOutputFilePath, &strError))
@@ -236,7 +289,7 @@ bool QCMdExportService::exportSnippetsToFile(qint64 nSessionId, const QVector<qi
 {
     clearError();
 
-    if (nullptr == m_pExportDataService || nullptr == m_pMdExportRenderer)
+    if (nullptr == m_pExportDataService)
     {
         setLastError(QString::fromUtf8("Markdown export service dependencies are not ready."));
         return false;
@@ -269,12 +322,7 @@ bool QCMdExportService::exportSnippetsToFile(qint64 nSessionId, const QVector<qi
         return false;
     }
 
-    QString strMarkdown;
-    if (!m_pMdExportRenderer->renderMarkdown(filteredContext, &strMarkdown))
-    {
-        setLastError(m_pMdExportRenderer->lastError());
-        return false;
-    }
+    const QString strMarkdown = BuildMinimalMarkdown(filteredContext);
 
     if (!WriteMarkdownToFile(strMarkdown, strOutputFilePath, &strError))
     {

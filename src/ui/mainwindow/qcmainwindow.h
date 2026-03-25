@@ -19,11 +19,14 @@
 #include "../../services/qcscreencaptureservice.h"
 
 class QAction;
+class QCloseEvent;
 class QCheckBox;
 class QComboBox;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QTreeWidget;
+class QTreeWidgetItem;
 class QPlainTextEdit;
 class QListWidgetItem;
 class QPushButton;
@@ -31,6 +34,7 @@ class QMimeData;
 class QDragEnterEvent;
 class QDragMoveEvent;
 class QDropEvent;
+class QEvent;
 class QCSnippetTagDialog;
 class QCStudySession;
 class QCSnippet;
@@ -59,6 +63,8 @@ protected:
     void dragEnterEvent(QDragEnterEvent *pEvent) override;
     void dragMoveEvent(QDragMoveEvent *pEvent) override;
     void dropEvent(QDropEvent *pEvent) override;
+    void closeEvent(QCloseEvent *pEvent) override;
+    bool eventFilter(QObject *pObject, QEvent *pEvent) override;
 
 private:
     QCMainWindow(const QCMainWindow& other);
@@ -71,6 +77,8 @@ private:
     void setupUi();
     void setupActions();
     void loadSessions();
+    void rebuildNavigationTree();
+    void onNavigationItemActivated(QTreeWidgetItem *pItem, int nColumn);
     void loadTagFilterOptions();
     void loadSnippets(qint64 nSessionId);
     void applySnippetFilters();
@@ -78,7 +86,9 @@ private:
     void showSnippetDetails(qint64 nSnippetId);
     void clearSnippetDetails();
     void updateDetailImage(const QString& strImagePath);
+    void refreshImagePreviewScale();
     void updateActionState();
+    void flushSnippetDraftToStorage(bool bShowError);
     void updateViewSummary(int nVisibleSnippetCount, int nTotalSnippetCount);
     void updateAiStatusDisplay();
     void updateSelectionContextDisplay();
@@ -216,6 +226,8 @@ private:
 
     QListWidget *m_pSessionListWidget;
     QListWidget *m_pSnippetListWidget;
+    QLineEdit *m_pNavigationSearchLineEdit;
+    QTreeWidget *m_pNavigationTreeWidget;
     QLineEdit *m_pSnippetSearchLineEdit;
     QComboBox *m_pSearchHistoryComboBox;
     QPushButton *m_pClearSearchButton;
@@ -249,11 +261,16 @@ private:
     QPlainTextEdit *m_pSnippetSummaryTextEdit;
     QLabel *m_pImagePathValueLabel;
     QLabel *m_pImagePreviewLabel;
+    QPixmap m_originalPreviewPixmap;
+    QString m_strCurrentImagePath;
 
     bool m_bSnippetSummaryRunning;
     bool m_bSessionSummaryRunning;
     bool m_bAutomaticSnippetSummary;
     bool m_bUpdatingSnippetStateControls;
+    bool m_bSyncingNavigationSelection;
+    bool m_bPopulatingSnippetEditors;
+    qint64 m_nDisplayedSnippetId;
     bool m_bHasRetryableSnippetSummary;
     bool m_bHasRetryableSessionSummary;
     qint64 m_nRetrySnippetId;
